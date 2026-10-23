@@ -95,7 +95,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `onRowClick` | `(row: T) => void` | – | Row click callback |
 | `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
-| `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-test-id` for end-to-end tests |
+| `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |
 | `getRowLabel` | `(row: T) => string` | – | Names each row's selection checkbox "Select ⟨label⟩" for assistive technology. Without it, the name falls back to "Select row ⟨id⟩". |
 | `labels` | `Partial<DataTableLabels>` | English | Overrides the visible strings (empty state, page count, range text) |
 | `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link` |
@@ -110,8 +110,8 @@ interface TableColumn<T> {
   cell?: ({ row }) => ReactNode;
   loadingCell?: () => ReactNode;
   headerIcon?: ReactNode;
-  className?: string;        // header cell classes
-  rowClassName?: string;     // body cell classes
+  headerClassName?: string;  // header cell classes
+  cellClassName?: string;    // body cell classes
   subColumns?: TableColumn<T>[]; // makes this a grouped parent column
   hideByDefault?: boolean;   // starts hidden; can be shown from the panel
   alwaysVisible?: boolean;   // cannot be hidden (see Known issues)
@@ -128,7 +128,7 @@ interface TableColumn<T> {
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
 
-`useTableSort` reports directions as lowercase `'asc'` / `'desc'`. Everything that takes a direction also accepts the uppercase `SortOrder` values (`'ASC'` / `'DESC'`), for GraphQL sort enums.
+`useTableSort` reports directions as lowercase `'asc'` / `'desc'`, and every option that takes a direction expects lowercase too. If your API wants an uppercase enum, convert at the call.
 
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 

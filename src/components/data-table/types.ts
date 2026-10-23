@@ -20,8 +20,10 @@ export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
   sortKey?: string;
   cell?: (params: { row: TData }) => React.ReactNode;
   loadingCell?: () => React.ReactNode;
-  className?: string;
-  rowClassName?: string;
+  /** Extra classes on the column's header cell (the group header for a column with sub-columns). */
+  headerClassName?: string;
+  /** Extra classes on each of the column's body cells. */
+  cellClassName?: string;
   subColumns?: TableColumn<TData>[];
   hideByDefault?: boolean;
   alwaysVisible?: boolean;
@@ -89,8 +91,8 @@ export interface TablePagination {
   pageSize: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  handleNextPage: () => void;
-  handlePreviousPage: () => void;
+  onNextPage: () => void;
+  onPreviousPage: () => void;
 }
 
 export interface TableSort {

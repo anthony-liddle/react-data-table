@@ -66,8 +66,8 @@ const FullTable = () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: fn(),
-        handlePreviousPage: fn(),
+        onNextPage: fn(),
+        onPreviousPage: fn(),
       }}
     />
   );

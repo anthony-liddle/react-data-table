@@ -264,8 +264,8 @@ describe('DataTable', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} pagination={pagination} />);
@@ -274,42 +274,42 @@ describe('DataTable', () => {
       expect(screen.getByText(/Showing.*of.*results/)).toBeInTheDocument();
     });
 
-    it('should call handleNextPage when next button is clicked', async () => {
+    it('should call onNextPage when next button is clicked', async () => {
       const user = userEvent.setup();
-      const handleNextPage = vi.fn();
+      const onNextPage = vi.fn();
       const pagination: TablePagination = {
         totalCount: 100,
         pageIndex: 0,
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage,
-        handlePreviousPage: vi.fn(),
+        onNextPage,
+        onPreviousPage: vi.fn(),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} pagination={pagination} />);
 
       await user.click(screen.getByRole('button', { name: 'Next page' }));
-      expect(handleNextPage).toHaveBeenCalledTimes(1);
+      expect(onNextPage).toHaveBeenCalledTimes(1);
     });
 
-    it('should call handlePreviousPage when previous button is clicked', async () => {
+    it('should call onPreviousPage when previous button is clicked', async () => {
       const user = userEvent.setup();
-      const handlePreviousPage = vi.fn();
+      const onPreviousPage = vi.fn();
       const pagination: TablePagination = {
         totalCount: 100,
         pageIndex: 1,
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage,
+        onNextPage: vi.fn(),
+        onPreviousPage,
       };
 
       render(<DataTable columns={baseColumns} data={baseData} pagination={pagination} />);
 
       await user.click(screen.getByRole('button', { name: 'Previous page' }));
-      expect(handlePreviousPage).toHaveBeenCalledTimes(1);
+      expect(onPreviousPage).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -856,19 +856,40 @@ describe('DataTable', () => {
       expect(screen.getByText('User 0')).toBeInTheDocument();
     });
 
-    it('should handle columns with custom className', () => {
+    it('puts a column headerClassName on its header and cellClassName on its cells', () => {
       const columnsWithClassName: TableColumn<TestRow>[] = [
         {
           header: 'Name',
           cell: ({ row }) => <span>{row.name}</span>,
-          className: 'custom-header-class',
+          headerClassName: 'custom-header-class',
+          cellClassName: 'custom-cell-class',
         },
       ];
 
       render(<DataTable columns={columnsWithClassName} data={baseData} />);
 
-      const header = screen.getByText('Name');
-      expect(header.closest('th')).toHaveClass('custom-header-class');
+      const header = screen.getByText('Name').closest('th');
+      expect(header).toHaveClass('custom-header-class');
+      expect(header).not.toHaveClass('custom-cell-class');
+      const cell = screen.getByText('John Doe').closest('td');
+      expect(cell).toHaveClass('rdt-table__cell', 'custom-cell-class');
+      expect(cell).not.toHaveClass('custom-header-class');
+    });
+
+    it('puts a group column headerClassName on its group header', () => {
+      const grouped: TableColumn<TestRow>[] = [
+        {
+          header: 'Person',
+          headerClassName: 'custom-group-class',
+          subColumns: [{ header: 'Name', cell: ({ row }) => row.name }],
+        },
+      ];
+
+      render(<DataTable columns={grouped} data={baseData} />);
+
+      expect(screen.getByRole('columnheader', { name: 'Person' })).toHaveClass(
+        'custom-group-class'
+      );
     });
   });
 
@@ -1029,6 +1050,13 @@ describe('DataTable', () => {
     it('appends rowClassName after the package classes', () => {
       render(<DataTable columns={baseColumns} data={baseData} rowClassName={() => 'mine'} />);
       expect(at(bodyRows(), 0).className).toBe('rdt-table__row mine');
+    });
+
+    it('sets getRowTestId as data-testid, the attribute test libraries look up', () => {
+      render(
+        <DataTable columns={baseColumns} data={baseData} getRowTestId={row => `member-${row.id}`} />
+      );
+      expect(screen.getByTestId('member-1').tagName).toBe('TR');
     });
   });
 });

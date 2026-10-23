@@ -49,7 +49,7 @@ const preview: Preview = {
             'localStorage Persistence',
           ],
           'Components',
-          ['DataTable', 'PaginationClient', 'SortableHeaderClient'],
+          ['DataTable', 'Pagination', 'SortableHeaderClient'],
         ],
       },
     },

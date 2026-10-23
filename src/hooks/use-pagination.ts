@@ -30,12 +30,12 @@ export const usePagination = (pageSize: number) => {
       pageSize,
       hasNextPage,
       hasPreviousPage,
-      handleNextPage: () => {
+      onNextPage: () => {
         if (hasNextPage) {
           goToNext();
         }
       },
-      handlePreviousPage: goToPrevious,
+      onPreviousPage: goToPrevious,
     };
   };
 

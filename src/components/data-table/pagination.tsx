@@ -5,14 +5,14 @@ import { cx } from '../../lib/cx.ts';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '../icon.tsx';
 import { Button } from '../ui/button.tsx';
 
-interface PaginationClientProps {
+interface PaginationProps {
   totalCount: number;
   pageIndex: number;
   pageSize: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  handleNextPage: () => void;
-  handlePreviousPage: () => void;
+  onNextPage: () => void;
+  onPreviousPage: () => void;
   className?: string;
   /**
    * Opt-in: also show a "Page N of M" indicator next to the prev/next controls
@@ -24,18 +24,18 @@ interface PaginationClientProps {
   labels?: Partial<DataTableLabels>;
 }
 
-export const PaginationClient = ({
+export const Pagination = ({
   totalCount = 0,
   pageIndex = 0,
   pageSize,
   hasNextPage,
   hasPreviousPage,
-  handleNextPage,
-  handlePreviousPage,
+  onNextPage,
+  onPreviousPage,
   className,
   showPageCount = false,
   labels,
-}: PaginationClientProps) => {
+}: PaginationProps) => {
   const t = resolveLabels(labels);
 
   const start = pageIndex * pageSize + 1;
@@ -59,9 +59,9 @@ export const PaginationClient = ({
           variant={showPageCount ? 'outline' : 'ghost'}
           className="rdt-pagination__button"
           disabled={!hasPreviousPage}
-          onClick={handlePreviousPage}
+          onClick={onPreviousPage}
           aria-label="Previous page"
-          data-test-id={showPageCount ? 'btn.pagination.previous' : undefined}
+          data-testid={showPageCount ? 'btn.pagination.previous' : undefined}
         >
           <KeyboardArrowLeft className="rdt-pagination__icon" />
         </Button>
@@ -69,9 +69,9 @@ export const PaginationClient = ({
           variant={showPageCount ? 'outline' : 'ghost'}
           className="rdt-pagination__button"
           disabled={!hasNextPage}
-          onClick={handleNextPage}
+          onClick={onNextPage}
           aria-label="Next page"
-          data-test-id={showPageCount ? 'btn.pagination.next' : undefined}
+          data-testid={showPageCount ? 'btn.pagination.next' : undefined}
         >
           <KeyboardArrowRight className="rdt-pagination__icon" />
         </Button>

@@ -1,6 +1,6 @@
 // Components
 export { DataTable } from './components/data-table/data-table.tsx';
-export { PaginationClient } from './components/data-table/pagination-client.tsx';
+export { Pagination } from './components/data-table/pagination.tsx';
 // Persistence helpers (URL params + localStorage)
 export {
   readPersisted,

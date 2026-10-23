@@ -21,13 +21,13 @@ const groupedColumns: TableColumn<Member>[] = [
   {
     id: 'activity',
     header: 'Activity',
-    className: 'text-center',
+    headerClassName: 'text-center',
     subColumns: [memberColumn.joined, memberColumn.lastActive],
   },
   {
     id: 'usage',
     header: 'Usage',
-    className: 'text-center',
+    headerClassName: 'text-center',
     subColumns: [memberColumn.projects, memberColumn.storage],
   },
   memberColumn.status,

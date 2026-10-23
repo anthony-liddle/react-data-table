@@ -69,13 +69,13 @@ describe('usePagination', () => {
 
   it('wires the table controls to the page and ignores Next on the last page', () => {
     const { result } = renderHook(() => usePagination(10));
-    act(() => result.current.getPagination(15).handleNextPage());
+    act(() => result.current.getPagination(15).onNextPage());
     expect(result.current.pageIndex).toBe(1);
 
-    act(() => result.current.getPagination(15).handleNextPage());
+    act(() => result.current.getPagination(15).onNextPage());
     expect(result.current.pageIndex).toBe(1);
 
-    act(() => result.current.getPagination(15).handlePreviousPage());
+    act(() => result.current.getPagination(15).onPreviousPage());
     expect(result.current.pageIndex).toBe(0);
   });
 });

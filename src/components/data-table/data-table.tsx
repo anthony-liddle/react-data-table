@@ -6,7 +6,7 @@ import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
-import { PaginationClient } from './pagination-client.tsx';
+import { Pagination } from './pagination.tsx';
 import { readPersisted, writePersisted } from './persist.ts';
 import { type ActionMenuLinkComponent, TableActionMenu } from './table-action-menu.tsx';
 import { TableHeader } from './table-header.tsx';
@@ -51,7 +51,7 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   rowClassName?: (row: TData) => string;
   /**
-   * Optional stable per-row `data-test-id` for e2e locators. Returns the id for a
+   * Optional stable per-row `data-testid` for e2e locators. Returns the id for a
    * row (or undefined to skip). Prefer this over positional `tr:nth` / `td:nth`
    * selectors, which race Suspense re-streams and hydration.
    */
@@ -363,7 +363,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           className={cx(
                             'rdt-table__header-cell',
                             'rdt-table__header-cell--group',
-                            column.className
+                            column.headerClassName
                           )}
                         >
                           {column.header}
@@ -378,7 +378,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           currentSortKey={sort?.sortKey}
                           currentDirection={sort?.direction}
                           onSort={sort?.handleSort}
-                          className={column.className || ''}
+                          className={column.headerClassName || ''}
                           rowSpan={2}
                         />
                       );
@@ -407,7 +407,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           currentSortKey={sort?.sortKey}
                           currentDirection={sort?.direction}
                           onSort={sort?.handleSort}
-                          className={subColumn.className || ''}
+                          className={subColumn.headerClassName || ''}
                         />
                       ));
                     }
@@ -443,7 +443,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     currentSortKey={sort?.sortKey}
                     currentDirection={sort?.direction}
                     onSort={sort?.handleSort}
-                    className={column.className || ''}
+                    className={column.headerClassName || ''}
                   />
                 ))}
                 {!hideTableSettings && (
@@ -488,7 +488,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               && data.map((row: TData, rowIndex: number) => (
                 <React.Fragment key={row.id}>
                   <tr
-                    data-test-id={getRowTestId?.(row)}
+                    data-testid={getRowTestId?.(row)}
                     onClick={e => rowClickHandler(e, row)}
                     onMouseDown={selection ? e => handleRowMouseDown(e, rowIndex) : undefined}
                     onMouseUp={selection ? e => handleRowMouseUp(e, rowIndex) : undefined}
@@ -517,7 +517,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     {flattenedColumnsData.map((column, index: number) => (
                       <td
                         key={`${row.id}-${index}-${getColumnId(column)}`}
-                        className={cx('rdt-table__cell', column.rowClassName)}
+                        className={cx('rdt-table__cell', column.cellClassName)}
                         // If the column is the last column and the action menu is hidden, colSpan should be 2
                         colSpan={index === flattenedColumnsData.length - 1 && !actionMenu ? 2 : 1}
                       >
@@ -561,14 +561,14 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         </table>
       </div>
       {pagination && (
-        <PaginationClient
+        <Pagination
           totalCount={pagination.totalCount}
           pageIndex={pagination.pageIndex}
           pageSize={pagination.pageSize}
           hasNextPage={pagination.hasNextPage}
           hasPreviousPage={pagination.hasPreviousPage}
-          handleNextPage={pagination.handleNextPage}
-          handlePreviousPage={pagination.handlePreviousPage}
+          onNextPage={pagination.onNextPage}
+          onPreviousPage={pagination.onPreviousPage}
           showPageCount={showPageCount}
           labels={labels}
         />
