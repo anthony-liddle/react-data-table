@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import { cn } from '../../../lib/shadcn-utils.ts';
+import { cx } from '../../../lib/cx.ts';
 import type { SortOrder } from '../../data-table/types.ts';
 import { ArrowDownward, ArrowUpward, SwapVert } from '../../icon.tsx';
 
@@ -77,26 +77,26 @@ export const SortableHeaderClient = ({
     <th
       scope="col"
       aria-sort={ariaSort}
-      className={cn(sticky && 'data-table-sticky', className, 'relative')}
+      className={cx('rdt-sort-header', sticky && 'rdt-sort-header--sticky', className)}
       {...(rowSpan !== undefined ? { rowSpan } : {})}
     >
       {disabled ? (
-        <div className="flex items-center gap-1 w-full">
+        <div className="rdt-sort-header__content">
           {headerIcon}
-          <span>{title || children}</span>
+          <span className="rdt-sort-header__label">{title || children}</span>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={handleClick}
-          className="flex items-center gap-1 w-full cursor-pointer hover:text-primary bg-transparent border-0 p-0 text-left [font:inherit] text-inherit"
-        >
+        <button type="button" onClick={handleClick} className="rdt-sort-header__button">
           {headerIcon}
-          <span>{title || children}</span>
-          <span aria-hidden="true">
-            {(!isActive || sortDirection === null) && <SwapVert className="w-4 h-4" />}
-            {isActive && sortDirection === 'asc' && <ArrowDownward className="w-3 h-3 font-bold" />}
-            {isActive && sortDirection === 'desc' && <ArrowUpward className="w-3 h-3 font-bold" />}
+          <span className="rdt-sort-header__label">{title || children}</span>
+          <span
+            aria-hidden="true"
+            className="rdt-sort-header__icon"
+            data-direction={(isActive && sortDirection) || undefined}
+          >
+            {(!isActive || sortDirection === null) && <SwapVert />}
+            {isActive && sortDirection === 'asc' && <ArrowDownward />}
+            {isActive && sortDirection === 'desc' && <ArrowUpward />}
           </span>
         </button>
       )}

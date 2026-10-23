@@ -106,7 +106,7 @@ describe('TableHeader', () => {
 
       // Find the clickable sortable header element
       const header = screen.getByText('Name').closest('th');
-      const clickableElement = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableElement = header?.querySelector('.rdt-sort-header__button');
 
       if (clickableElement) {
         await user.click(clickableElement);
@@ -149,7 +149,7 @@ describe('TableHeader', () => {
       );
 
       const header = screen.getByText('Name').closest('th');
-      const clickableElement = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableElement = header?.querySelector('.rdt-sort-header__button');
 
       if (clickableElement) {
         await user.click(clickableElement);

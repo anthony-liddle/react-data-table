@@ -178,21 +178,24 @@
 /* Sticky first and last columns, each with a soft edge over the scrolled
    content. */
 .rdt-table__header-cell--sticky:first-child,
-.rdt-table__cell--sticky:first-child {
+.rdt-table__cell--sticky:first-child,
+.rdt-sort-header--sticky:first-child {
   position: sticky;
   left: 0;
   z-index: 10;
 }
 
 .rdt-table__header-cell--sticky:last-child,
-.rdt-table__cell--sticky:last-child {
+.rdt-table__cell--sticky:last-child,
+.rdt-sort-header--sticky:last-child {
   position: sticky;
   right: 0;
   z-index: 10;
 }
 
 .rdt-table__header-cell--sticky:first-child::before,
-.rdt-table__cell--sticky:first-child::before {
+.rdt-table__cell--sticky:first-child::before,
+.rdt-sort-header--sticky:first-child::before {
   content: "";
   position: absolute;
   top: 0;
@@ -204,7 +207,8 @@
 }
 
 .rdt-table__header-cell--sticky:last-child::before,
-.rdt-table__cell--sticky:last-child::before {
+.rdt-table__cell--sticky:last-child::before,
+.rdt-sort-header--sticky:last-child::before {
   content: "";
   position: absolute;
   top: 0;
@@ -227,7 +231,8 @@
 }
 
 .rdt-table__cell--sticky:first-child:where(tr:hover > *)::before,
-.rdt-table__header-cell--sticky:first-child:where(tr:hover > *)::before {
+.rdt-table__header-cell--sticky:first-child:where(tr:hover > *)::before,
+.rdt-sort-header--sticky:first-child:where(tr:hover > *)::before {
   background-image: none;
 }
 
@@ -270,6 +275,51 @@
 .rdt-table__table[data-dragging] :where(.rdt-table__row) {
   cursor: grabbing;
   user-select: none;
+}
+
+/*
+ *  rdt-sort-header
+ *
+ *  A sortable <th>. Inside DataTable it is also an rdt-table__header-cell.
+ */
+
+.rdt-sort-header {
+  position: relative;
+}
+
+.rdt-sort-header__button,
+.rdt-sort-header__content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.rdt-sort-header__button {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .rdt-sort-header__button:hover {
+    color: var(--_rdt-primary);
+  }
+}
+
+.rdt-sort-header__icon svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.rdt-sort-header__icon[data-direction] svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 /*
