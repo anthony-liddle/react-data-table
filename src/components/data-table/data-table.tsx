@@ -347,7 +347,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           }
                           onCheckedChange={selection.handleSelectAll}
                           disabled={!!loading}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                           aria-label="Select all"
                         />
                       </div>
@@ -432,7 +431,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         }
                         onCheckedChange={selection.handleSelectAll}
                         disabled={!!loading}
-                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                         aria-label="Select all"
                       />
                     </div>
@@ -510,7 +508,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.handleSelectRow(row)}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                           aria-label={
                             getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
                           }

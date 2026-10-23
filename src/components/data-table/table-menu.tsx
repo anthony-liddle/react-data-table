@@ -60,12 +60,7 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
       style={style}
       className="flex items-center gap-2 rounded-md hover:bg-muted p-2"
     >
-      <Checkbox
-        id={columnId}
-        checked={isVisible}
-        onCheckedChange={() => onToggle(column)}
-        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-      />
+      <Checkbox id={columnId} checked={isVisible} onCheckedChange={() => onToggle(column)} />
       <label htmlFor={columnId} className="cursor-pointer flex-1 inline-flex items-center gap-1">
         {column.headerIcon}
         {column.header}

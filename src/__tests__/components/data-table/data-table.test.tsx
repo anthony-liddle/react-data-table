@@ -1004,6 +1004,26 @@ describe('DataTable', () => {
       );
     });
 
+    it('names checkboxes and exposes their checked state', () => {
+      render(
+        <DataTable
+          columns={baseColumns}
+          data={baseData}
+          selection={selectionFor([at(baseData, 0)])}
+        />
+      );
+      const checked = screen.getByRole('checkbox', { name: 'Select row 1' });
+      expect(checked).toHaveClass('rdt-checkbox');
+      expect(checked).toHaveAttribute('data-state', 'checked');
+      expect(
+        checked.querySelector('.rdt-checkbox__indicator > .rdt-checkbox__icon')
+      ).not.toBeNull();
+      expect(screen.getByRole('checkbox', { name: 'Select row 2' })).toHaveAttribute(
+        'data-state',
+        'unchecked'
+      );
+    });
+
     it('appends rowClassName after the package classes', () => {
       render(<DataTable columns={baseColumns} data={baseData} rowClassName={() => 'mine'} />);
       expect(at(bodyRows(), 0).className).toBe('rdt-table__row mine');

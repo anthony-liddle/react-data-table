@@ -323,6 +323,61 @@
 }
 
 /*
+ *  rdt-checkbox
+ */
+
+.rdt-checkbox {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  border: 1px solid var(--_rdt-primary);
+  border-radius: 0.25rem;
+}
+
+.rdt-checkbox:focus-visible {
+  outline-style: none;
+  box-shadow:
+    0 0 0 2px var(--_rdt-background),
+    0 0 0 4px var(--_rdt-ring);
+}
+
+.rdt-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rdt-checkbox[data-state="checked"] {
+  color: var(--_rdt-primary-foreground);
+  background-color: var(--_rdt-primary);
+}
+
+.rdt-checkbox__indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.rdt-checkbox__icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (forced-colors: active) {
+  .rdt-checkbox:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+/*
  *  rdt-skeleton
  */
 
