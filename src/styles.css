@@ -68,6 +68,7 @@
   --_rdt-drag-selection: var(--drag-selection, hsl(216 100% 58.4%));
   --_rdt-row-selected: var(--rdt-row-selected, #dbeafe);
   --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
+  --_rdt-surface-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 :where(.dark) :where(.rdt-table, .rdt-pagination, .rdt-sort-header, .rdt-menu, .rdt-column-panel) {
@@ -87,6 +88,7 @@
   --_rdt-ring: var(--ring, hsl(216 34% 50%));
   --_rdt-row-selected: var(--rdt-row-selected, #1e3a8a);
   --_rdt-skeleton: var(--rdt-skeleton, oklch(37.4% 0.01 67.558));
+  --_rdt-surface-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.2);
 }
 
 /*
@@ -311,15 +313,23 @@
   }
 }
 
-.rdt-sort-header__icon svg {
+/* The span sets the size and the arrow fills it, so the sorted state needs
+   no element selector. */
+.rdt-sort-header__icon {
   display: block;
   width: 1rem;
   height: 1rem;
 }
 
-.rdt-sort-header__icon[data-direction] svg {
+.rdt-sort-header__icon[data-direction] {
   width: 0.75rem;
   height: 0.75rem;
+}
+
+.rdt-sort-header__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /*
@@ -375,6 +385,223 @@
     outline: 2px solid transparent;
     outline-offset: 2px;
   }
+}
+
+/*
+ *  Surfaces: the column panel and menus portal to <body> and share a look.
+ */
+
+.rdt-column-panel,
+.rdt-menu {
+  min-width: 8rem;
+  padding: 0.25rem;
+  color: var(--_rdt-popover-foreground);
+  background-color: var(--_rdt-popover);
+  border: 1px solid var(--_rdt-border);
+  border-radius: 0.375rem;
+  box-shadow: var(--_rdt-surface-shadow);
+}
+
+/* The two triggers that open them: a bare 24px icon button. */
+.rdt-column-panel__trigger,
+.rdt-action-menu__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.rdt-column-panel__trigger svg,
+.rdt-action-menu__trigger svg {
+  display: block;
+}
+
+/*
+ *  rdt-column-panel
+ */
+
+.rdt-column-panel {
+  z-index: 100;
+  max-height: 50vh;
+  overflow: hidden auto;
+  outline-style: none;
+}
+
+.rdt-column-panel__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rdt-column-panel__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.rdt-column-panel__item[data-dragging] {
+  opacity: 0.5;
+}
+
+.rdt-column-panel__label {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.rdt-column-panel__handle {
+  display: flex;
+  padding: 0.25rem;
+  color: var(--_rdt-muted-foreground);
+  background-color: transparent;
+  border: 0;
+  cursor: grab;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdt-column-panel__handle:active {
+  cursor: grabbing;
+}
+
+.rdt-column-panel__handle-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (hover: hover) {
+  .rdt-column-panel__item:hover {
+    background-color: var(--_rdt-muted);
+  }
+
+  .rdt-column-panel__handle:hover {
+    color: var(--_rdt-foreground);
+  }
+}
+
+@media (forced-colors: active) {
+  .rdt-column-panel {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+/*
+ *  rdt-menu
+ */
+
+.rdt-menu {
+  z-index: 902;
+  overflow: hidden;
+}
+
+/* Submenus keep the lighter shadow in both themes, as they always have. */
+.rdt-menu--sub {
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.rdt-menu__item,
+.rdt-menu__sub-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: 0.25rem;
+  outline-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rdt-menu__item {
+  padding: 0.375rem 0.75rem;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdt-menu__sub-trigger {
+  padding: 0.375rem 0.5rem;
+}
+
+.rdt-menu__item:focus {
+  color: var(--_rdt-accent-foreground);
+  background-color: var(--_rdt-accent);
+}
+
+.rdt-menu__sub-trigger:focus,
+.rdt-menu__sub-trigger[data-state="open"] {
+  background-color: var(--_rdt-accent);
+}
+
+.rdt-menu__item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.rdt-menu__item svg,
+.rdt-menu__sub-trigger svg {
+  display: block;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+.rdt-menu__chevron {
+  margin-left: auto;
+}
+
+@media (hover: hover) {
+  .rdt-menu__item:hover {
+    background-color: var(--_rdt-accent);
+  }
+}
+
+/*
+ *  rdt-action-menu
+ */
+
+.rdt-action-menu__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.rdt-action-menu__button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-block: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The icon slot before an item's label. Link items center it in a taller
+   slot without the gap, matching how they have always rendered. */
+.rdt-action-menu__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.rdt-action-menu__icon--link {
+  height: 2rem;
+  margin-right: 0;
 }
 
 /*

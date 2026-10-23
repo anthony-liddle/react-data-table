@@ -51,17 +51,17 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-md hover:bg-muted p-2"
+      className="rdt-column-panel__item"
+      data-dragging={isDragging || undefined}
     >
       <Checkbox id={columnId} checked={isVisible} onCheckedChange={() => onToggle(column)} />
-      <label htmlFor={columnId} className="cursor-pointer flex-1 inline-flex items-center gap-1">
+      <label htmlFor={columnId} className="rdt-column-panel__label">
         {column.headerIcon}
         {column.header}
       </label>
@@ -70,10 +70,10 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
         {...attributes}
         {...listeners}
         aria-label={`Reorder ${column.header}`}
-        className="flex bg-transparent border-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-1"
+        className="rdt-column-panel__handle"
         onClick={e => e.stopPropagation()}
       >
-        <DragIndicator className="h-4 w-4" />
+        <DragIndicator className="rdt-column-panel__handle-icon" />
       </button>
     </div>
   );
@@ -132,21 +132,12 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex items-center justify-center bg-transparent border-0 cursor-pointer p-0 w-6 h-6"
-          aria-label="Column settings"
-        >
+        <button type="button" className="rdt-column-panel__trigger" aria-label="Column settings">
           <TableEdit />
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        className="z-100 max-h-[50vh] overflow-y-auto"
-        align="end"
-        sideOffset={5}
-        aria-label="Columns"
-      >
-        <div className="flex flex-col">
+      <PopoverContent className="rdt-column-panel" align="end" sideOffset={5} aria-label="Columns">
+        <div className="rdt-column-panel__list">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

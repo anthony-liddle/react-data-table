@@ -794,4 +794,48 @@ describe('TableActionMenu', () => {
       expect(screen.getByText('Change role')).toBeInTheDocument();
     });
   });
+
+  // The rdt- classes are the documented styling API.
+  describe('styling contract', () => {
+    const items: TableActionMenuItem<TestRow>[] = [
+      { label: 'View', href: '/users/1', icon: <svg data-testid="view-icon" /> },
+      { label: 'Edit', callbackAction: vi.fn(), icon: <svg data-testid="edit-icon" /> },
+      { label: 'Change role', subItems: [{ label: 'Make admin', callbackAction: vi.fn() }] },
+    ];
+
+    it('names the trigger, the menu and its items', async () => {
+      const user = userEvent.setup();
+      render(<TableActionMenu items={items} row={mockRow} />);
+      const trigger = screen.getByRole('button', { name: 'Actions' });
+      expect(trigger).toHaveClass('rdt-action-menu__trigger');
+
+      await user.click(trigger);
+      expect(screen.getByRole('menu')).toHaveClass('rdt-menu');
+      expect(screen.getByRole('menuitem', { name: 'View' })).toHaveClass(
+        'rdt-menu__item',
+        'rdt-action-menu__link'
+      );
+      expect(screen.getByTestId('view-icon').parentElement).toHaveClass(
+        'rdt-action-menu__icon',
+        'rdt-action-menu__icon--link'
+      );
+      const editButton = screen.getByText('Edit').closest('button');
+      expect(editButton).toHaveClass('rdt-action-menu__button');
+      expect(editButton?.closest('[role="menuitem"]')).toHaveClass('rdt-menu__item');
+      expect(screen.getByTestId('edit-icon').parentElement).toHaveClass('rdt-action-menu__icon');
+      const subTrigger = screen.getByRole('menuitem', { name: 'Change role' });
+      expect(subTrigger).toHaveClass('rdt-menu__sub-trigger');
+      expect(subTrigger.querySelector('.rdt-menu__chevron')).not.toBeNull();
+    });
+
+    it('marks submenu content', async () => {
+      const user = userEvent.setup();
+      render(<TableActionMenu items={items} row={mockRow} />);
+      await user.click(screen.getByRole('button', { name: 'Actions' }));
+      await user.hover(screen.getByText('Change role'));
+      const subItem = await screen.findByText('Make admin');
+      expect(subItem.closest('[role="menu"]')).toHaveClass('rdt-menu', 'rdt-menu--sub');
+      expect(subItem.closest('[role="menuitem"]')).toHaveClass('rdt-menu__item');
+    });
+  });
 });

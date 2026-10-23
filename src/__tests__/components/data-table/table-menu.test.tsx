@@ -431,4 +431,33 @@ describe('TableMenu', () => {
       });
     });
   });
+
+  // The rdt- classes are the documented styling API.
+  describe('styling contract', () => {
+    it('names the trigger, panel, rows, labels and handles', async () => {
+      const user = userEvent.setup();
+      render(
+        <TableMenu
+          visibleColumns={baseVisibleColumns}
+          columns={baseColumns}
+          toggleHeaders={mockToggleHeaders}
+        />
+      );
+      const trigger = screen.getByRole('button', { name: 'Column settings' });
+      expect(trigger).toHaveClass('rdt-column-panel__trigger');
+
+      await user.click(trigger);
+      const panel = screen.getByRole('dialog', { name: 'Columns' });
+      expect(panel).toHaveClass('rdt-column-panel');
+      expect(panel.querySelector('.rdt-column-panel__list')).not.toBeNull();
+
+      const handle = screen.getByRole('button', { name: 'Reorder Email' });
+      expect(handle).toHaveClass('rdt-column-panel__handle');
+      expect(handle.querySelector('.rdt-column-panel__handle-icon')).not.toBeNull();
+      const item = handle.closest('.rdt-column-panel__item');
+      expect(item).not.toBeNull();
+      expect(item).not.toHaveAttribute('data-dragging');
+      expect(screen.getByText('Email').closest('label')).toHaveClass('rdt-column-panel__label');
+    });
+  });
 });
