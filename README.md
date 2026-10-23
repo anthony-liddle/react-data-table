@@ -174,7 +174,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `--rdt-header-font-size` | `0.75rem` | Header text |
 | `--rdt-cell-padding-x` | `0.75rem` | Horizontal cell padding |
 | `--rdt-cell-padding-y` | `0.5rem` | Vertical cell padding |
-| `--rdt-row-selected` | unset | Background for selected rows. Unset, a selected row looks like any other; when you set it, keep your cell text readable against it. |
+| `--rdt-row-selected` | unset | Background tint for selected rows. Selected rows always show a 3px bar in `--primary` on their first cell; the tint is extra. Keep your cell text readable against it: with shadcn's default muted text, a light tint has to stay very pale to reach 4.5:1. |
 | `--rdt-skeleton` | stone, light and dark | Loading placeholders |
 | `--drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
 
@@ -182,12 +182,12 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 
 | Block | Elements and modifiers | State |
 |---|---|---|
-| `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
-| `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
+| `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty-row`, `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
+| `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon`, `__arrow` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
-| `rdt-column-panel` | `__trigger`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
+| `rdt-column-panel` | `__trigger`, `__trigger-icon`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
 | `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
-| `rdt-action-menu` | `__trigger`, `__link`, `__button`, `__icon` (`--link`) | |
+| `rdt-action-menu` | `__trigger`, `__trigger-icon`, `__link`, `__button`, `__icon` (`--link`) | |
 | `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
 | `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
 | `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |
@@ -203,13 +203,14 @@ Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-
   --rdt-radius: 0;
 }
 
-/* Highlight selected rows, in both themes */
+/* Tint selected rows as well, in both themes. These keep shadcn's
+   default muted text at 4.5:1. */
 :root {
-  --rdt-row-selected: oklch(0.96 0.02 250);
+  --rdt-row-selected: oklch(0.985 0.012 250);
 }
 
 .dark {
-  --rdt-row-selected: oklch(0.3 0.05 250);
+  --rdt-row-selected: oklch(0.26 0.03 255);
 }
 
 /* Bold the sorted column's header */
