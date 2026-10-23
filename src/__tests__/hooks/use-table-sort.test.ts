@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SortOrder as SortDirection } from '@/components/data-table/types';
 import { useTableSort } from '@/hooks/use-table-sort';
 
 // The `sort`/`dir` table params use GLOBAL (un-namespaced) URL param names, so a
@@ -39,7 +38,7 @@ describe('useTableSort persisted sort-key validation', () => {
       useTableSort({
         sortableColumns: COLUMNS,
         defaultSortKey: 'UPDATED_AT',
-        defaultSortDirection: SortDirection.Desc,
+        defaultSortDirection: 'desc',
         persistKey: PERSIST_KEY,
       })
     );
@@ -52,7 +51,7 @@ describe('useTableSort persisted sort-key validation', () => {
       useTableSort({
         sortableColumns: COLUMNS,
         defaultSortKey: 'UPDATED_AT',
-        defaultSortDirection: SortDirection.Desc,
+        defaultSortDirection: 'desc',
         persistKey: PERSIST_KEY,
       })
     );
@@ -87,7 +86,7 @@ describe('useTableSort persisted sort-key validation', () => {
       useTableSort({
         sortableColumns: COLUMNS,
         defaultSortKey: 'NAME',
-        defaultSortDirection: SortDirection.Asc,
+        defaultSortDirection: 'asc',
         persistKey: PERSIST_KEY,
       })
     );
@@ -102,7 +101,7 @@ describe('useTableSort persisted sort-key validation', () => {
       useTableSort({
         sortableColumns: COLUMNS,
         defaultSortKey: 'UPDATED_AT',
-        defaultSortDirection: SortDirection.Asc,
+        defaultSortDirection: 'asc',
         persistKey: PERSIST_KEY,
       })
     );
@@ -111,9 +110,8 @@ describe('useTableSort persisted sort-key validation', () => {
   });
 });
 
-// The hook reports lowercase directions, the common REST and client-side
-// convention. Uppercase SortOrder values are still accepted wherever a direction
-// goes in, so GraphQL callers can keep passing them.
+// Directions are lowercase everywhere, in and out: the common REST and
+// client-side convention. The uppercase GraphQL-style values are not accepted.
 describe('useTableSort directions', () => {
   it('cycles a column ascending, descending, then unsorted', () => {
     const { result } = renderHook(() => useTableSort({ sortableColumns: COLUMNS }));
@@ -129,22 +127,22 @@ describe('useTableSort directions', () => {
     expect(result.current.direction).toBeNull();
   });
 
-  it.each([
-    ['DESC', 'desc'],
-    ['desc', 'desc'],
-    ['ASC', 'asc'],
-  ] as const)('reports a %s default direction as %s', (input, expected) => {
+  it.each(['asc', 'desc'] as const)('reports a %s default direction as given', direction => {
     const { result } = renderHook(() =>
-      useTableSort({ defaultSortKey: 'NAME', defaultSortDirection: input })
+      useTableSort({ defaultSortKey: 'NAME', defaultSortDirection: direction })
     );
-    expect(result.current.direction).toBe(expected);
+    expect(result.current.direction).toBe(direction);
   });
 
-  it('reports a direction set from either case in lowercase', () => {
-    const { result } = renderHook(() => useTableSort({ defaultSortKey: 'NAME' }));
-    act(() => result.current.setSortDirection('DESC'));
-    expect(result.current.direction).toBe('desc');
-    act(() => result.current.setSortDirection('asc'));
-    expect(result.current.direction).toBe('asc');
+  it('treats an uppercase direction as no direction', () => {
+    const { result } = renderHook(() =>
+      // @ts-expect-error uppercase directions are not part of the API
+      useTableSort({ defaultSortKey: 'NAME', defaultSortDirection: 'DESC' })
+    );
+    expect(result.current.direction).toBeNull();
+
+    // @ts-expect-error uppercase directions are not part of the API
+    act(() => result.current.setSortDirection('ASC'));
+    expect(result.current.direction).toBeNull();
   });
 });

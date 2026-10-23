@@ -6,17 +6,6 @@ import type { SortDirection } from '../library/sortable-header-client/index.ts';
 // Re-export SortDirection for consistent usage
 export type { SortDirection };
 
-/**
- * Uppercase sort direction, mirroring the shape of a GraphQL SortDirection
- * enum. Everywhere a direction is accepted, both this and the lowercase
- * client-side `SortDirection` ('asc' | 'desc') are tolerated.
- */
-export const SortOrder = {
-  Asc: 'ASC',
-  Desc: 'DESC',
-} as const;
-export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
-
 // Base interface that all table data must have
 export interface BaseTableRow {
   id: string | number;
@@ -106,7 +95,7 @@ export interface TablePagination {
 
 export interface TableSort {
   sortKey: string | null;
-  direction: SortDirection | SortOrder | null;
+  direction: SortDirection;
   handleSort: (sortKey: string) => void;
 }
 
@@ -127,18 +116,26 @@ export interface VisibleColumn {
 
 export interface TableActionMenuSubItem<TData extends BaseTableRow = BaseTableRow> {
   label: string;
-  callbackAction: (params: { row: TData }) => void;
-  hidden?: boolean | ((params: { row: TData }) => boolean);
-}
-
-export interface TableActionMenuItem<TData extends BaseTableRow = BaseTableRow> {
+  /** Renders the item as a link, through `linkComponent`. */
   href?: string | ((params: { row: TData }) => string);
-  label: string | ((params: { row: TData }) => string);
   icon?: ReactNode | ((params: { row: TData }) => ReactNode);
-  callbackAction?: (params: { row: TData }) => void;
+  /** Runs when the item is chosen, by pointer or keyboard. */
+  onSelect?: (params: { row: TData }) => void;
   hidden?: boolean | ((params: { row: TData }) => boolean);
   /** When true the item is shown but greyed out and non-interactive (vs. `hidden`, which removes it). */
   disabled?: boolean | ((params: { row: TData }) => boolean);
-  /** Sub-items for creating a submenu. When present, clicking the main item opens a submenu instead of triggering callbackAction */
+}
+
+export interface TableActionMenuItem<TData extends BaseTableRow = BaseTableRow> {
+  /** Renders the item as a link, through `linkComponent`. */
+  href?: string | ((params: { row: TData }) => string);
+  label: string | ((params: { row: TData }) => string);
+  icon?: ReactNode | ((params: { row: TData }) => ReactNode);
+  /** Runs when the item is chosen, by pointer or keyboard. */
+  onSelect?: (params: { row: TData }) => void;
+  hidden?: boolean | ((params: { row: TData }) => boolean);
+  /** When true the item is shown but greyed out and non-interactive (vs. `hidden`, which removes it). */
+  disabled?: boolean | ((params: { row: TData }) => boolean);
+  /** Sub-items for creating a submenu. When present, choosing the item opens the submenu instead of running onSelect */
   subItems?: TableActionMenuSubItem<TData>[];
 }

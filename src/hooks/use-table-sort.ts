@@ -3,19 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readPersistedString, writePersisted } from '../components/data-table/persist.ts';
-import type { SortDirection, SortOrder } from '../components/data-table/types.ts';
+import type { SortDirection } from '../components/data-table/types.ts';
 
 interface UseTableSortProps {
   sortableColumns?: string[];
   defaultSortKey?: string;
-  /** Either case is accepted; the hook always reports lowercase. */
-  defaultSortDirection?: SortDirection | SortOrder;
+  defaultSortDirection?: SortDirection;
   persistKey?: string;
-  /**
-   * Called when the sort handler throws. Route it to your own error reporter;
-   * defaults to console.error.
-   */
-  onError?: (context: string, error: unknown) => void;
 }
 
 // The `sort`/`dir` params are shared across every table on the site (the URL
@@ -38,19 +32,15 @@ const readValidatedSortKey = (
   return null;
 };
 
-// Directions come in as 'asc'/'desc' or the uppercase SortOrder values (and, from
-// a URL or storage, as any string). The hook reports lowercase only.
-const toSortDirection = (value: string | null | undefined): SortDirection => {
-  const lower = value?.toLowerCase();
-  return lower === 'asc' || lower === 'desc' ? lower : null;
-};
+// A URL or storage can hold any string; anything but 'asc'/'desc' is no direction.
+const toSortDirection = (value: string | null | undefined): SortDirection =>
+  value === 'asc' || value === 'desc' ? value : null;
 
 export const useTableSort = ({
   sortableColumns,
   defaultSortKey,
   defaultSortDirection,
   persistKey,
-  onError = (context, error) => console.error(context, error),
 }: UseTableSortProps) => {
   // Lazy initializer: reads persisted state on client, defaults on server
   const [sort, setSort] = useState<string | null>(() => {
@@ -94,31 +84,26 @@ export const useTableSort = ({
 
   const handleSort = useCallback(
     (key: string) => {
-      try {
-        if (!sortableColumns || sortableColumns.includes(key)) {
-          if (sort !== key) {
-            setSort(key);
-            setDirection('asc');
-          } else {
-            if (direction === 'asc') {
-              setDirection('desc');
-            } else if (direction === 'desc') {
-              setSort(null);
-              setDirection(null);
-            } else {
-              setSort(key);
-              setDirection('asc');
-            }
-          }
-        }
-      } catch (error) {
-        onError('useTableSort - handleSort', error);
+      if (sortableColumns && !sortableColumns.includes(key)) {
+        return;
+      }
+      if (sort !== key) {
+        setSort(key);
+        setDirection('asc');
+      } else if (direction === 'asc') {
+        setDirection('desc');
+      } else if (direction === 'desc') {
+        setSort(null);
+        setDirection(null);
+      } else {
+        setSort(key);
+        setDirection('asc');
       }
     },
-    [sort, direction, sortableColumns, onError]
+    [sort, direction, sortableColumns]
   );
 
-  const setSortDirection = useCallback((direction: SortDirection | SortOrder) => {
+  const setSortDirection = useCallback((direction: SortDirection) => {
     setDirection(toSortDirection(direction));
   }, []);
 

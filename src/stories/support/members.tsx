@@ -1,4 +1,8 @@
-import type { BaseTableRow, SortOrder, TableColumn } from '../../components/data-table/types.ts';
+import type {
+  BaseTableRow,
+  SortDirection,
+  TableColumn,
+} from '../../components/data-table/types.ts';
 import { at } from '../../test-support/at.ts';
 
 /**
@@ -270,12 +274,12 @@ export const sortKeysOf = (columns: TableColumn<Member>[]) =>
 export const sortMembers = (
   rows: Member[],
   sortKey: string | null,
-  direction: SortOrder | 'asc' | 'desc' | null
+  direction: SortDirection
 ): Member[] => {
   if (!sortKey || !direction) {
     return rows;
   }
-  const dir = direction.toLowerCase() === 'asc' ? 1 : -1;
+  const dir = direction === 'asc' ? 1 : -1;
   return [...rows].sort((a, b) => {
     const av = a[sortKey] as string | number | null;
     const bv = b[sortKey] as string | number | null;

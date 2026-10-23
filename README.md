@@ -187,7 +187,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
 | `rdt-column-panel` | `__trigger`, `__trigger-icon`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
 | `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
-| `rdt-action-menu` | `__trigger`, `__trigger-icon`, `__link`, `__button`, `__icon` (`--link`) | |
+| `rdt-action-menu` | `__trigger`, `__trigger-icon`, `__link`, `__content`, `__icon` (`--link`) | |
 | `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
 | `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
 | `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |

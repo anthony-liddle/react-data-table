@@ -620,21 +620,13 @@
   text-decoration: none;
 }
 
-.rdt-action-menu__button {
+/* A top-level item's content box, which gives the item its taller padding. */
+.rdt-action-menu__content {
   box-sizing: border-box;
   display: flex;
   align-items: center;
   width: 100%;
-  margin: 0;
   padding: 0.5rem 0;
-  font: inherit;
-  letter-spacing: inherit;
-  color: inherit;
-  text-align: left;
-  text-transform: none;
-  background-color: transparent;
-  border: 0;
-  cursor: pointer;
 }
 
 /* The icon slot before an item's label. Link items center it in a taller

@@ -43,23 +43,23 @@ const onDelete = fn();
 
 const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'View profile', href: ({ row }) => `#/members/${row.id}` },
-  { label: ({ row }) => `Edit ${row.name.split(' ')[0]}`, callbackAction: onEdit },
+  { label: ({ row }) => `Edit ${row.name.split(' ')[0]}`, onSelect: onEdit },
   {
     label: 'Change role',
     subItems: [
       {
         label: 'Make admin',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Admin',
       },
       {
         label: 'Make editor',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Editor',
       },
       {
         label: 'Make viewer',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Viewer',
       },
     ],
@@ -67,7 +67,7 @@ const actionMenu: TableActionMenuItem<Member>[] = [
   },
   {
     label: 'Remove from workspace',
-    callbackAction: onDelete,
+    onSelect: onDelete,
     hidden: ({ row }) => row.role === 'Owner',
     disabled: ({ row }) => isSuspended(row),
   },

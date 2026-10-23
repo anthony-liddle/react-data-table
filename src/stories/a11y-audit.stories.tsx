@@ -28,15 +28,15 @@ type Story = StoryObj<typeof meta>;
 
 const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'View profile', href: ({ row }) => `#/members/${row.id}` },
-  { label: 'Edit', callbackAction: fn() },
+  { label: 'Edit', onSelect: fn() },
   {
     label: 'Change role',
     subItems: [
-      { label: 'Make admin', callbackAction: fn() },
-      { label: 'Make viewer', callbackAction: fn() },
+      { label: 'Make admin', onSelect: fn() },
+      { label: 'Make viewer', onSelect: fn() },
     ],
   },
-  { label: 'Delete', callbackAction: fn(), disabled: ({ row }) => isSuspended(row) },
+  { label: 'Delete', onSelect: fn(), disabled: ({ row }) => isSuspended(row) },
 ];
 
 const FullTable = () => {

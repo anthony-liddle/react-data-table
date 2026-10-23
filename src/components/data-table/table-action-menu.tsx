@@ -1,6 +1,6 @@
 'use client';
 
-import { type ComponentType, type ReactNode, useCallback } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 import { stringToKey } from '../../helpers/strings.ts';
 import { MoreVert } from '../icon.tsx';
@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu.tsx';
-import type { BaseTableRow, TableActionMenuItem } from './types.ts';
+import type { BaseTableRow, TableActionMenuItem, TableActionMenuSubItem } from './types.ts';
 
 /**
  * Props the injectable link component must accept. The default is a plain
@@ -36,51 +36,67 @@ interface TableActionMenuProps<TData extends BaseTableRow = BaseTableRow> {
   linkComponent?: ActionMenuLinkComponent;
 }
 
+type RowValue<T, TData> = T | ((params: { row: TData }) => T);
+
+// Item fields are either a value or a function of the row.
+const resolve = <T, TData>(value: RowValue<T, TData>, row: TData): T =>
+  typeof value === 'function' ? (value as (params: { row: TData }) => T)({ row }) : value;
+
+const isHidden = <TData,>(item: { hidden?: RowValue<boolean, TData> }, row: TData) =>
+  item.hidden != null && resolve(item.hidden, row);
+
 export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   items,
   row,
   linkComponent: Link = 'a',
 }: TableActionMenuProps<TData>) => {
-  const handleItemClick = useCallback(
-    (item: TableActionMenuItem<TData>) => {
-      item.callbackAction?.({ row });
-    },
-    [row]
+  // An item with sub-items shows only while at least one of them does.
+  const visibleItems = items.filter(
+    item =>
+      !isHidden(item, row) && (!item.subItems || item.subItems.some(sub => !isHidden(sub, row)))
   );
 
-  // Filter out hidden items and items with all subItems hidden
-  const visibleItems = items.filter(item => {
-    // Check if the item itself is hidden
-    if (item.hidden !== undefined && item.hidden !== null) {
-      const isHidden = typeof item.hidden === 'function' ? item.hidden({ row }) : item.hidden;
-      if (isHidden) {
-        return false;
-      }
-    }
-
-    // If item has subItems, check if at least one subItem is visible
-    if (item.subItems) {
-      const hasVisibleSubItem = item.subItems.some(subItem => {
-        if (subItem.hidden === undefined || subItem.hidden === null) {
-          return true;
-        }
-        const isHidden =
-          typeof subItem.hidden === 'function' ? subItem.hidden({ row }) : subItem.hidden;
-        return !isHidden;
-      });
-      // If no visible subItems, filter out this item
-      if (!hasVisibleSubItem) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  // Don't render anything if no visible items
   if (visibleItems.length === 0) {
     return null;
   }
+
+  // One menu item, from either level. Radix's onSelect runs for pointer and
+  // keyboard alike; a link item renders as the link itself. A top-level item's
+  // content sits in its own box, which gives it its taller padding.
+  const renderItem = (
+    item: TableActionMenuItem<TData> | TableActionMenuSubItem<TData>,
+    topLevel: boolean
+  ) => {
+    const label = resolve(item.label, row);
+    const icon = item.icon == null ? null : resolve(item.icon, row);
+    const href = item.href == null ? undefined : resolve(item.href, row);
+    const disabled = item.disabled == null ? false : resolve(item.disabled, row);
+    const onSelect = () => item.onSelect?.({ row });
+
+    if (href !== undefined) {
+      return (
+        <DropdownMenuItem key={stringToKey(label)} asChild disabled={disabled} onSelect={onSelect}>
+          <Link href={href} className="rdt-action-menu__link">
+            {icon && (
+              <span className="rdt-action-menu__icon rdt-action-menu__icon--link">{icon}</span>
+            )}
+            {label}
+          </Link>
+        </DropdownMenuItem>
+      );
+    }
+    const content = (
+      <>
+        {icon && <span className="rdt-action-menu__icon">{icon}</span>}
+        {label}
+      </>
+    );
+    return (
+      <DropdownMenuItem key={stringToKey(label)} disabled={disabled} onSelect={onSelect}>
+        {topLevel ? <span className="rdt-action-menu__content">{content}</span> : content}
+      </DropdownMenuItem>
+    );
+  };
 
   return (
     <DropdownMenu>
@@ -94,88 +110,23 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
           menu portals to <body>, so this is also safe for non-modal tables. */}
       <DropdownMenuContent align="end" sideOffset={5}>
         {visibleItems.map(item => {
-          const label = typeof item.label === 'function' ? item.label({ row }) : item.label;
-          const icon =
-            item.icon && typeof item.icon === 'function' ? item.icon({ row }) : item.icon;
-          const href =
-            item.href && typeof item.href === 'function' ? item.href({ row }) : item.href;
-          // allows for empty strings
-          const isLink = href !== undefined && href !== null;
-          const isDisabled =
-            item.disabled === undefined || item.disabled === null
-              ? false
-              : typeof item.disabled === 'function'
-                ? item.disabled({ row })
-                : item.disabled;
-
-          // Render as submenu if subItems exist
-          if (item.subItems && item.subItems.length > 0) {
-            // Filter out hidden subItems
-            const visibleSubItems = item.subItems.filter(subItem => {
-              if (subItem.hidden === undefined || subItem.hidden === null) {
-                return true;
-              }
-              const isHidden =
-                typeof subItem.hidden === 'function' ? subItem.hidden({ row }) : subItem.hidden;
-              return !isHidden;
-            });
-
-            // Don't render submenu if no visible subItems
-            if (visibleSubItems.length === 0) {
-              return null;
-            }
-
-            return (
-              <DropdownMenuSub key={stringToKey(label)}>
-                <DropdownMenuSubTrigger>
-                  {icon && <span className="rdt-action-menu__icon">{icon}</span>}
-                  {label}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {visibleSubItems.map(subItem => (
-                    <DropdownMenuItem
-                      key={stringToKey(subItem.label)}
-                      onSelect={() => subItem.callbackAction({ row })}
-                    >
-                      {subItem.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            );
+          if (!item.subItems || item.subItems.length === 0) {
+            return renderItem(item, true);
           }
-
+          const label = resolve(item.label, row);
+          const icon = item.icon == null ? null : resolve(item.icon, row);
           return (
-            <DropdownMenuItem key={stringToKey(label)} asChild={isLink} disabled={isDisabled}>
-              {isLink ? (
-                <Link
-                  href={href}
-                  className="rdt-action-menu__link"
-                  onClick={e => {
-                    if (process.env.NODE_ENV === 'test') {
-                      e.preventDefault();
-                    }
-                    handleItemClick(item);
-                  }}
-                >
-                  {icon && (
-                    <span className="rdt-action-menu__icon rdt-action-menu__icon--link">
-                      {icon}
-                    </span>
-                  )}
-                  {label}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="rdt-action-menu__button"
-                  onClick={() => handleItemClick(item)}
-                >
-                  {icon && <span className="rdt-action-menu__icon">{icon}</span>}
-                  {label}
-                </button>
-              )}
-            </DropdownMenuItem>
+            <DropdownMenuSub key={stringToKey(label)}>
+              <DropdownMenuSubTrigger>
+                {icon && <span className="rdt-action-menu__icon">{icon}</span>}
+                {label}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {item.subItems
+                  .filter(sub => !isHidden(sub, row))
+                  .map(sub => renderItem(sub, false))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           );
         })}
       </DropdownMenuContent>

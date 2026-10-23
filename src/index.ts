@@ -30,7 +30,6 @@ export type {
 export {
   getColumnId,
   reconcileColumnOrder,
-  SortOrder,
 } from './components/data-table/types.ts';
 export { SortableHeaderClient } from './components/library/sortable-header-client/index.ts';
 // Hooks

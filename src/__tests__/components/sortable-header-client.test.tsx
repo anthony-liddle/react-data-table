@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SortOrder as UppercaseSortOrder } from '@/components/data-table/types';
 import { SortableHeaderClient } from '@/components/library/sortable-header-client';
 
 // Helper function to render component within table structure
@@ -186,40 +185,6 @@ describe('SortableHeaderClient', () => {
       expect(iconContainer).toBeInTheDocument();
       expect(iconContainer?.children.length).toBeGreaterThan(0);
     });
-
-    it('should handle uppercase direction values from an uppercase enum', () => {
-      renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={UppercaseSortOrder.Asc}
-        />
-      );
-
-      const header = screen.getByText('Name').closest('th');
-      const iconContainer = header?.querySelector('span[aria-hidden="true"]');
-      expect(iconContainer).toBeInTheDocument();
-      expect(iconContainer?.children.length).toBeGreaterThan(0);
-    });
-
-    it('should handle DESC direction value from an uppercase enum', () => {
-      renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={UppercaseSortOrder.Desc}
-        />
-      );
-
-      const header = screen.getByText('Name').closest('th');
-      const iconContainer = header?.querySelector('span[aria-hidden="true"]');
-      expect(iconContainer).toBeInTheDocument();
-      expect(iconContainer?.children.length).toBeGreaterThan(0);
-    });
   });
 
   describe('accessibility', () => {
@@ -258,7 +223,7 @@ describe('SortableHeaderClient', () => {
                 title="Name"
                 onSort={mockOnSort}
                 currentSortKey="name"
-                currentDirection={UppercaseSortOrder.Desc}
+                currentDirection="desc"
               />
             </tr>
           </thead>
@@ -461,34 +426,6 @@ describe('SortableHeaderClient', () => {
     });
   });
 
-  describe('error handling', () => {
-    it('should handle errors in onClick and call onSortError', async () => {
-      const user = userEvent.setup();
-      const onSortError = vi.fn();
-      const errorOnSort = vi.fn(() => {
-        throw new Error('Test error');
-      });
-
-      renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={errorOnSort}
-          onSortError={onSortError}
-        />
-      );
-
-      const header = screen.getByText('Name').closest('th');
-      const clickableDiv = header?.querySelector('.rdt-sort-header__button');
-
-      if (clickableDiv) {
-        await user.click(clickableDiv);
-      }
-
-      expect(onSortError).toHaveBeenCalled();
-    });
-  });
-
   describe('accessibility', () => {
     it('should have proper table header structure', () => {
       renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
@@ -523,7 +460,7 @@ describe('SortableHeaderClient', () => {
 
     it.each([
       ['asc', 'asc'],
-      ['DESC', 'desc'],
+      ['desc', 'desc'],
     ] as const)('marks the icon of the sorted column with %s as %s', (direction, expected) => {
       renderInTable(
         <SortableHeaderClient

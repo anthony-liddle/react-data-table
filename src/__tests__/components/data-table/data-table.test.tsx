@@ -243,7 +243,7 @@ describe('DataTable', () => {
       const actionMenu: TableActionMenuItem<TestRow>[] = [
         {
           label: 'View',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -932,7 +932,7 @@ describe('DataTable', () => {
           columns={baseColumns}
           data={baseData}
           selection={selectionFor([])}
-          actionMenu={[{ label: 'View', callbackAction: vi.fn() }]}
+          actionMenu={[{ label: 'View', onSelect: vi.fn() }]}
         />
       );
       const selectAll = screen.getByRole('checkbox', { name: 'Select all' });
