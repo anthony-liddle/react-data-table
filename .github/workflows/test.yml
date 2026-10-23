@@ -93,7 +93,7 @@ jobs:
   storybook-test:
     name: storybook tests
     runs-on: ubuntu-latest
-    # The Chromium install (apt via --with-deps) has hung once; fail fast.
+    # Backstop: fail rather than hang if the browser setup ever stalls.
     timeout-minutes: 15
 
     steps:
@@ -112,8 +112,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Cache the browser download per Playwright version. --with-deps is left
+      # off on purpose: it ran apt-get, which stalled for 11 to 20+ minutes,
+      # and GitHub's Ubuntu runners already ship Chromium's system libraries.
+      # If a library ever goes missing, the story tests fail at browser launch.
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
+
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
 
       - name: Run story tests
         run: pnpm test:storybook
