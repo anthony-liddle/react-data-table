@@ -1,6 +1,6 @@
 {
   "name": "@anthony-liddle/react-data-table",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A data-dense React table: sorting, grouped columns, row and drag selection, column management, pagination, and URL + localStorage persistence. Styled with Tailwind CSS over shadcn-style theme tokens.",
   "keywords": [
     "react",
