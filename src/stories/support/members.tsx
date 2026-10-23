@@ -179,14 +179,14 @@ export const formatDate = (iso: string | null) =>
   iso ? dateFormat.format(new Date(`${iso}T00:00:00Z`)) : 'Never';
 
 const STATUS_DOT: Record<Status, string> = {
-  Active: 'bg-emerald-500',
-  Invited: 'bg-amber-500',
-  Suspended: 'bg-stone-400',
+  Active: 'demo-status__dot--active',
+  Invited: 'demo-status__dot--invited',
+  Suspended: 'demo-status__dot--suspended',
 };
 
 export const StatusBadge = ({ status }: { status: Status }) => (
-  <span className="inline-flex items-center gap-1.5">
-    <span aria-hidden="true" className={`size-1.5 rounded-full ${STATUS_DOT[status]}`} />
+  <span className="demo-status">
+    <span aria-hidden="true" className={`demo-status__dot ${STATUS_DOT[status]}`} />
     {status}
   </span>
 );
@@ -197,12 +197,12 @@ export const memberColumn = {
     id: 'name',
     header: 'Name',
     sortKey: 'name',
-    cell: ({ row }) => <span className="font-medium whitespace-nowrap">{row.name}</span>,
+    cell: ({ row }) => <span className="demo-name">{row.name}</span>,
   },
   email: {
     id: 'email',
     header: 'Email',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.email}</span>,
+    cell: ({ row }) => <span className="demo-muted">{row.email}</span>,
   },
   team: { id: 'team', header: 'Team', sortKey: 'team', cell: ({ row }) => row.team },
   role: { id: 'role', header: 'Role', sortKey: 'role', cell: ({ row }) => row.role },

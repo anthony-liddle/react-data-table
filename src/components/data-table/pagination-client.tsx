@@ -1,7 +1,7 @@
 'use client';
 
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
-import { cn } from '../../lib/shadcn-utils.ts';
+import { cx } from '../../lib/cx.ts';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '../icon.tsx';
 import { Button } from '../ui/button.tsx';
 
@@ -45,70 +45,36 @@ export const PaginationClient = ({
   const pageCount = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
 
   return (
-    <div
-      className={cn(
-        'flex items-center justify-between px-2 py-2 border-t border-border',
-        className
-      )}
-    >
-      <div className="text-sm text-muted-foreground">
+    <div className={cx('rdt-pagination', showPageCount && 'rdt-pagination--bordered', className)}>
+      <div className="rdt-pagination__range">
         {t.showingRangeOf({ start, end, total: totalCount })}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="rdt-pagination__controls">
         {showPageCount && (
-          <span className="text-sm text-muted-foreground">
+          <span className="rdt-pagination__page-count">
             {t.page} {pageIndex + 1} {t.of} {pageCount}
           </span>
         )}
-        {showPageCount ? (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="size-8 p-0"
-              disabled={!hasPreviousPage}
-              onClick={handlePreviousPage}
-              aria-label="Previous page"
-              data-test-id="btn.pagination.previous"
-            >
-              <KeyboardArrowLeft className="size-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="size-8 p-0"
-              disabled={!hasNextPage}
-              onClick={handleNextPage}
-              aria-label="Next page"
-              data-test-id="btn.pagination.next"
-            >
-              <KeyboardArrowRight className="size-5" />
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-12 w-12 p-0"
-              disabled={!hasPreviousPage}
-              onClick={handlePreviousPage}
-              aria-label="Previous page"
-            >
-              <KeyboardArrowLeft className="h-12 w-12" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-12 w-12 p-0"
-              disabled={!hasNextPage}
-              onClick={handleNextPage}
-              aria-label="Next page"
-            >
-              <KeyboardArrowRight className="h-12 w-12" />
-            </Button>
-          </>
-        )}
+        <Button
+          variant={showPageCount ? 'outline' : 'ghost'}
+          className="rdt-pagination__button"
+          disabled={!hasPreviousPage}
+          onClick={handlePreviousPage}
+          aria-label="Previous page"
+          data-test-id={showPageCount ? 'btn.pagination.previous' : undefined}
+        >
+          <KeyboardArrowLeft className="rdt-pagination__icon" />
+        </Button>
+        <Button
+          variant={showPageCount ? 'outline' : 'ghost'}
+          className="rdt-pagination__button"
+          disabled={!hasNextPage}
+          onClick={handleNextPage}
+          aria-label="Next page"
+          data-test-id={showPageCount ? 'btn.pagination.next' : undefined}
+        >
+          <KeyboardArrowRight className="rdt-pagination__icon" />
+        </Button>
       </div>
     </div>
   );

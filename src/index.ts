@@ -42,6 +42,7 @@ export {
   usePersistedFilters,
 } from './hooks/use-persisted-filters.ts';
 export {
+  type RowDragState,
   type UseTableDragSelectionReturn,
   useTableDragSelection,
 } from './hooks/use-table-drag-selection.ts';

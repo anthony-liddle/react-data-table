@@ -59,6 +59,25 @@ A few things worth knowing before you touch the config:
 Use the `@/` path alias for internal imports (`@/components/...`) rather than
 long relative paths.
 
+### Styles
+
+`src/styles.css` is the whole stylesheet, and its class names are public API
+(listed in the README's Styling section). When you add or change markup:
+
+- Give every element the package renders an `rdt-` class: `.rdt-block`,
+  `.rdt-block__element`, `.rdt-block__element--modifier`. A fixed variant is a
+  modifier; state that changes at runtime goes on an attribute (`data-*`,
+  `aria-*`, or Radix's own `data-state`).
+- A base rule is one class. A modifier or state adds at most one more class,
+  attribute or pseudo-class; put any structural part in `:where()`. No IDs and
+  no `!important`.
+- Read colours through the private `--_rdt-*` properties, never a token
+  directly, so a consumer's theme always wins.
+- Keep the file free of top-level `@import` and `@layer`: the build wraps it in
+  a layer to make `styles.layer.css`, and refuses if it can't.
+- The Storybook runs without Tailwind, so the stories' own chrome uses `demo-`
+  classes in `.storybook/preview.css`. Don't style package elements there.
+
 ### Stories
 
 A play function runs every time someone opens its story, including on the

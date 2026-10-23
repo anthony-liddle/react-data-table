@@ -16,15 +16,15 @@ const meta = {
   },
   decorators: [
     Story => (
-      <table className="w-64 text-left text-sm">
+      <table className="demo-mini-table">
         <thead>
-          <tr className="border-b">
+          <tr className="demo-mini-table__row">
             <Story />
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="py-2 text-muted-foreground">Row content</td>
+            <td className="demo-mini-table__cell">Row content</td>
           </tr>
         </tbody>
       </table>

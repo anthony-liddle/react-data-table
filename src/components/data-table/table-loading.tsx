@@ -65,8 +65,11 @@ const renderLoadingCell = <TData extends BaseTableRow>(
   // Selection column
   if (visibleColumnIndex === -1 && hasSelection && colIndex === 0) {
     return (
-      <td key={`cell-loading-${colIndex}`} className="data-table-sticky">
-        <Skeleton className="w-5 h-5 ml-1" />
+      <td
+        key={`cell-loading-${colIndex}`}
+        className="rdt-table__cell rdt-table__cell--select rdt-table__cell--sticky"
+      >
+        <Skeleton className="rdt-skeleton--select" />
       </td>
     );
   }
@@ -74,8 +77,11 @@ const renderLoadingCell = <TData extends BaseTableRow>(
   // Action menu column
   if (visibleColumnIndex === -1 && hasActionMenu && colIndex === colSpan - 1) {
     return (
-      <td key={`cell-loading-${colIndex}`} className="data-table-sticky data-table-no-highlight">
-        <Skeleton className="w-3 h-5" />
+      <td
+        key={`cell-loading-${colIndex}`}
+        className="rdt-table__cell rdt-table__cell--actions rdt-table__cell--sticky"
+      >
+        <Skeleton className="rdt-skeleton--action" />
       </td>
     );
   }
@@ -85,12 +91,13 @@ const renderLoadingCell = <TData extends BaseTableRow>(
   return (
     <td
       key={`cell-loading-${colIndex}`}
+      className="rdt-table__cell"
       colSpan={colIndex === colSpan - 1 && !hasActionMenu ? 2 : 1}
     >
       {visibleColumn?.loadingCell ? (
         visibleColumn.loadingCell()
       ) : (
-        <Skeleton className="h-5" style={{ width: '80px' }} />
+        <Skeleton className="rdt-skeleton--cell" />
       )}
     </td>
   );
@@ -107,7 +114,7 @@ export const TableLoading = <TData extends BaseTableRow>({
   return (
     <>
       {Array.from({ length: rowCount }).map((_, rowIndex) => (
-        <tr key={`row-${rowIndex}`}>
+        <tr key={`row-${rowIndex}`} className="rdt-table__row">
           {Array.from({ length: colSpan }).map((_, colIndex) =>
             renderLoadingCell<TData>(
               colIndex,

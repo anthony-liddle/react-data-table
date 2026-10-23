@@ -48,9 +48,7 @@ const RowSelectionTable = ({
           <DemoButton onClick={handlers.handleDeselectAll}>Clear selection</DemoButton>
         </Toolbar>
         {selection.length > 0 && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {selection.map(member => member.name).join(', ')}
-          </p>
+          <p className="demo-hint">{selection.map(member => member.name).join(', ')}</p>
         )}
       </StatePanel>
       <DataTable

@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
+import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
+import { cx } from '../../lib/cx.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { PaginationClient } from './pagination-client.tsx';
 import { readPersisted, writePersisted } from './persist.ts';
@@ -80,6 +81,18 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   linkComponent?: ActionMenuLinkComponent;
 }
+
+const SELECT_HEADER_CLASS =
+  'rdt-table__header-cell rdt-table__header-cell--select rdt-table__header-cell--sticky';
+const SETTINGS_HEADER_CLASS =
+  'rdt-table__header-cell rdt-table__header-cell--settings rdt-table__header-cell--sticky';
+
+// Drag state as data attributes, present only when true, for the stylesheet.
+const dragAttributes = ({ inRange, isStart, isEnd }: RowDragState) => ({
+  'data-drag-range': inRange || undefined,
+  'data-drag-start': isStart || undefined,
+  'data-drag-end': isEnd || undefined,
+});
 
 export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   loading,
@@ -199,7 +212,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     handleRowMouseDown,
     handleRowMouseUp,
     handleRowMouseEnter,
-    getRowClassName,
+    isDragActive,
+    getRowDragState,
   } = useTableDragSelection({
     data,
     selection,
@@ -307,25 +321,22 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   }, [visibleColumnsData]);
 
   return (
-    <div className="data-table-con flex flex-col">
-      <div className="overflow-x-auto">
+    <div className="rdt-table">
+      <div className="rdt-table__scroll">
         <table
-          className="data-table w-full"
+          className="rdt-table__table"
           aria-busy={loading || undefined}
+          data-dragging={isDragActive || undefined}
           onMouseLeave={selection ? handleTableMouseLeave : undefined}
         >
-          <thead>
+          <thead className="rdt-table__head">
             {hasGroupedColumns ? (
               <>
                 {/* Parent header row */}
-                <tr>
+                <tr className="rdt-table__header-row">
                   {selection && (
-                    <th
-                      scope="col"
-                      rowSpan={2}
-                      className="data-table-sticky w-[40px] pl-4! align-middle"
-                    >
-                      <div className="flex items-center">
+                    <th scope="col" rowSpan={2} className={SELECT_HEADER_CLASS}>
+                      <div className="rdt-table__select-all">
                         <Checkbox
                           id="select-all"
                           checked={
@@ -336,7 +347,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           }
                           onCheckedChange={selection.handleSelectAll}
                           disabled={!!loading}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                           aria-label="Select all"
                         />
                       </div>
@@ -350,7 +360,11 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           key={getColumnId(column)}
                           scope="colgroup"
                           colSpan={column.subColumns.length}
-                          className={column.className || ''}
+                          className={cx(
+                            'rdt-table__header-cell',
+                            'rdt-table__header-cell--group',
+                            column.className
+                          )}
                         >
                           {column.header}
                         </th>
@@ -371,11 +385,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     }
                   })}
                   {!hideTableSettings && (
-                    <th
-                      scope="col"
-                      rowSpan={2}
-                      className="data-table-sticky data-table-no-highlight px-1! w-[32px]"
-                    >
+                    <th scope="col" rowSpan={2} className={SETTINGS_HEADER_CLASS}>
                       <TableMenu
                         visibleColumns={visibleColumns}
                         columns={menuColumns}
@@ -386,7 +396,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   )}
                 </tr>
                 {/* Sub-column header row */}
-                <tr>
+                <tr className="rdt-table__header-row">
                   {visibleColumnsData.flatMap(column => {
                     if (column.subColumns && column.subColumns.length > 0) {
                       // Render sub-columns
@@ -407,10 +417,10 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               </>
             ) : (
               // Single header row when no grouped columns
-              <tr>
+              <tr className="rdt-table__header-row">
                 {selection && (
-                  <th scope="col" className="data-table-sticky w-[40px] pl-4! align-middle">
-                    <div className="flex items-center">
+                  <th scope="col" className={SELECT_HEADER_CLASS}>
+                    <div className="rdt-table__select-all">
                       <Checkbox
                         id="select-all"
                         checked={
@@ -421,7 +431,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         }
                         onCheckedChange={selection.handleSelectAll}
                         disabled={!!loading}
-                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                         aria-label="Select all"
                       />
                     </div>
@@ -438,10 +447,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   />
                 ))}
                 {!hideTableSettings && (
-                  <th
-                    scope="col"
-                    className="data-table-sticky data-table-no-highlight px-1! w-[32px]"
-                  >
+                  <th scope="col" className={SETTINGS_HEADER_CLASS}>
                     <TableMenu
                       visibleColumns={visibleColumns}
                       columns={columns}
@@ -453,7 +459,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               </tr>
             )}
           </thead>
-          <tbody>
+          <tbody className="rdt-table__body">
             {loading && (
               <TableLoading
                 visibleColumnsData={flattenedColumnsData}
@@ -463,8 +469,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               />
             )}
             {!loading && data.length === 0 && (
-              <tr>
+              <tr className="rdt-table__empty-row">
                 <td
+                  className="rdt-table__empty"
                   colSpan={
                     flattenedColumnsData.length
                     + (selection ? 1 : 0)
@@ -486,16 +493,21 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     onMouseDown={selection ? e => handleRowMouseDown(e, rowIndex) : undefined}
                     onMouseUp={selection ? e => handleRowMouseUp(e, rowIndex) : undefined}
                     onMouseEnter={selection ? () => handleRowMouseEnter(rowIndex) : undefined}
-                    className={`${selection ? getRowClassName(rowIndex) : ''} ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName ? rowClassName(row) : ''}`}
+                    data-selected={selection?.isRowSelected(row) || undefined}
+                    {...dragAttributes(getRowDragState(rowIndex))}
+                    className={cx(
+                      'rdt-table__row',
+                      (selection || onRowClick) && 'rdt-table__row--clickable',
+                      rowClassName?.(row)
+                    )}
                   >
                     {selection && (
-                      <td className="data-table-sticky w-[40px] pl-4!">
+                      <td className="rdt-table__cell rdt-table__cell--select rdt-table__cell--sticky">
                         <Checkbox
                           id={`select-${row.id}`}
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.handleSelectRow(row)}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                           aria-label={
                             getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
                           }
@@ -505,7 +517,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     {flattenedColumnsData.map((column, index: number) => (
                       <td
                         key={`${row.id}-${index}-${getColumnId(column)}`}
-                        className={column.rowClassName || ''}
+                        className={cx('rdt-table__cell', column.rowClassName)}
                         // If the column is the last column and the action menu is hidden, colSpan should be 2
                         colSpan={index === flattenedColumnsData.length - 1 && !actionMenu ? 2 : 1}
                       >
@@ -514,7 +526,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     ))}
                     {actionMenu && (
                       <td
-                        className="data-table-sticky data-table-no-highlight px-1! w-[32px]"
+                        className="rdt-table__cell rdt-table__cell--actions rdt-table__cell--sticky"
                         onClick={e => e.stopPropagation()}
                       >
                         <TableActionMenu
@@ -528,7 +540,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   {(() => {
                     const expanded = renderExpandedRow?.(row);
                     return expanded != null ? (
-                      <tr className="data-table-no-highlight">
+                      <tr className="rdt-table__expanded-row">
                         <td
                           colSpan={
                             flattenedColumnsData.length
@@ -536,7 +548,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                             + (actionMenu ? 1 : 0)
                             + 1
                           }
-                          className="bg-muted/30 p-0!"
+                          className="rdt-table__expanded-cell"
                         >
                           {expanded}
                         </td>

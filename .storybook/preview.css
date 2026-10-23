@@ -1,45 +1,304 @@
 /*
- * Storybook preview stylesheet. This doubles as a reference for consumers:
- * it is exactly the Tailwind v4 wiring an app needs to style the package.
+ * Storybook preview stylesheet. No Tailwind: the package brings its own
+ * styles, and the stories' demo chrome is plain CSS below.
+ *
+ * The package loads into a cascade layer, the setup the README describes for
+ * apps that manage layers. The unlayered rules here, like the stories'
+ * alignment classes, then win over it the way a consumer's own CSS would.
  */
 
-/* The package's semantic table CSS (tokens, .data-table*, drag selection). */
-@import "../src/styles.css";
+@import "../src/styles.css" layer(react-data-table);
 
-@import "tailwindcss";
+/* The demo theme: shadcn-style tokens as full colour values, the way an app
+   using the package would declare them. The values match the package's own
+   defaults, so stories look the same with or without this block. */
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 4%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 4%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 4%);
+  --primary: hsl(24 9.8% 10%);
+  --primary-foreground: hsl(0 0% 100%);
+  --muted: hsl(20 5.9% 90%);
+  --muted-foreground: hsl(0 0% 45%);
+  --accent: hsl(0 0% 96.1%);
+  --accent-foreground: hsl(0 0% 9%);
+  --destructive: hsl(0 70% 35%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(24 5.7% 82.9%);
+  --input: hsl(24 5.7% 82.9%);
+  --ring: hsl(0 0% 4%);
+}
 
-/* Compile utilities for the component markup in this package. */
-@source "../src";
+.dark {
+  --background: hsl(224 71% 4%);
+  --foreground: hsl(213 31% 91%);
+  --card: hsl(222 47% 11%);
+  --card-foreground: hsl(213 31% 91%);
+  --popover: hsl(222 47% 11%);
+  --popover-foreground: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%);
+  --primary-foreground: hsl(222 47% 1%);
+  --muted: hsl(223 47% 11%);
+  --muted-foreground: hsl(215 16% 57%);
+  --accent: hsl(216 34% 17%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(216 34% 17%);
+  --input: hsl(216 34% 17%);
+  --ring: hsl(216 34% 50%);
+}
 
-/* Class-based dark mode: `dark:` utilities follow the `.dark` class that the
-   theme toolbar toggles on <html>, matching the `.dark` token swap in
-   styles.css. */
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* Map the shadcn-style HSL tokens to Tailwind color utilities (bg-card,
-   border-border, text-muted-foreground, ...). `inline` resolves the var() at
-   use-site, so the `.dark` token swap propagates without a second block. */
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+/* Page basics. These reach the table only by inheritance, as any app's would. */
+html {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  line-height: 1.5;
+  tab-size: 4;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  margin: 0;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+/* Elements only the demo chrome uses; the package renders none of them. */
+:where(p, dl, dd) {
+  margin: 0;
+}
+
+:where(code) {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 1em;
+}
+
+:where([class^="demo-"], [class*=" demo-"], .demo) {
+  box-sizing: border-box;
+}
+
+/* Consumer-style utilities the stories pass through column props. */
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+/* Demo chrome */
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.demo-intro {
+  max-width: 65ch;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.demo-note {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.demo-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.demo-muted {
+  color: var(--muted-foreground);
+}
+
+.demo-toolbar,
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-toolbar {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.demo-actions {
+  margin-top: 0.5rem;
+}
+
+.demo-button,
+.demo-select,
+.demo-input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.demo-button {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: var(--card);
+}
+
+.demo-select {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--card);
+}
+
+.demo-input {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+@media (hover: hover) {
+  .demo-button:hover {
+    background-color: var(--accent);
+  }
+}
+
+.demo-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.demo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.demo-panel {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.demo-panel__label {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.demo-keyvalues {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.demo-keyvalues__row {
+  display: contents;
+}
+
+.demo-keyvalues__value {
+  word-break: break-all;
+}
+
+.demo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.demo-status__dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+}
+
+.demo-status__dot--active {
+  background-color: oklch(69.6% 0.17 162.48);
+}
+
+.demo-status__dot--invited {
+  background-color: oklch(76.9% 0.188 70.08);
+}
+
+.demo-status__dot--suspended {
+  background-color: oklch(70.9% 0.01 56.259);
+}
+
+.demo-name {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.demo-expanded {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (width >= 40rem) {
+  .demo-expanded {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.demo-mini-table {
+  width: 16rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: left;
+  text-indent: 0;
+  border-collapse: collapse;
+}
+
+.demo-mini-table__row {
+  border-bottom: 1px solid currentColor;
+}
+
+.demo-mini-table__cell {
+  padding: 0.5rem 0;
+  color: var(--muted-foreground);
 }

@@ -85,18 +85,14 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex items-center justify-center bg-transparent border-0 cursor-pointer p-0 w-6 h-6"
-          aria-label="Actions"
-        >
-          <MoreVert />
+        <button type="button" className="rdt-action-menu__trigger" aria-label="Actions">
+          <MoreVert className="rdt-action-menu__trigger-icon" />
         </button>
       </DropdownMenuTrigger>
       {/* A high z-index keeps row actions above modal overlays, so the menu
           stays clickable when a DataTable is rendered inside a dialog. The
           menu portals to <body>, so this is also safe for non-modal tables. */}
-      <DropdownMenuContent className="z-902" align="end" sideOffset={5}>
+      <DropdownMenuContent align="end" sideOffset={5}>
         {visibleItems.map(item => {
           const label = typeof item.label === 'function' ? item.label({ row }) : item.label;
           const icon =
@@ -131,20 +127,15 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
 
             return (
               <DropdownMenuSub key={stringToKey(label)}>
-                <DropdownMenuSubTrigger className="flex items-center cursor-pointer">
-                  {icon && (
-                    <span className="mr-2 w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4">
-                      {icon}
-                    </span>
-                  )}
+                <DropdownMenuSubTrigger>
+                  {icon && <span className="rdt-action-menu__icon">{icon}</span>}
                   {label}
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="z-902">
+                <DropdownMenuSubContent>
                   {visibleSubItems.map(subItem => (
                     <DropdownMenuItem
                       key={stringToKey(subItem.label)}
                       onSelect={() => subItem.callbackAction({ row })}
-                      className="cursor-pointer"
                     >
                       {subItem.label}
                     </DropdownMenuItem>
@@ -159,7 +150,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
               {isLink ? (
                 <Link
                   href={href}
-                  className="flex items-center cursor-pointer"
+                  className="rdt-action-menu__link"
                   onClick={e => {
                     if (process.env.NODE_ENV === 'test') {
                       e.preventDefault();
@@ -168,7 +159,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
                   }}
                 >
                   {icon && (
-                    <span className="w-5 h-8 flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4">
+                    <span className="rdt-action-menu__icon rdt-action-menu__icon--link">
                       {icon}
                     </span>
                   )}
@@ -177,14 +168,10 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
               ) : (
                 <button
                   type="button"
-                  className="flex items-center w-full text-left cursor-pointer py-2"
+                  className="rdt-action-menu__button"
                   onClick={() => handleItemClick(item)}
                 >
-                  {icon && (
-                    <span className="mr-2 w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4">
-                      {icon}
-                    </span>
-                  )}
+                  {icon && <span className="rdt-action-menu__icon">{icon}</span>}
                   {label}
                 </button>
               )}

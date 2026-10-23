@@ -1,225 +1,815 @@
 /*
- * react-data-table: semantic table styles.
+ * react-data-table stylesheet.
  *
- * These are the `.data-table*` / `.drag-selection*` rules the components rely
- * on, written as plain CSS over shadcn-style theme tokens (no Tailwind
- * `@apply`), so they work without any build step.
+ * Every element the package renders carries an `rdt-` class, and these rules
+ * style those classes and the state attributes on them. Nothing here depends
+ * on Tailwind or on any reset of yours.
  *
- * Theme tokens: every color goes through `hsl(var(--token))`. The `:where()`
- * blocks below ship zero-specificity defaults (light + `.dark`), so ANY
- * definition of these variables in your own stylesheet wins regardless of
- * import order. If you already use a shadcn/ui theme with HSL triplet tokens,
- * your theme applies automatically.
+ * Theme: colours come from shadcn-style tokens (`--background`, `--card`,
+ * `--border`, ...) as full colour values. The package never declares them; it
+ * reads each one with a default, so a theme you declare anywhere (unlayered,
+ * in a layer, before or after this file) wins. `.dark` on an ancestor switches
+ * the defaults.
  *
- * NOTE: the component markup also uses Tailwind utility classes, so your app
- * must run Tailwind and scan this package. See the README's Styling section.
+ * This file is shipped twice: as `styles.css` (unlayered) and as
+ * `styles.layer.css` (the same rules inside `@layer react-data-table`). Keep it
+ * free of top-level `@import` and `@layer` so the build can wrap it.
  */
 
-:where(:root) {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 4%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 4%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 4%;
-  --primary: 24 9.8% 10%;
-  --primary-foreground: 0 0% 100%;
-  --muted: 20 5.9% 90%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 70% 35%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 24 5.7% 82.9%;
-  --input: 24 5.7% 82.9%;
-  --ring: 0 0% 4%;
-  --drag-selection: 216 100% 58.4%;
+/*
+ *  Reset, for package elements only
+ *
+ *  Zero specificity, so any rule of yours overrides it. It reaches only
+ *  elements with an `rdt-` class, never your markup inside a cell.
+ */
+
+:where([class^="rdt-"], [class*=" rdt-"]),
+:where([class^="rdt-"], [class*=" rdt-"])::before,
+:where([class^="rdt-"], [class*=" rdt-"])::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
 }
 
-:where(.dark) {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --card: 222 47% 11%;
-  --card-foreground: 213 31% 91%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 213 31% 91%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222 47% 1%;
-  --muted: 223 47% 11%;
-  --muted-foreground: 215 16% 57%;
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
-  --ring: 216 34% 50%;
-  --drag-selection: 216 100% 58.4%;
+:where(button[class^="rdt-"], button[class*=" rdt-"]) {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 /*
- *  Data Table
+ *  Tokens
+ *
+ *  Private `--_rdt-*` properties, set on every block that can render on its
+ *  own (menus and the column panel portal to <body>, and the header and
+ *  loading exports can sit in a table of yours), and on each row so a row can
+ *  carry its own --rdt-row-selected. Each reads the public token and falls
+ *  back to the package default.
  */
 
-.data-table-con {
-  font-size: 0.875rem; /* text-sm */
-  line-height: 1.25rem;
-  border: 1px solid hsl(var(--border));
-  width: 100%;
-  border-radius: 0.5rem; /* rounded-lg */
-  overflow: auto;
-  background-color: hsl(var(--card));
+:where(
+  .rdt-table,
+  .rdt-pagination,
+  .rdt-sort-header,
+  .rdt-menu,
+  .rdt-column-panel,
+  .rdt-table__row,
+  .rdt-table__header-cell
+) {
+  --_rdt-background: var(--background, hsl(0 0% 100%));
+  --_rdt-foreground: var(--foreground, hsl(0 0% 4%));
+  --_rdt-card: var(--card, hsl(0 0% 100%));
+  --_rdt-popover: var(--popover, hsl(0 0% 100%));
+  --_rdt-popover-foreground: var(--popover-foreground, hsl(0 0% 4%));
+  --_rdt-primary: var(--primary, hsl(24 9.8% 10%));
+  --_rdt-primary-foreground: var(--primary-foreground, hsl(0 0% 100%));
+  --_rdt-muted: var(--muted, hsl(20 5.9% 90%));
+  --_rdt-muted-foreground: var(--muted-foreground, hsl(0 0% 45%));
+  --_rdt-accent: var(--accent, hsl(0 0% 96.1%));
+  --_rdt-accent-foreground: var(--accent-foreground, hsl(0 0% 9%));
+  --_rdt-border: var(--border, hsl(24 5.7% 82.9%));
+  --_rdt-ring: var(--ring, hsl(0 0% 4%));
+  --_rdt-drag-selection: var(--drag-selection, hsl(216 100% 58.4%));
+  --_rdt-row-selected: var(--rdt-row-selected, var(--_rdt-card));
+  --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
+  --_rdt-surface-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
-.data-table {
+
+:where(.dark)
+  :where(
+    .rdt-table,
+    .rdt-pagination,
+    .rdt-sort-header,
+    .rdt-menu,
+    .rdt-column-panel,
+    .rdt-table__row,
+    .rdt-table__header-cell
+  ) {
+  --_rdt-background: var(--background, hsl(224 71% 4%));
+  --_rdt-foreground: var(--foreground, hsl(213 31% 91%));
+  --_rdt-card: var(--card, hsl(222 47% 11%));
+  --_rdt-popover: var(--popover, hsl(222 47% 11%));
+  --_rdt-popover-foreground: var(--popover-foreground, hsl(213 31% 91%));
+  --_rdt-primary: var(--primary, hsl(210 40% 98%));
+  --_rdt-primary-foreground: var(--primary-foreground, hsl(222 47% 1%));
+  --_rdt-muted: var(--muted, hsl(223 47% 11%));
+  --_rdt-muted-foreground: var(--muted-foreground, hsl(215 16% 57%));
+  --_rdt-accent: var(--accent, hsl(216 34% 17%));
+  --_rdt-accent-foreground: var(--accent-foreground, hsl(210 40% 98%));
+  --_rdt-border: var(--border, hsl(216 34% 17%));
+  --_rdt-ring: var(--ring, hsl(216 34% 50%));
+  --_rdt-skeleton: var(--rdt-skeleton, oklch(37.4% 0.01 67.558));
+  --_rdt-surface-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+}
+
+/*
+ *  rdt-table
+ */
+
+.rdt-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: auto;
+  font-size: var(--rdt-font-size, 0.875rem);
+  line-height: 1.25rem;
+  background-color: var(--_rdt-card);
+  border: 1px solid var(--_rdt-border);
+  border-radius: var(--rdt-radius, 0.5rem);
+}
+
+.rdt-table__scroll {
+  overflow-x: auto;
+}
+
+.rdt-table__table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
-.data-table th {
-  font-size: 0.75rem; /* text-xs */
-  line-height: 1rem;
-  font-weight: 400;
-}
-.data-table thead {
+
+.rdt-table__head {
   white-space: nowrap;
 }
-.data-table tbody tr:hover th:not(.data-table-no-highlight),
-.data-table tbody tr:hover td:not(.data-table-no-highlight) {
-  background-color: hsl(var(--accent));
-}
 
-/* Override hover effect for tables where we want more control */
-.data-table-no-auto-hover tbody tr:hover th,
-.data-table-no-auto-hover tbody tr:hover td {
-  background-color: transparent;
-}
-
-.data-table-no-auto-hover tbody tr:hover {
-  background-color: hsl(var(--accent));
-}
-
-.data-table td,
-.data-table th {
+.rdt-table__header-cell,
+.rdt-table__cell,
+.rdt-table__empty,
+.rdt-table__expanded-cell {
+  padding: var(--rdt-cell-padding-y, 0.5rem) var(--rdt-cell-padding-x, 0.75rem);
   text-align: left;
-  border-bottom: 1px solid hsl(var(--border));
-  background-color: hsl(var(--card));
-  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  vertical-align: middle;
+  background-color: var(--_rdt-card);
+  border-bottom: 1px solid var(--_rdt-border);
 }
-.data-table td.data-table-tight,
-.data-table th.data-table-tight {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
+
+.rdt-table__header-cell {
+  font-size: var(--rdt-header-font-size, 0.75rem);
+  font-weight: 400;
+  line-height: 1rem;
 }
-.data-table td.data-table-sticky:first-child,
-.data-table th.data-table-sticky:first-child {
+
+.rdt-table__header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The selection column, and the settings and row-action column. */
+.rdt-table__header-cell--select,
+.rdt-table__cell--select {
+  width: 40px;
+  padding-left: 1rem;
+  vertical-align: middle;
+}
+
+.rdt-table__header-cell--settings,
+.rdt-table__cell--actions {
+  width: 32px;
+  padding-inline: 0.25rem;
+}
+
+.rdt-table__select-all {
+  display: flex;
+  align-items: center;
+}
+
+.rdt-table__expanded-cell {
+  padding: 0;
+  background-color: color-mix(in oklab, var(--_rdt-muted) 30%, transparent);
+}
+
+.rdt-table__cell:where(tr:last-child > *),
+.rdt-table__empty:where(tr:last-child > *),
+.rdt-table__expanded-cell:where(tr:last-child > *) {
+  border-bottom: 0;
+}
+
+.rdt-table__row--clickable {
+  cursor: pointer;
+}
+
+/* Sticky first and last columns, each with a soft edge over the scrolled
+   content. */
+.rdt-table__header-cell--sticky:first-child,
+.rdt-table__cell--sticky:first-child,
+.rdt-sort-header--sticky:first-child {
   position: sticky;
   left: 0;
   z-index: 10;
 }
-.data-table td.data-table-sticky:first-child::before,
-.data-table th.data-table-sticky:first-child::before {
-  display: block;
-  position: absolute;
-  width: 6px;
-  height: 100%;
-  top: 0;
-  right: -6px;
-  content: "";
-  background-image: linear-gradient(to right, hsl(var(--card)), transparent);
-}
-.data-table tr:hover td.data-table-sticky:first-child::before,
-.data-table tr:hover th.data-table-sticky:first-child::before {
-  background-image: none;
-}
-.data-table td.data-table-sticky:last-child,
-.data-table th.data-table-sticky:last-child {
+
+.rdt-table__header-cell--sticky:last-child,
+.rdt-table__cell--sticky:last-child,
+.rdt-sort-header--sticky:last-child {
   position: sticky;
   right: 0;
   z-index: 10;
 }
-.data-table td.data-table-sticky:last-child::before,
-.data-table th.data-table-sticky:last-child::before {
-  display: block;
+
+.rdt-table__header-cell--sticky:first-child::before,
+.rdt-table__cell--sticky:first-child::before,
+.rdt-sort-header--sticky:first-child::before {
+  content: "";
   position: absolute;
+  top: 0;
+  right: -6px;
+  display: block;
   width: 6px;
   height: 100%;
+  /* Fades from the row's own colour: the card, or the selected colour. */
+  background-image: linear-gradient(to right, var(--_rdt-edge, var(--_rdt-card)), transparent);
+}
+
+.rdt-table__header-cell--sticky:last-child::before,
+.rdt-table__cell--sticky:last-child::before,
+.rdt-sort-header--sticky:last-child::before {
+  content: "";
+  position: absolute;
   top: 0;
   left: -6px;
-  content: "";
-  background-image: linear-gradient(to left, hsl(var(--border) / 0.3), transparent);
+  display: block;
+  width: 6px;
+  height: 100%;
+  background-image: linear-gradient(
+    to left,
+    color-mix(in oklab, var(--_rdt-border) 30%, transparent),
+    transparent
+  );
 }
 
-.data-table tr:last-child td {
-  border-bottom: 0;
+/* Row states. Each rule matches the specificity of the rule it overrides,
+   with the structure in a :where(), so the order below sets precedence:
+   selected, then hover, then a drag range. A selected row is tinted only
+   when --rdt-row-selected is set; by default it keeps the card colour. */
+.rdt-table__cell:where([data-selected] > *) {
+  --_rdt-edge: var(--_rdt-row-selected);
+  background-color: var(--_rdt-row-selected);
 }
 
-/* The modal portal breaks CSS inheritance here.
-tables rendered in portals need explicit styles to work outside the normal DOM hierarchy */
-.modal-table td,
-.modal-table th {
-  background-color: hsl(var(--card)) !important;
+/* Selected rows are always marked by a bar on their first cell, which leaves
+   the row's background, and so its text contrast, alone. The tint above is
+   opt-in. */
+.rdt-table__cell:where([data-selected] > :first-child) {
+  box-shadow: inset 3px 0 0 var(--_rdt-primary);
 }
 
-/* Ensure borders on nested table cells */
-.modal-table tr:not(:last-child) td {
-  border-bottom: 1px solid hsl(var(--border));
+.rdt-table__cell:where(.rdt-table__row:hover > :not(.rdt-table__cell--actions)),
+.rdt-table__empty:where(tr:hover > *) {
+  background-color: var(--_rdt-accent);
 }
 
-/* Last row should not have a border */
-.modal-table tr:last-child td {
-  border-bottom: 0;
+.rdt-table__cell--sticky:first-child:where(tr:hover > *)::before,
+.rdt-table__header-cell--sticky:first-child:where(tr:hover > *)::before,
+.rdt-sort-header--sticky:first-child:where(tr:hover > *)::before {
+  background-image: none;
 }
 
-/* Hover only for non-selected rows */
-.modal-table tr:not(.table-row-selected):hover td,
-.modal-table tr:not(.table-row-selected):hover {
-  background-color: hsl(var(--accent)) !important;
-}
-
-/* Table row selection - can be used as a class name */
-/* This is very funky but this is the way to make the data-table-sticky highlighted when selected */
-.data-table .table-row-selected td {
-  background-color: #dbeafe !important; /* blue-100 */
-}
-.dark .data-table .table-row-selected td {
-  background-color: #1e3a8a !important; /* blue-900 */
-}
-.data-table .table-row-selected td.data-table-sticky::before {
-  background-color: #dbeafe !important;
-  background-image: none !important;
-}
-.dark .data-table .table-row-selected td.data-table-sticky::before {
-  background-color: #1e3a8a !important;
-}
-
-/* Drag selection visual feedback using ::after pseudo-element */
-.data-table tbody tr.drag-selection-range {
+.rdt-table__row[data-drag-range] {
   position: relative;
 }
 
-.data-table tr.drag-selection-range td.data-table-sticky:first-child::before,
-.data-table tr.drag-selection-range td.data-table-sticky:last-child::before {
-  display: none;
-}
-
-.data-table tbody tr.drag-selection-range::after {
+.rdt-table__row[data-drag-range]::after {
   content: "";
   position: absolute;
-  left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
-  background-color: hsl(var(--drag-selection));
+  left: 0;
   z-index: 10;
+  width: 4px;
+  background-color: var(--_rdt-drag-selection);
   pointer-events: none;
 }
 
-.data-table tbody tr.drag-selection-range td {
+.rdt-table__cell:where([data-drag-range] > *) {
   position: relative;
-  background-color: hsl(var(--accent)) !important;
+  background-color: var(--_rdt-accent);
 }
 
-.data-table tbody tr.drag-selection-dragging {
-  cursor: grabbing !important;
-  user-select: none !important;
+.rdt-table__cell--sticky:first-child:where([data-drag-range] > *)::before,
+.rdt-table__cell--sticky:last-child:where([data-drag-range] > *)::before {
+  display: none;
+}
+
+.rdt-table__table[data-dragging] :where(.rdt-table__row) {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/*
+ *  rdt-sort-header
+ *
+ *  A sortable <th>. Inside DataTable it is also an rdt-table__header-cell.
+ */
+
+.rdt-sort-header {
+  position: relative;
+}
+
+/* The sticky variant is used outside DataTable too, so it brings its own
+   background for content to scroll under. */
+.rdt-sort-header--sticky {
+  background-color: var(--_rdt-card);
+}
+
+/* The button spans the cell, so the whole cell is clickable, and its content
+   follows the header's text-align. */
+.rdt-sort-header__button {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.rdt-sort-header__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: top;
+}
+
+@media (hover: hover) {
+  .rdt-sort-header__button:hover {
+    color: var(--_rdt-primary);
+  }
+}
+
+/* The span sets the size and the arrow fills it, so the sorted state needs
+   no element selector. */
+.rdt-sort-header__icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.rdt-sort-header__icon[data-direction] {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.rdt-sort-header__arrow {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ *  rdt-checkbox
+ */
+
+.rdt-checkbox {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  border: 1px solid var(--_rdt-primary);
+  border-radius: 0.25rem;
+}
+
+.rdt-checkbox:focus-visible {
+  outline-style: none;
+  box-shadow:
+    0 0 0 2px var(--_rdt-background),
+    0 0 0 4px var(--_rdt-ring);
+}
+
+.rdt-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rdt-checkbox[data-state="checked"] {
+  color: var(--_rdt-primary-foreground);
+  background-color: var(--_rdt-primary);
+}
+
+.rdt-checkbox__indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.rdt-checkbox__icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (forced-colors: active) {
+  .rdt-checkbox:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+/*
+ *  Surfaces: the column panel and menus portal to <body> and share a look.
+ */
+
+.rdt-column-panel,
+.rdt-menu {
+  min-width: 8rem;
+  padding: 0.25rem;
+  color: var(--_rdt-popover-foreground);
+  background-color: var(--_rdt-popover);
+  border: 1px solid var(--_rdt-border);
+  border-radius: 0.375rem;
+  box-shadow: var(--_rdt-surface-shadow);
+}
+
+/* The two triggers that open them: a bare 24px icon button. */
+.rdt-column-panel__trigger,
+.rdt-action-menu__trigger {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.rdt-column-panel__trigger-icon,
+.rdt-action-menu__trigger-icon {
+  display: block;
+}
+
+/*
+ *  rdt-column-panel
+ */
+
+.rdt-column-panel {
+  z-index: 100;
+  max-height: 50vh;
+  overflow: hidden auto;
+  outline-style: none;
+}
+
+.rdt-column-panel__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rdt-column-panel__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.rdt-column-panel__item[data-dragging] {
+  opacity: 0.5;
+}
+
+.rdt-column-panel__label {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.rdt-column-panel__handle {
+  box-sizing: border-box;
+  display: flex;
+  margin: 0;
+  padding: 0.25rem;
+  color: var(--_rdt-muted-foreground);
+  background-color: transparent;
+  border: 0;
+  cursor: grab;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdt-column-panel__handle:active {
+  cursor: grabbing;
+}
+
+.rdt-column-panel__handle-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (hover: hover) {
+  .rdt-column-panel__item:hover {
+    background-color: var(--_rdt-muted);
+  }
+
+  .rdt-column-panel__handle:hover {
+    color: var(--_rdt-foreground);
+  }
+}
+
+@media (forced-colors: active) {
+  .rdt-column-panel {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+/*
+ *  rdt-menu
+ */
+
+.rdt-menu {
+  z-index: 902;
+  overflow: hidden;
+}
+
+/* Submenus keep the lighter shadow in both themes, as they always have. */
+.rdt-menu--sub {
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.rdt-menu__item,
+.rdt-menu__sub-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: 0.25rem;
+  outline-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rdt-menu__item {
+  padding: 0.375rem 0.75rem;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdt-menu__sub-trigger {
+  padding: 0.375rem 0.5rem;
+}
+
+.rdt-menu__item:focus {
+  color: var(--_rdt-accent-foreground);
+  background-color: var(--_rdt-accent);
+}
+
+.rdt-menu__sub-trigger:focus,
+.rdt-menu__sub-trigger[data-state="open"] {
+  background-color: var(--_rdt-accent);
+}
+
+.rdt-menu__item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.rdt-menu__item :where(svg),
+.rdt-menu__sub-trigger :where(svg) {
+  display: block;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+.rdt-menu__chevron {
+  margin-left: auto;
+}
+
+@media (hover: hover) {
+  .rdt-menu__item:hover {
+    background-color: var(--_rdt-accent);
+  }
+}
+
+/*
+ *  rdt-action-menu
+ */
+
+.rdt-action-menu__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.rdt-action-menu__button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: left;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+/* The icon slot before an item's label. Link items center it in a taller
+   slot without the gap, matching how they have always rendered. */
+.rdt-action-menu__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.rdt-action-menu__icon--link {
+  height: 2rem;
+  margin-right: 0;
+}
+
+/*
+ *  rdt-button
+ *
+ *  The pagination's icon button. Placed before rdt-pagination, which sizes it.
+ */
+
+.rdt-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: inherit;
+  color: var(--_rdt-primary);
+  text-transform: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdt-button:focus-visible {
+  outline-style: none;
+  box-shadow:
+    0 0 0 2px var(--_rdt-background),
+    0 0 0 4px var(--_rdt-ring);
+}
+
+.rdt-button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.rdt-button :where(svg) {
+  flex-shrink: 0;
+  width: 20px;
+  pointer-events: none;
+}
+
+.rdt-button--outline {
+  background-color: var(--_rdt-background);
+  border: 1px solid var(--_rdt-primary);
+}
+
+.rdt-button--outline:active,
+.rdt-button--ghost:active {
+  background-color: color-mix(in oklab, var(--_rdt-accent) 80%, transparent);
+}
+
+@media (hover: hover) {
+  .rdt-button--outline:hover {
+    background-color: var(--_rdt-accent);
+    border-color: color-mix(in oklab, var(--_rdt-primary) 80%, transparent);
+  }
+
+  .rdt-button--ghost:hover {
+    background-color: var(--_rdt-accent);
+  }
+}
+
+@media (forced-colors: active) {
+  .rdt-button:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+/*
+ *  rdt-pagination
+ */
+
+.rdt-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-top: 1px solid var(--_rdt-border);
+}
+
+.rdt-pagination__range,
+.rdt-pagination__page-count {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--_rdt-muted-foreground);
+}
+
+.rdt-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Borderless 48px buttons by default; 32px outlined ones with the page count. */
+.rdt-pagination__button {
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+}
+
+.rdt-pagination__icon {
+  display: block;
+  width: 1.25rem;
+  height: 3rem;
+}
+
+.rdt-pagination--bordered .rdt-pagination__button {
+  width: 2rem;
+  height: 2rem;
+}
+
+.rdt-pagination--bordered .rdt-pagination__icon {
+  height: 1.25rem;
+}
+
+/*
+ *  rdt-skeleton
+ */
+
+.rdt-skeleton {
+  background-color: var(--_rdt-skeleton);
+  border-radius: 0.375rem;
+  animation: rdt-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.rdt-skeleton--select {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.25rem;
+}
+
+.rdt-skeleton--action {
+  width: 0.75rem;
+  height: 1.25rem;
+}
+
+.rdt-skeleton--cell {
+  width: 80px;
+  height: 1.25rem;
+}
+
+/*
+ *  Keyframes
+ */
+
+@keyframes rdt-pulse {
+  50% {
+    opacity: 0.5;
+  }
 }

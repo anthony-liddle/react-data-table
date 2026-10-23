@@ -109,7 +109,7 @@ const PlaygroundTable = ({
         Every feature at once over {members.length} rows. Use the controls panel to switch features
         on and off.
       </Intro>
-      <p className="text-sm text-muted-foreground" aria-live="polite">
+      <p className="demo-note" aria-live="polite">
         {withSelection ? `${selection.length} selected` : 'Selection off'}
       </p>
       <DataTable
@@ -226,16 +226,15 @@ const ExpandedRowsDemo = ({ rowCount }: { rowCount: number }) => {
         }}
         renderExpandedRow={row =>
           expandedIds.has(row.id) ? (
-            <div className="grid gap-1 p-4 text-sm sm:grid-cols-3">
+            <div className="demo-expanded">
               <p>
-                <span className="text-muted-foreground">Location</span> {row.location}
+                <span className="demo-muted">Location</span> {row.location}
               </p>
               <p>
-                <span className="text-muted-foreground">Last active</span>{' '}
-                {formatDate(row.lastActive)}
+                <span className="demo-muted">Last active</span> {formatDate(row.lastActive)}
               </p>
               <p>
-                <span className="text-muted-foreground">Storage</span> {row.storageGb.toFixed(1)} GB
+                <span className="demo-muted">Storage</span> {row.storageGb.toFixed(1)} GB
               </p>
             </div>
           ) : null

@@ -400,4 +400,44 @@ describe('PaginationClient', () => {
       });
     });
   });
+
+  // The rdt- classes are the documented styling API.
+  describe('styling contract', () => {
+    const props = {
+      totalCount: 100,
+      pageIndex: 0,
+      pageSize: 10,
+      hasNextPage: true,
+      hasPreviousPage: false,
+      handleNextPage: vi.fn(),
+      handlePreviousPage: vi.fn(),
+    };
+
+    it('names the footer and its parts', () => {
+      const { container } = render(<PaginationClient {...props} showPageCount />);
+      const root = container.firstElementChild;
+      expect(root).toHaveClass('rdt-pagination');
+      expect(screen.getByText(/^Showing/)).toHaveClass('rdt-pagination__range');
+      expect(screen.getByText('Page 1 of 10')).toHaveClass('rdt-pagination__page-count');
+      expect(root?.querySelector('.rdt-pagination__controls')).not.toBeNull();
+      const next = screen.getByRole('button', { name: 'Next page' });
+      expect(next).toHaveClass('rdt-button', 'rdt-pagination__button');
+      expect(next.querySelector('.rdt-pagination__icon')).not.toBeNull();
+    });
+
+    it('marks the bordered layout exactly when the page count shows', () => {
+      const { container, rerender } = render(<PaginationClient {...props} />);
+      expect(container.firstElementChild).not.toHaveClass('rdt-pagination--bordered');
+      expect(screen.getByRole('button', { name: 'Next page' })).toHaveClass('rdt-button--ghost');
+
+      rerender(<PaginationClient {...props} showPageCount />);
+      expect(container.firstElementChild).toHaveClass('rdt-pagination--bordered');
+      expect(screen.getByRole('button', { name: 'Next page' })).toHaveClass('rdt-button--outline');
+    });
+
+    it('appends className after the package classes', () => {
+      const { container } = render(<PaginationClient {...props} className="mine" />);
+      expect(container.firstElementChild?.className).toBe('rdt-pagination mine');
+    });
+  });
 });

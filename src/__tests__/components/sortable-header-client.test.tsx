@@ -80,7 +80,7 @@ describe('SortableHeaderClient', () => {
       );
 
       const header = screen.getByText('Name').closest('th');
-      expect(header).toHaveClass('data-table-sticky');
+      expect(header).toHaveClass('rdt-sort-header--sticky');
     });
 
     it('should not apply sticky class when sticky is false', () => {
@@ -89,7 +89,7 @@ describe('SortableHeaderClient', () => {
       );
 
       const header = screen.getByText('Name').closest('th');
-      expect(header).not.toHaveClass('data-table-sticky');
+      expect(header).not.toHaveClass('rdt-sort-header--sticky');
     });
 
     it('should apply rowSpan when provided', () => {
@@ -304,7 +304,7 @@ describe('SortableHeaderClient', () => {
       );
 
       const header = screen.getByText('Name').closest('th');
-      const clickableDiv = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableDiv = header?.querySelector('.rdt-sort-header__button');
       expect(clickableDiv).not.toBeInTheDocument();
     });
 
@@ -347,7 +347,7 @@ describe('SortableHeaderClient', () => {
       renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
 
       const header = screen.getByText('Name').closest('th');
-      const clickableDiv = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableDiv = header?.querySelector('.rdt-sort-header__button');
       expect(clickableDiv).toBeInTheDocument();
 
       if (clickableDiv) {
@@ -479,7 +479,7 @@ describe('SortableHeaderClient', () => {
       );
 
       const header = screen.getByText('Name').closest('th');
-      const clickableDiv = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableDiv = header?.querySelector('.rdt-sort-header__button');
 
       if (clickableDiv) {
         await user.click(clickableDiv);
@@ -498,12 +498,75 @@ describe('SortableHeaderClient', () => {
       expect(header.tagName).toBe('TH');
     });
 
-    it('should have cursor-pointer class when enabled', () => {
+    it('should render the sort button when enabled', () => {
       renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
 
       const header = screen.getByText('Name').closest('th');
-      const clickableDiv = header?.querySelector('button[class*="cursor-pointer"]');
+      const clickableDiv = header?.querySelector('.rdt-sort-header__button');
       expect(clickableDiv).toBeInTheDocument();
+    });
+  });
+
+  // The rdt- classes and data-direction are the documented styling API.
+  describe('styling contract', () => {
+    it('names the header, its button, label and icon', () => {
+      renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
+      const header = screen.getByRole('columnheader');
+      expect(header).toHaveClass('rdt-sort-header');
+      expect(header.querySelector('button')).toHaveClass('rdt-sort-header__button');
+      expect(screen.getByText('Name')).toHaveClass('rdt-sort-header__label');
+      expect(header.querySelector('.rdt-sort-header__icon')).not.toHaveAttribute('data-direction');
+      expect(header.querySelector('.rdt-sort-header__icon svg')).toHaveClass(
+        'rdt-sort-header__arrow'
+      );
+    });
+
+    it.each([
+      ['asc', 'asc'],
+      ['DESC', 'desc'],
+    ] as const)('marks the icon of the sorted column with %s as %s', (direction, expected) => {
+      renderInTable(
+        <SortableHeaderClient
+          sortKey="name"
+          title="Name"
+          onSort={mockOnSort}
+          currentSortKey="name"
+          currentDirection={direction}
+        />
+      );
+      expect(
+        screen.getByRole('columnheader').querySelector('.rdt-sort-header__icon')
+      ).toHaveAttribute('data-direction', expected);
+    });
+
+    it('leaves the direction off a column that is not sorted', () => {
+      renderInTable(
+        <SortableHeaderClient
+          sortKey="name"
+          title="Name"
+          onSort={mockOnSort}
+          currentSortKey="email"
+          currentDirection="asc"
+        />
+      );
+      expect(
+        screen.getByRole('columnheader').querySelector('.rdt-sort-header__icon')
+      ).not.toHaveAttribute('data-direction');
+    });
+
+    it('wraps the button contents in the content element', () => {
+      renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
+      const content = screen.getByText('Name').parentElement;
+      expect(content).toHaveClass('rdt-sort-header__content');
+      expect(content?.parentElement).toHaveClass('rdt-sort-header__button');
+      expect(content?.querySelector('.rdt-sort-header__icon')).not.toBeNull();
+    });
+
+    it('wraps a disabled header in its content element', () => {
+      renderInTable(
+        <SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} disabled />
+      );
+      expect(screen.getByText('Name').parentElement).toHaveClass('rdt-sort-header__content');
     });
   });
 });

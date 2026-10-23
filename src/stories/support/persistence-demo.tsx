@@ -137,7 +137,7 @@ const PersistedTable = ({ mechanism, persistKey, rowCount }: PersistedTableProps
         <label htmlFor={selectId}>Team</label>
         <select
           id={selectId}
-          className="rounded-md border border-border bg-card px-2 py-1"
+          className="demo-select"
           value={team}
           onChange={e => setFilter('team', e.target.value)}
         >
@@ -233,7 +233,7 @@ const IsolatedDemo = ({
                 : [['(none)', 'change something in the table below']]
             }
           />
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="demo-actions">
             <DemoButton
               onClick={() => {
                 clearPersistedStorage(persistKey);
@@ -243,29 +243,24 @@ const IsolatedDemo = ({
               Reload table from URL
             </DemoButton>
             <DemoButton onClick={resetView}>Reset view</DemoButton>
-            <a
-              href={shareLink}
-              target="_blank"
-              rel="noopener"
-              className="underline underline-offset-2"
-            >
+            <a href={shareLink} target="_blank" rel="noopener" className="demo-link">
               Open this view in a new tab
             </a>
           </div>
-          <label className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
+          <label className="demo-field">
             Shareable link
             <input
               readOnly
               value={shareLink}
               onFocus={e => e.currentTarget.select()}
-              className="w-full rounded-md border border-border bg-background px-2 py-1 font-mono text-foreground"
+              className="demo-input"
             />
           </label>
         </StatePanel>
       ) : (
         <StatePanel label="Persisted in localStorage">
           <KeyValues entries={stored.map(([key, value]) => [key, printable(value)])} />
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="demo-actions">
             <DemoButton
               onClick={() => {
                 stripPersistedParams();
