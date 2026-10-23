@@ -1,4 +1,4 @@
-# Public Release — 2026-10-22
+# Public Release: 2026-10-22
 
 - **Repo:** https://github.com/anthony-liddle/react-data-table (public)
 - **npm:** https://www.npmjs.com/package/@anthony-liddle/react-data-table (`0.1.0`, with provenance)

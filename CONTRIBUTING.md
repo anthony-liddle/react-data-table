@@ -8,7 +8,7 @@ By participating in this project you agree to abide by the
 
 ## Development setup
 
-The project uses [pnpm](https://pnpm.io/) — please don't use npm or yarn, as the
+The project uses [pnpm](https://pnpm.io/). Please don't use npm or yarn, as the
 lockfile is pnpm-specific. The Node version is pinned in `.nvmrc` (Node 24); CI
 reads the same file.
 
@@ -25,7 +25,7 @@ Installing also sets up the Husky git hooks via the `prepare` script.
 
 | Script | What it does |
 | --- | --- |
-| `pnpm storybook` | Run Storybook on port 6006 — the main way to work on the table |
+| `pnpm storybook` | Run Storybook on port 6006, the main way to work on the table |
 | `pnpm test` | Run the unit tests once (Vitest + happy-dom) |
 | `pnpm test:watch` | Run the unit tests in watch mode |
 | `pnpm test:storybook` | Render every story in headless Chromium: play functions + axe checks (run `pnpm exec playwright install chromium` once first) |
@@ -41,7 +41,7 @@ Installing also sets up the Husky git hooks via the `prepare` script.
 
 ## Code style
 
-Formatting and linting are both handled by [Biome](https://biomejs.dev/) — there
+Formatting and linting are both handled by [Biome](https://biomejs.dev/). There
 is no ESLint or Prettier in this project. The configuration lives in
 `biome.jsonc`.
 
@@ -52,7 +52,7 @@ A few things worth knowing before you touch the config:
   why. Warnings do not fail CI. If you're fixing one, remove the corresponding
   override in the same PR.
 - `useExhaustiveDependencies` is off on purpose. Some hook dependency arrays are
-  intentionally partial — please don't "fix" them.
+  intentionally partial. Please don't "fix" them.
 - Biome doesn't format Markdown, so `.md` files are left unformatted.
 - Imports are sorted automatically by Biome's assist actions.
 
@@ -89,8 +89,8 @@ Commits should be signed. If you haven't set up commit signing, see
 
 Two hooks run automatically:
 
-- `pre-commit` — `lint-staged` (Biome over staged files) then `pnpm typecheck`
-- `commit-msg` — commitlint
+- `pre-commit`: `lint-staged` (Biome over staged files) then `pnpm typecheck`
+- `commit-msg`: commitlint
 
 If a hook blocks you and you're certain the failure is spurious, `--no-verify`
 exists, but CI runs the same checks, so it's usually faster to fix the issue.
@@ -128,5 +128,5 @@ The Storybook redeploys to GitHub Pages on every push to `main`
 
 ## Reporting bugs
 
-Open an issue using the bug report template. A minimal reproduction — ideally a
-Storybook story — makes a fix dramatically more likely.
+Open an issue using the bug report template. A minimal reproduction, ideally a
+Storybook story, makes a fix dramatically more likely.

@@ -23,7 +23,7 @@ import {
   type VisibleColumn,
 } from './types.ts';
 
-// Unit-separator control char — safe join delimiter for column-id signatures
+// Unit-separator control char: safe join delimiter for column-id signatures
 // (column ids are kebab-case or explicit strings, neither of which contains it).
 const COLUMN_LAYOUT_SEP = '\u001f';
 
@@ -61,7 +61,7 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    * Opt-in accordion rows: when set, each data row that returns non-null gets a
    * full-width companion row rendered directly beneath it with the returned
    * content. Expansion STATE belongs to the consumer (track the expanded row
-   * ids and return null for collapsed rows) — pair it with `onRowClick` to
+   * ids and return null for collapsed rows). Pair it with `onRowClick` to
    * toggle. Returning null for every row is equivalent to omitting the prop.
    */
   renderExpandedRow?: (row: TData) => React.ReactNode | null;
@@ -140,7 +140,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     return reconcileColumnOrder(p.order, currentIds);
   });
 
-  // Reconcile the ORDER used for layout against the current column set — e.g. a
+  // Reconcile the ORDER used for layout against the current column set, e.g. a
   // dynamic metric/category toggle that adds or removes columns. Derived at
   // render (no effect / no setState-in-effect): if the persisted `columnOrder`
   // set no longer matches the current columns, fall back to natural order so new

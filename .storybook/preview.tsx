@@ -20,7 +20,7 @@ const preview: Preview = {
     (Story, context) => {
       const theme = context.globals.theme as string;
       useEffect(() => {
-        // Toggle on <html>, not a wrapper div — dropdown menus portal to
+        // Toggle on <html>, not a wrapper div: dropdown menus portal to
         // <body>, so a wrapper-scoped .dark would leave them light.
         document.documentElement.classList.toggle('dark', theme === 'dark');
       }, [theme]);

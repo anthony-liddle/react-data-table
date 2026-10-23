@@ -14,8 +14,8 @@ export interface PaginationInput {
 
 // goToNext only needs the cursor and whether another page exists. Accepting this
 // structural subset (rather than the full PageInfo) lets callers select just
-// `hasNextPage`/`endCursor` without over-fetching the unused page-info fields —
-// a full PageInfo is still assignable.
+// `hasNextPage`/`endCursor` without over-fetching the unused page-info fields.
+// A full PageInfo is still assignable.
 type NextPageInfo = { hasNextPage: boolean; endCursor?: string | null };
 
 export const usePagination = (pageSize: number) => {
