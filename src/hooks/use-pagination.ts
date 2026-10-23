@@ -2,54 +2,51 @@
 
 import { useCallback, useState } from 'react';
 
+import type { TablePagination } from '../components/data-table/types.ts';
+
 /**
- * Relay-style forward pagination input (`{ first, after }`), the shape
- * GraphQL connection queries take. Pass it straight into the query's
- * variables.
+ * Page-based pagination for offset or page-number APIs and in-memory arrays.
+ * Send `offset` and `limit` with the request (or slice the array with them),
+ * then pass `getPagination(totalCount)` to `DataTable`'s `pagination` prop.
+ * The total usually arrives with the page the offset fetched, which is why the
+ * table's prop is built from it at render time rather than passed in up front.
+ *
+ * For GraphQL connection queries, use `useCursorPagination` instead.
  */
-export interface PaginationInput {
-  first: number;
-  after: string | null;
-}
-
-// goToNext only needs the cursor and whether another page exists. Accepting this
-// structural subset (rather than the full PageInfo) lets callers select just
-// `hasNextPage`/`endCursor` without over-fetching the unused page-info fields.
-// A full PageInfo is still assignable.
-type NextPageInfo = { hasNextPage: boolean; endCursor?: string | null };
-
 export const usePagination = (pageSize: number) => {
-  const [history, setHistory] = useState<(string | null)[]>([null]); // stack of cursors
   const [pageIndex, setPageIndex] = useState(0);
+  const offset = pageIndex * pageSize;
+  const hasPreviousPage = pageIndex > 0;
 
-  const pagination: PaginationInput = {
-    first: pageSize,
-    after: history[pageIndex] ?? null,
+  const goToNext = useCallback(() => setPageIndex(i => i + 1), []);
+  const goToPrevious = useCallback(() => setPageIndex(i => Math.max(0, i - 1)), []);
+  const reset = useCallback(() => setPageIndex(0), []);
+
+  const getPagination = (totalCount: number): TablePagination => {
+    const hasNextPage = offset + pageSize < totalCount;
+    return {
+      totalCount,
+      pageIndex,
+      pageSize,
+      hasNextPage,
+      hasPreviousPage,
+      handleNextPage: () => {
+        if (hasNextPage) {
+          goToNext();
+        }
+      },
+      handlePreviousPage: goToPrevious,
+    };
   };
 
-  const goToNext = useCallback((pageInfo: NextPageInfo | null | undefined) => {
-    if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-      setHistory(prev => [...prev, pageInfo.endCursor as string]);
-      setPageIndex(i => i + 1);
-    }
-  }, []);
-
-  const goToPrevious = useCallback(() => {
-    setHistory(prev => prev.slice(0, -1));
-    setPageIndex(i => Math.max(0, i - 1));
-  }, []);
-
-  const reset = useCallback(() => {
-    setHistory([null]);
-    setPageIndex(0);
-  }, []);
-
   return {
-    pagination,
     pageIndex,
+    offset,
+    limit: pageSize,
     goToNext,
     goToPrevious,
     reset,
-    hasPreviousPage: pageIndex > 0,
+    hasPreviousPage,
+    getPagination,
   };
 };

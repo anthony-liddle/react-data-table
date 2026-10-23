@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../../components/data-table/data-table.tsx';
-import { SortOrder } from '../../components/data-table/types.ts';
 import { useTableSort } from '../../hooks/use-table-sort.ts';
 import { Demo, DemoButton, Intro, StatePanel, Toolbar } from '../support/demo-ui.tsx';
 import { defaultColumns, members, sortKeysOf, sortMembers } from '../support/members.tsx';
@@ -21,12 +20,7 @@ const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: Sortin
   const { sort, direction, handleSort, reset } = useTableSort({
     sortableColumns: SORT_KEYS,
     defaultSortKey: defaultSortKey === 'none' ? undefined : defaultSortKey,
-    defaultSortDirection:
-      defaultSortKey === 'none'
-        ? undefined
-        : defaultSortDirection === 'asc'
-          ? SortOrder.Asc
-          : SortOrder.Desc,
+    defaultSortDirection: defaultSortKey === 'none' ? undefined : defaultSortDirection,
   });
 
   const rows = useMemo(
@@ -46,7 +40,7 @@ const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: Sortin
         <Toolbar>
           <span data-testid="sort-state">
             {column && direction
-              ? `${column.header}, ${direction === SortOrder.Asc ? 'ascending' : 'descending'}`
+              ? `${column.header}, ${direction === 'asc' ? 'ascending' : 'descending'}`
               : 'Unsorted (original order)'}
           </span>
           <DemoButton onClick={reset}>Clear sort</DemoButton>
@@ -85,7 +79,14 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Sorting: Story = {
+export const Sorting: Story = {};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: clicks through the sort cycle on Name.
+ */
+export const SortingInteraction: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const firstName = () => canvasElement.querySelector('tbody tr td')?.textContent;

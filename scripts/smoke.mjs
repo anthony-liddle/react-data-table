@@ -39,6 +39,7 @@ const EXPECTED_EXPORTS = {
     'TableLoading',
     'TableMenu',
     'SortableHeaderClient',
+    'useCursorPagination',
     'usePagination',
     'usePersistedFilters',
     'useTableDragSelection',

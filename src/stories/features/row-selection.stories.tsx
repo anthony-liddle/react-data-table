@@ -106,12 +106,29 @@ const selectThroughCheckboxes =
 
 export const RowSelection: Story = {
   name: 'With row labels',
-  play: selectThroughCheckboxes(`Select ${at(members, 0).name}`),
 };
 
 /** The same table without getRowLabel: checkboxes fall back to the row id. */
 export const RowSelectionIdFallback: Story = {
   name: 'Id fallback',
   args: { labelRows: false },
+};
+
+/**
+ * Test-only twins (hidden from the sidebar by `!dev`), so the stories above stay
+ * still for visitors: each selects a row, then all, then none, and checks the
+ * first checkbox's accessible name.
+ */
+export const RowSelectionInteraction: Story = {
+  ...RowSelection,
+  name: 'With row labels (interaction)',
+  tags: ['!dev', '!autodocs'],
+  play: selectThroughCheckboxes(`Select ${at(members, 0).name}`),
+};
+
+export const RowSelectionIdFallbackInteraction: Story = {
+  ...RowSelectionIdFallback,
+  name: 'Id fallback (interaction)',
+  tags: ['!dev', '!autodocs'],
   play: selectThroughCheckboxes(`Select row ${at(members, 0).id}`),
 };

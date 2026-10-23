@@ -21,7 +21,7 @@ A data-dense React table for admin and reporting screens. It was extracted from 
 - **Row selection**: checkboxes, select-all, optional click-anywhere-on-the-row, and rows that can't be selected.
 - **Drag selection**: press on a row and drag to select a range.
 - **Column management**: show, hide, and reorder columns from a header panel, by mouse or keyboard.
-- **Pagination**: a footer with range text and an optional "Page N of M", plus a cursor-pagination hook.
+- **Pagination**: a footer with range text and an optional "Page N of M", plus hooks for offset and cursor APIs.
 - **Persistence**: column layout, sort, and filters written to the URL (shareable) and to localStorage (survives reloads).
 - Also: row action menus with submenus, loading skeletons, expandable rows, and overridable labels.
 
@@ -120,10 +120,22 @@ interface TableColumn<T> {
 |---|---|---|
 | `useTableSort({ sortableColumns, defaultSortKey, defaultSortDirection, persistKey })` | `{ sort, direction, handleSort, reset, … }` | Pass to the `sort` prop; feed `sort` / `direction` into your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selection, handleSelectRow, handleSelectAll, … }` | Spread into the `selection` prop |
-| `usePagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | Cursor pagination: pass `pagination` to a connection query |
+| `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
+| `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
 
-`SortOrder` (`'ASC'` / `'DESC'`) and lowercase `'asc'` / `'desc'` are accepted everywhere a direction is.
+`useTableSort` reports directions as lowercase `'asc'` / `'desc'`. Everything that takes a direction also accepts the uppercase `SortOrder` values (`'ASC'` / `'DESC'`), for GraphQL sort enums.
+
+`usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
+
+```tsx
+const { offset, limit, getPagination, reset } = usePagination(25);
+const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.slice(offset, offset + limit)
+
+<DataTable columns={columns} data={items} pagination={getPagination(total)} />;
+```
+
+Call `reset()` when the sort or filters change, so the table goes back to the first page.
 
 ## Persistence
 

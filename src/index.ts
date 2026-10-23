@@ -34,7 +34,8 @@ export {
 } from './components/data-table/types.ts';
 export { SortableHeaderClient } from './components/library/sortable-header-client/index.ts';
 // Hooks
-export { type PaginationInput, usePagination } from './hooks/use-pagination.ts';
+export { type CursorPaginationInput, useCursorPagination } from './hooks/use-cursor-pagination.ts';
+export { usePagination } from './hooks/use-pagination.ts';
 export {
   type FilterDef,
   type PersistedFiltersOptions,
