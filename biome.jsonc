@@ -1,0 +1,99 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/node_modules", "!dist", "!storybook-static", "!coverage"]
+  },
+
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf",
+    "bracketSpacing": true,
+    "useEditorconfig": false
+  },
+
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "asNeeded",
+      "bracketSameLine": false,
+      "operatorLinebreak": "before"
+    }
+  },
+
+  "json": { "formatter": { "trailingCommas": "none" } },
+
+  "css": {
+    // Tailwind v4 `@theme` / `@source` / `@custom-variant` directives.
+    "parser": { "tailwindDirectives": true },
+    "formatter": { "quoteStyle": "double" }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [":URL:", ":NODE:"],
+              ":BLANK_LINE:",
+              ":PACKAGE_WITH_PROTOCOL:",
+              ":PACKAGE:",
+              ":BLANK_LINE:",
+              ":ALIAS:",
+              ":BLANK_LINE:",
+              ":PATH:"
+            ]
+          }
+        }
+      }
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+    "domains": { "react": "recommended" },
+    "rules": {
+      "preset": "recommended",
+      "correctness": {
+        // The copied hooks were written under a no-exhaustive-deps regime and
+        // several dep arrays are deliberately partial (e.g. the persistence
+        // effect in use-persisted-filters). Never "fix" a dep array here.
+        "useExhaustiveDependencies": "off"
+      },
+      // These findings are kept as a documented "warn" backlog rather than
+      // rewriting working component code to satisfy them. Remove an override
+      // in the same change that fixes its last finding.
+      "a11y": {
+        "useKeyWithClickEvents": "warn",
+        "noSvgWithoutTitle": "warn"
+      },
+      "complexity": { "noImportantStyles": "warn" },
+      "style": {
+        "noNonNullAssertion": "warn",
+        // Inherent to the table cascade (hover/sticky/selected overrides are
+        // ordered by intent, not specificity).
+        "noDescendingSpecificity": "warn"
+      },
+      "suspicious": { "noArrayIndexKey": "warn" }
+    }
+  }
+}

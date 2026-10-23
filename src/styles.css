@@ -1,0 +1,225 @@
+/*
+ * react-data-table — semantic table styles.
+ *
+ * These are the `.data-table*` / `.drag-selection*` rules the components rely
+ * on, written as plain CSS over shadcn-style theme tokens (no Tailwind
+ * `@apply`), so they work without any build step.
+ *
+ * Theme tokens: every color goes through `hsl(var(--token))`. The `:where()`
+ * blocks below ship zero-specificity defaults (light + `.dark`), so ANY
+ * definition of these variables in your own stylesheet wins regardless of
+ * import order. If you already use a shadcn/ui theme with HSL triplet tokens,
+ * your theme applies automatically.
+ *
+ * NOTE: the component markup also uses Tailwind utility classes, so your app
+ * must run Tailwind and scan this package — see the README's Styling section.
+ */
+
+:where(:root) {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --primary: 24 9.8% 10%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 20 5.9% 90%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96.1%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 70% 35%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 24 5.7% 82.9%;
+  --input: 24 5.7% 82.9%;
+  --ring: 0 0% 4%;
+  --drag-selection: 216 100% 58.4%;
+}
+
+:where(.dark) {
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  --card: 222 47% 11%;
+  --card-foreground: 213 31% 91%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 213 31% 91%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222 47% 1%;
+  --muted: 223 47% 11%;
+  --muted-foreground: 215 16% 57%;
+  --accent: 216 34% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 216 34% 17%;
+  --input: 216 34% 17%;
+  --ring: 216 34% 50%;
+  --drag-selection: 216 100% 58.4%;
+}
+
+/*
+ *  Data Table
+ */
+
+.data-table-con {
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  border: 1px solid hsl(var(--border));
+  width: 100%;
+  border-radius: 0.5rem; /* rounded-lg */
+  overflow: auto;
+  background-color: hsl(var(--card));
+}
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-table th {
+  font-size: 0.75rem; /* text-xs */
+  line-height: 1rem;
+  font-weight: 400;
+}
+.data-table thead {
+  white-space: nowrap;
+}
+.data-table tbody tr:hover th:not(.data-table-no-highlight),
+.data-table tbody tr:hover td:not(.data-table-no-highlight) {
+  background-color: hsl(var(--accent));
+}
+
+/* Override hover effect for tables where we want more control */
+.data-table-no-auto-hover tbody tr:hover th,
+.data-table-no-auto-hover tbody tr:hover td {
+  background-color: transparent;
+}
+
+.data-table-no-auto-hover tbody tr:hover {
+  background-color: hsl(var(--accent));
+}
+
+.data-table td,
+.data-table th {
+  text-align: left;
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+}
+.data-table td.data-table-tight,
+.data-table th.data-table-tight {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+.data-table td.data-table-sticky:first-child,
+.data-table th.data-table-sticky:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+.data-table td.data-table-sticky:first-child::before,
+.data-table th.data-table-sticky:first-child::before {
+  display: block;
+  position: absolute;
+  width: 6px;
+  height: 100%;
+  top: 0;
+  right: -6px;
+  content: "";
+  background-image: linear-gradient(to right, hsl(var(--card)), transparent);
+}
+.data-table tr:hover td.data-table-sticky:first-child::before,
+.data-table tr:hover th.data-table-sticky:first-child::before {
+  background-image: none;
+}
+.data-table td.data-table-sticky:last-child,
+.data-table th.data-table-sticky:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 10;
+}
+.data-table td.data-table-sticky:last-child::before,
+.data-table th.data-table-sticky:last-child::before {
+  display: block;
+  position: absolute;
+  width: 6px;
+  height: 100%;
+  top: 0;
+  left: -6px;
+  content: "";
+  background-image: linear-gradient(to left, hsl(var(--border) / 0.3), transparent);
+}
+
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The modal portal breaks CSS inheritance here.
+tables rendered in portals need explicit styles to work outside the normal DOM hierarchy */
+.modal-table td,
+.modal-table th {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Ensure borders on nested table cells */
+.modal-table tr:not(:last-child) td {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/* Last row should not have a border */
+.modal-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Hover only for non-selected rows */
+.modal-table tr:not(.table-row-selected):hover td,
+.modal-table tr:not(.table-row-selected):hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Table row selection - can be used as a class name */
+/* This is very funky but this is the way to make the data-table-sticky highlighted when selected */
+.data-table .table-row-selected td {
+  background-color: #dbeafe !important; /* blue-100 */
+}
+.dark .data-table .table-row-selected td {
+  background-color: #1e3a8a !important; /* blue-900 */
+}
+.data-table .table-row-selected td.data-table-sticky::before {
+  background-color: #dbeafe !important;
+  background-image: none !important;
+}
+.dark .data-table .table-row-selected td.data-table-sticky::before {
+  background-color: #1e3a8a !important;
+}
+
+/* Drag selection visual feedback using ::after pseudo-element */
+.data-table tbody tr.drag-selection-range {
+  position: relative;
+}
+
+.data-table tr.drag-selection-range td.data-table-sticky:first-child::before,
+.data-table tr.drag-selection-range td.data-table-sticky:last-child::before {
+  display: none;
+}
+
+.data-table tbody tr.drag-selection-range::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: hsl(var(--drag-selection));
+  z-index: 10;
+  pointer-events: none;
+}
+
+.data-table tbody tr.drag-selection-range td {
+  position: relative;
+  background-color: hsl(var(--accent)) !important;
+}
+
+.data-table tbody tr.drag-selection-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+}

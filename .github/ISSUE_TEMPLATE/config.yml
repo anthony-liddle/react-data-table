@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/anthony-liddle/react-data-table/discussions
+    about: Ask a question about usage, or discuss an idea before opening an issue.

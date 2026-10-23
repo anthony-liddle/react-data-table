@@ -1,0 +1,85 @@
+name: Release
+
+# Publishes to npm when a GitHub Release is published. Publishing is deliberate
+# and tied to a version tag, not fired on every push. Uses npm trusted
+# publishing (OIDC): no NPM_TOKEN, no long-lived secrets.
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The environment name must match the npm trusted-publisher configuration.
+    environment: npm-publish
+    permissions:
+      # id-token: write lets the runner mint the OIDC token npm exchanges for
+      # short-lived publish credentials (and signs the provenance statement).
+      # contents: read is for checkout.
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # Build from the exact tag the release points at, not a branch head.
+          ref: ${{ github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # A v1.2.3 release must publish package.json version 1.2.3, nothing else.
+      - name: Check the tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match package.json version v${version}"
+            exit 1
+          fi
+
+      # Every gate runs again here: a release must never ship unvalidated code.
+      - name: Lint
+        run: pnpm lint:ci
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint the package (publint + attw)
+        run: pnpm lint:package
+
+      - name: Smoke test the packed tarball
+        run: pnpm smoke
+
+      # Trusted publishing needs npm 11.5.1 or newer. Node 24 bundles a newer
+      # npm, so check rather than upgrade.
+      - name: Check npm supports trusted publishing
+        run: |
+          npm -v
+          node -e "const [a,b,c]=process.argv[1].split('.').map(Number); process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)" "$(npm -v)"
+
+      # No NODE_AUTH_TOKEN: under trusted publishing npm authenticates via OIDC.
+      # --provenance attaches a signed statement linking the tarball to this
+      # workflow run; npm checks it against package.json's repository.url.
+      # --ignore-scripts: every gate above already ran; don't rerun them via
+      # prepublishOnly.
+      - name: Publish to npm
+        run: npm publish --access public --provenance --ignore-scripts

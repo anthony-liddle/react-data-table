@@ -1,0 +1,96 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+
+import { DataTable } from '../../components/data-table/data-table.tsx';
+import { useTableSelection } from '../../hooks/use-table-selection.ts';
+import { Demo, DemoButton, Intro, StatePanel, Toolbar } from '../support/demo-ui.tsx';
+import { defaultColumns, isSuspended, members } from '../support/members.tsx';
+
+interface RowSelectionDemoProps {
+  /** Click anywhere on a row (not just its checkbox) to toggle it. */
+  selectOnRowClick: boolean;
+  /** Suspended members cannot be selected by any method. */
+  disableSuspended: boolean;
+  rowCount: number;
+}
+
+const RowSelectionTable = ({
+  selectOnRowClick,
+  disableSuspended,
+  rowCount,
+}: RowSelectionDemoProps) => {
+  const rows = members.slice(0, rowCount);
+  const isRowDisabled = disableSuspended ? isSuspended : undefined;
+  const { selection, ...handlers } = useTableSelection(rows, { isRowDisabled });
+  const disabledCount = isRowDisabled ? rows.filter(isRowDisabled).length : 0;
+
+  return (
+    <Demo>
+      <Intro>
+        Tick a row's checkbox, or the header checkbox to select every selectable row.
+        {selectOnRowClick ? ' Clicking anywhere on a row also toggles it.' : ''}
+        {disabledCount > 0
+          ? ` The ${disabledCount} suspended member${disabledCount === 1 ? ' is' : 's are'} disabled and skipped by select-all.`
+          : ''}
+      </Intro>
+      <StatePanel label="Selection">
+        <Toolbar>
+          <span data-testid="selected-count">
+            {selection.length} of {rows.length - disabledCount} selected
+          </span>
+          <DemoButton onClick={handlers.handleDeselectAll}>Clear selection</DemoButton>
+        </Toolbar>
+        {selection.length > 0 && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {selection.map(member => member.name).join(', ')}
+          </p>
+        )}
+      </StatePanel>
+      <DataTable
+        columns={defaultColumns}
+        data={rows}
+        selectOnRowClick={selectOnRowClick}
+        selection={{ selectedRows: selection, isRowDisabled, ...handlers }}
+        hideTableSettings
+      />
+    </Demo>
+  );
+};
+
+/** Remounts on control changes so selection never points at rows that left the table. */
+const RowSelectionDemo = (props: RowSelectionDemoProps) => (
+  <RowSelectionTable key={`${props.disableSuspended}:${props.rowCount}`} {...props} />
+);
+
+const meta = {
+  title: 'Features/Row Selection',
+  component: RowSelectionDemo,
+  args: { selectOnRowClick: true, disableSuspended: true, rowCount: 15 },
+  argTypes: {
+    rowCount: { control: { type: 'range', min: 5, max: members.length, step: 5 } },
+  },
+} satisfies Meta<typeof RowSelectionDemo>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const RowSelection: Story = {
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const count = () => canvas.getByTestId('selected-count').textContent ?? '';
+    const rows = members.slice(0, args.rowCount);
+    const selectable = args.disableSuspended
+      ? rows.filter(m => !isSuspended(m)).length
+      : rows.length;
+
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row m-001' }));
+    await waitFor(() => expect(count()).toMatch(/^1 of/));
+
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select all' }));
+    await waitFor(() => expect(count()).toMatch(new RegExp(`^${selectable} of ${selectable}`)));
+
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select all' }));
+    await waitFor(() => expect(count()).toMatch(/^0 of/));
+  },
+};

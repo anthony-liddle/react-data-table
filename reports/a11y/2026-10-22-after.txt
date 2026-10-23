@@ -1,0 +1,39 @@
+# a11y run: final, at e7e2edc (24 visible + 5 hidden test-only stories), 2026-10-22
+
+Command: pnpm test:storybook (vitest --project storybook, @storybook/addon-a11y with a11y.test = 'error')
+Stories: 29  passed: 29  failed: 0
+
+## Per-story result (rule x violating nodes)
+
+PASS  src/stories/a11y-audit.stories.tsx > Column Menu Open  —  no violations
+PASS  src/stories/a11y-audit.stories.tsx > Row Action Submenu Open  —  no violations
+PASS  src/stories/a11y-audit.stories.tsx > Dark Theme  —  no violations
+PASS  src/stories/data-table.stories.tsx > Playground  —  no violations
+PASS  src/stories/data-table.stories.tsx > Loading  —  no violations
+PASS  src/stories/data-table.stories.tsx > Empty  —  no violations
+PASS  src/stories/data-table.stories.tsx > Expanded Rows  —  no violations
+PASS  src/stories/data-table.stories.tsx > With Action Menu  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > Default  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > With Page Count  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > First Page  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > Last Page  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > No Results  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > Custom Labels  —  no violations
+PASS  src/stories/pagination-client.stories.tsx > Interactive  —  no violations
+PASS  src/stories/persistence-checks.stories.tsx > Url Round Trip  —  no violations
+PASS  src/stories/persistence-checks.stories.tsx > Local Storage Round Trip  —  no violations
+PASS  src/stories/sortable-header-client.stories.tsx > Inactive  —  no violations
+PASS  src/stories/sortable-header-client.stories.tsx > Sorted Ascending  —  no violations
+PASS  src/stories/sortable-header-client.stories.tsx > Sorted Descending  —  no violations
+PASS  src/stories/sortable-header-client.stories.tsx > Disabled  —  no violations
+PASS  src/stories/features/column-management.stories.tsx > Column Management  —  no violations
+PASS  src/stories/features/drag-selection.stories.tsx > Drag Selection  —  no violations
+PASS  src/stories/features/grouped-columns.stories.tsx > Grouped Columns  —  no violations
+PASS  src/stories/features/local-storage-persistence.stories.tsx > localStorage Persistence  —  no violations
+PASS  src/stories/features/pagination.stories.tsx > Pagination  —  no violations
+PASS  src/stories/features/row-selection.stories.tsx > Row Selection  —  no violations
+PASS  src/stories/features/sorting.stories.tsx > Sorting  —  no violations
+PASS  src/stories/features/url-persistence.stories.tsx > URL Persistence  —  no violations
+
+## Raw axe output for failing stories
+
