@@ -1,19 +1,25 @@
 /*
- * Storybook preview stylesheet. This doubles as a reference for consumers:
- * it is exactly the Tailwind v4 wiring an app needs to style the package.
+ * Storybook preview stylesheet. The package needs no Tailwind; Tailwind here
+ * styles only the stories' own demo chrome.
+ *
+ * It also shows the layered setup the README gives Tailwind users: the
+ * package's rules sit in a react-data-table layer between Tailwind's base
+ * (so preflight can't undo them) and its utilities (so a utility passed
+ * through className wins).
  */
 
-/* The package's semantic table CSS (tokens, .data-table*, drag selection). */
-@import "../src/styles.css";
+@layer theme, base, react-data-table, components, utilities;
 
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@import "../src/styles.css" layer(react-data-table);
 
-/* Compile utilities for the component markup in this package. */
-@source "../src";
+/* Utilities for the stories only. source(none) stops Tailwind's automatic
+   detection from scanning the components, so a utility left behind in one
+   would render unstyled instead of being silently generated. */
+@source "../src/stories";
 
 /* Class-based dark mode: `dark:` utilities follow the `.dark` class that the
-   theme toolbar toggles on <html>, matching the `.dark` token swap in
-   styles.css. */
+   theme toolbar toggles on <html>, matching the package's `.dark` defaults. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* The demo theme: shadcn-style tokens as full colour values, the way an app

@@ -115,7 +115,7 @@ for (const fragment of ['<table', 'Ada', 'bram@example.com', 'aria-sort="ascendi
 
 const cssPath = fileURLToPath(import.meta.resolve('${name}/styles.css'));
 const css = readFileSync(cssPath, 'utf8');
-assert.match(css, /\\.data-table\\b/, 'styles.css should contain the table rules');
+assert.match(css, /\\.rdt-table\\b/, 'styles.css should contain the table rules');
 
 // The layered copy is the same rules inside one cascade layer.
 const layerPath = fileURLToPath(import.meta.resolve('${name}/styles.layer.css'));
