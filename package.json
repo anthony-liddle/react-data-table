@@ -1,7 +1,7 @@
 {
   "name": "@anthony-liddle/react-data-table",
   "version": "0.3.0",
-  "description": "A data-dense React table: sorting, grouped columns, row and drag selection, column management, pagination, and URL + localStorage persistence. Styled with Tailwind CSS over shadcn-style theme tokens.",
+  "description": "A data-dense React table: sorting, grouped columns, row and drag selection, column management, pagination, and URL + localStorage persistence. Precompiled CSS with documented class names, themed by shadcn-style tokens.",
   "keywords": [
     "react",
     "table",
@@ -10,7 +10,7 @@
     "sorting",
     "pagination",
     "selection",
-    "tailwind",
+    "css",
     "shadcn"
   ],
   "homepage": "https://anthony-liddle.github.io/react-data-table/",

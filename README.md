@@ -25,25 +25,27 @@ A data-dense React table for admin and reporting screens. It was extracted from 
 - **Persistence**: column layout, sort, and filters written to the URL (shareable) and to localStorage (survives reloads).
 - Also: row action menus with submenus, loading skeletons, expandable rows, and overridable labels.
 
-ESM only, strict TypeScript, React 18 or 19.
+ESM only, strict TypeScript, React 18 or 19. No Tailwind required: the package ships its own CSS.
 
 ## Setup
 
-The table is styled with Tailwind CSS v4 utility classes plus a small stylesheet of semantic table rules. Both need wiring up.
+Import the stylesheet once, for example in your root layout:
 
-1. Import the stylesheet once, for example in your root layout:
+```tsx
+import '@anthony-liddle/react-data-table/styles.css';
+```
 
-   ```tsx
-   import '@anthony-liddle/react-data-table/styles.css';
-   ```
+That is the whole setup. The table needs no Tailwind and no build step of its own.
 
-2. Let Tailwind see the package's class names. Add this to your CSS entry, adjusting the relative path:
+If your app orders its own cascade layers (Tailwind v4 does), import the layered copy instead and give it a place in the order. Between Tailwind's `base` and `utilities`, preflight leaves the table alone and a utility you pass through `className` wins:
 
-   ```css
-   @source "../node_modules/@anthony-liddle/react-data-table/dist";
-   ```
+```css
+@layer theme, base, react-data-table, components, utilities;
+@import "tailwindcss";
+@import "@anthony-liddle/react-data-table/styles.layer.css";
+```
 
-Colours come from shadcn-style HSL tokens (`--card`, `--border`, `--accent`, `--muted-foreground`, `--drag-selection`, and so on). The stylesheet ships light and `.dark` defaults at zero specificity, so a shadcn/ui theme you already have wins automatically. For a complete reference setup, including the `@theme inline` token mapping, see [`.storybook/preview.css`](./.storybook/preview.css).
+`styles.layer.css` is the same rules as `styles.css` inside `@layer react-data-table`. See [Styling](#styling) for theming and overrides.
 
 ## Quick start
 
@@ -148,6 +150,67 @@ With `persistKey` set, state is read from the URL first, then localStorage, and 
 | Filters (`usePersistedFilters`) | one param per filter | `filters:{persistKey}` |
 
 The URL params are not namespaced, so use one persisted table per page. A persisted sort key is honoured only if it is in `sortableColumns`, so another table's `?sort=` can't leak in. A saved column order is dropped when the column set changes in code.
+
+## Styling
+
+Every element the table renders has a documented class, and runtime state lives on attributes, so you restyle it with ordinary CSS. Each base rule in `styles.css` is a single class, and a modifier or state adds at most one more class, attribute or pseudo-class. So one class of yours, loaded after the stylesheet, overrides a base style, and the same class with the same state overrides a stateful one. Nothing uses `!important`, and the stylesheet resets only its own elements, never your markup inside a cell.
+
+### Theme
+
+Colours come from shadcn-style tokens, read as full colour values: `--background`, `--foreground`, `--card`, `--popover`, `--popover-foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--border`, `--input` and `--ring`. The package never declares them. It reads each one with a built-in default, so a theme you declare anywhere wins, even inside a cascade layer, and `.dark` on any ancestor switches the defaults. A current shadcn/ui theme applies as it is.
+
+Older shadcn themes wrote bare HSL triplets (`--card: 0 0% 100%`). Wrap each value in `hsl()`: `--card: hsl(0 0% 100%)`.
+
+### Custom properties
+
+Set these on `:root` or on any ancestor of the table.
+
+| Property | Default | |
+|---|---|---|
+| `--rdt-radius` | `0.5rem` | Corner radius of the table container |
+| `--rdt-font-size` | `0.875rem` | Body text |
+| `--rdt-header-font-size` | `0.75rem` | Header text |
+| `--rdt-cell-padding-x` | `0.75rem` | Horizontal cell padding |
+| `--rdt-cell-padding-y` | `0.5rem` | Vertical cell padding |
+| `--rdt-row-selected` | unset | Background for selected rows. Unset, a selected row looks like any other; when you set it, keep your cell text readable against it. |
+| `--rdt-skeleton` | stone, light and dark | Loading placeholders |
+| `--drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
+
+### Classes and state
+
+| Block | Elements and modifiers | State |
+|---|---|---|
+| `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
+| `rdt-sort-header` (`--sticky`) | `__button`, `__content`, `__label`, `__icon` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
+| `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
+| `rdt-column-panel` | `__trigger`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
+| `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
+| `rdt-action-menu` | `__trigger`, `__link`, `__button`, `__icon` (`--link`) | |
+| `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
+| `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
+| `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |
+
+Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-sort-header`. The column panel and the row menus render in a portal at the end of `<body>`, so style them by their own classes, not through `.rdt-table`.
+
+### Example
+
+```css
+/* Denser rows and square corners for every table on the page */
+:root {
+  --rdt-cell-padding-y: 0.25rem;
+  --rdt-radius: 0;
+}
+
+/* Highlight selected rows */
+:root {
+  --rdt-row-selected: oklch(0.96 0.02 250);
+}
+
+/* Bold the sorted column's header */
+.rdt-table__header-cell[aria-sort] {
+  font-weight: 600;
+}
+```
 
 ## Accessibility
 
