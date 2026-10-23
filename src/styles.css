@@ -1,60 +1,107 @@
 /*
- * react-data-table: semantic table styles.
+ * react-data-table stylesheet.
  *
- * These are the `.data-table*` / `.drag-selection*` rules the components rely
- * on, written as plain CSS over shadcn-style theme tokens (no Tailwind
- * `@apply`), so they work without any build step.
+ * Every element the package renders carries an `rdt-` class, and these rules
+ * style those classes and the state attributes on them. Nothing here depends
+ * on Tailwind or on any reset of yours.
  *
- * Theme tokens: every color goes through `hsl(var(--token))`. The `:where()`
- * blocks below ship zero-specificity defaults (light + `.dark`), so ANY
- * definition of these variables in your own stylesheet wins regardless of
- * import order. If you already use a shadcn/ui theme with HSL triplet tokens,
- * your theme applies automatically.
+ * Theme: colours come from shadcn-style tokens (`--background`, `--card`,
+ * `--border`, ...) as full colour values. The package never declares them; it
+ * reads each one with a default, so a theme you declare anywhere (unlayered,
+ * in a layer, before or after this file) wins. `.dark` on an ancestor switches
+ * the defaults.
  *
- * NOTE: the component markup also uses Tailwind utility classes, so your app
- * must run Tailwind and scan this package. See the README's Styling section.
+ * This file is shipped twice: as `styles.css` (unlayered) and as
+ * `styles.layer.css` (the same rules inside `@layer react-data-table`). Keep it
+ * free of top-level `@import` and `@layer` so the build can wrap it.
  */
 
-:where(:root) {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 4%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 4%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 4%;
-  --primary: 24 9.8% 10%;
-  --primary-foreground: 0 0% 100%;
-  --muted: 20 5.9% 90%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 70% 35%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 24 5.7% 82.9%;
-  --input: 24 5.7% 82.9%;
-  --ring: 0 0% 4%;
-  --drag-selection: 216 100% 58.4%;
+/*
+ *  Reset, for package elements only
+ *
+ *  Zero specificity, so any rule of yours overrides it. It reaches only
+ *  elements with an `rdt-` class, never your markup inside a cell.
+ */
+
+:where([class^="rdt-"], [class*=" rdt-"]),
+:where([class^="rdt-"], [class*=" rdt-"])::before,
+:where([class^="rdt-"], [class*=" rdt-"])::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
 }
 
-:where(.dark) {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --card: 222 47% 11%;
-  --card-foreground: 213 31% 91%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 213 31% 91%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222 47% 1%;
-  --muted: 223 47% 11%;
-  --muted-foreground: 215 16% 57%;
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
-  --ring: 216 34% 50%;
-  --drag-selection: 216 100% 58.4%;
+:where(button[class^="rdt-"], button[class*=" rdt-"]) {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+/*
+ *  Tokens
+ *
+ *  Private `--_rdt-*` properties, set on every block that can render on its
+ *  own (menus and the column panel portal to <body>). Each reads the public
+ *  token and falls back to the package default.
+ */
+
+:where(
+  .rdt-table,
+  .rdt-pagination,
+  .rdt-sort-header,
+  .rdt-menu,
+  .rdt-column-panel,
+  .data-table-con
+) {
+  --_rdt-background: var(--background, hsl(0 0% 100%));
+  --_rdt-foreground: var(--foreground, hsl(0 0% 4%));
+  --_rdt-card: var(--card, hsl(0 0% 100%));
+  --_rdt-popover: var(--popover, hsl(0 0% 100%));
+  --_rdt-popover-foreground: var(--popover-foreground, hsl(0 0% 4%));
+  --_rdt-primary: var(--primary, hsl(24 9.8% 10%));
+  --_rdt-primary-foreground: var(--primary-foreground, hsl(0 0% 100%));
+  --_rdt-muted: var(--muted, hsl(20 5.9% 90%));
+  --_rdt-muted-foreground: var(--muted-foreground, hsl(0 0% 45%));
+  --_rdt-accent: var(--accent, hsl(0 0% 96.1%));
+  --_rdt-accent-foreground: var(--accent-foreground, hsl(0 0% 9%));
+  --_rdt-border: var(--border, hsl(24 5.7% 82.9%));
+  --_rdt-input: var(--input, hsl(24 5.7% 82.9%));
+  --_rdt-ring: var(--ring, hsl(0 0% 4%));
+  --_rdt-drag-selection: var(--drag-selection, hsl(216 100% 58.4%));
+  --_rdt-row-selected: var(--rdt-row-selected, #dbeafe);
+  --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
+}
+
+:where(.dark)
+  :where(
+    .rdt-table,
+    .rdt-pagination,
+    .rdt-sort-header,
+    .rdt-menu,
+    .rdt-column-panel,
+    .data-table-con
+  ) {
+  --_rdt-background: var(--background, hsl(224 71% 4%));
+  --_rdt-foreground: var(--foreground, hsl(213 31% 91%));
+  --_rdt-card: var(--card, hsl(222 47% 11%));
+  --_rdt-popover: var(--popover, hsl(222 47% 11%));
+  --_rdt-popover-foreground: var(--popover-foreground, hsl(213 31% 91%));
+  --_rdt-primary: var(--primary, hsl(210 40% 98%));
+  --_rdt-primary-foreground: var(--primary-foreground, hsl(222 47% 1%));
+  --_rdt-muted: var(--muted, hsl(223 47% 11%));
+  --_rdt-muted-foreground: var(--muted-foreground, hsl(215 16% 57%));
+  --_rdt-accent: var(--accent, hsl(216 34% 17%));
+  --_rdt-accent-foreground: var(--accent-foreground, hsl(210 40% 98%));
+  --_rdt-border: var(--border, hsl(216 34% 17%));
+  --_rdt-input: var(--input, hsl(216 34% 17%));
+  --_rdt-ring: var(--ring, hsl(216 34% 50%));
+  --_rdt-row-selected: var(--rdt-row-selected, #1e3a8a);
+  --_rdt-skeleton: var(--rdt-skeleton, oklch(37.4% 0.01 67.558));
 }
 
 /*
@@ -64,11 +111,11 @@
 .data-table-con {
   font-size: 0.875rem; /* text-sm */
   line-height: 1.25rem;
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--_rdt-border);
   width: 100%;
   border-radius: 0.5rem; /* rounded-lg */
   overflow: auto;
-  background-color: hsl(var(--card));
+  background-color: var(--_rdt-card);
 }
 .data-table {
   width: 100%;
@@ -85,7 +132,7 @@
 }
 .data-table tbody tr:hover th:not(.data-table-no-highlight),
 .data-table tbody tr:hover td:not(.data-table-no-highlight) {
-  background-color: hsl(var(--accent));
+  background-color: var(--_rdt-accent);
 }
 
 /* Override hover effect for tables where we want more control */
@@ -95,14 +142,14 @@
 }
 
 .data-table-no-auto-hover tbody tr:hover {
-  background-color: hsl(var(--accent));
+  background-color: var(--_rdt-accent);
 }
 
 .data-table td,
 .data-table th {
   text-align: left;
-  border-bottom: 1px solid hsl(var(--border));
-  background-color: hsl(var(--card));
+  border-bottom: 1px solid var(--_rdt-border);
+  background-color: var(--_rdt-card);
   padding: 0.5rem 0.75rem; /* px-3 py-2 */
 }
 .data-table td.data-table-tight,
@@ -125,7 +172,7 @@
   top: 0;
   right: -6px;
   content: "";
-  background-image: linear-gradient(to right, hsl(var(--card)), transparent);
+  background-image: linear-gradient(to right, var(--_rdt-card), transparent);
 }
 .data-table tr:hover td.data-table-sticky:first-child::before,
 .data-table tr:hover th.data-table-sticky:first-child::before {
@@ -146,7 +193,11 @@
   top: 0;
   left: -6px;
   content: "";
-  background-image: linear-gradient(to left, hsl(var(--border) / 0.3), transparent);
+  background-image: linear-gradient(
+    to left,
+    color-mix(in oklab, var(--_rdt-border) 30%, transparent),
+    transparent
+  );
 }
 
 .data-table tr:last-child td {
@@ -157,12 +208,12 @@
 tables rendered in portals need explicit styles to work outside the normal DOM hierarchy */
 .modal-table td,
 .modal-table th {
-  background-color: hsl(var(--card)) !important;
+  background-color: var(--_rdt-card) !important;
 }
 
 /* Ensure borders on nested table cells */
 .modal-table tr:not(:last-child) td {
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid var(--_rdt-border);
 }
 
 /* Last row should not have a border */
@@ -173,7 +224,7 @@ tables rendered in portals need explicit styles to work outside the normal DOM h
 /* Hover only for non-selected rows */
 .modal-table tr:not(.table-row-selected):hover td,
 .modal-table tr:not(.table-row-selected):hover {
-  background-color: hsl(var(--accent)) !important;
+  background-color: var(--_rdt-accent) !important;
 }
 
 /* Table row selection - can be used as a class name */
@@ -193,33 +244,33 @@ tables rendered in portals need explicit styles to work outside the normal DOM h
 }
 
 /* Drag selection visual feedback using ::after pseudo-element */
-.data-table tbody tr.drag-selection-range {
+.data-table tbody tr[data-drag-range] {
   position: relative;
 }
 
-.data-table tr.drag-selection-range td.data-table-sticky:first-child::before,
-.data-table tr.drag-selection-range td.data-table-sticky:last-child::before {
+.data-table tr[data-drag-range] td.data-table-sticky:first-child::before,
+.data-table tr[data-drag-range] td.data-table-sticky:last-child::before {
   display: none;
 }
 
-.data-table tbody tr.drag-selection-range::after {
+.data-table tbody tr[data-drag-range]::after {
   content: "";
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: hsl(var(--drag-selection));
+  background-color: var(--_rdt-drag-selection);
   z-index: 10;
   pointer-events: none;
 }
 
-.data-table tbody tr.drag-selection-range td {
+.data-table tbody tr[data-drag-range] td {
   position: relative;
-  background-color: hsl(var(--accent)) !important;
+  background-color: var(--_rdt-accent) !important;
 }
 
-.data-table tbody tr.drag-selection-dragging {
+.data-table[data-dragging] tbody tr {
   cursor: grabbing !important;
   user-select: none !important;
 }

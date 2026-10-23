@@ -89,7 +89,7 @@ export const DragSelectionInteraction: Story = {
       fireEvent.mouseOver(nameCell(i));
       await settle();
     }
-    await expect(canvasElement.querySelectorAll('tr.drag-selection-range')).toHaveLength(4);
+    await expect(canvasElement.querySelectorAll('tr[data-drag-range]')).toHaveLength(4);
     fireEvent.mouseUp(nameCell(4));
 
     const range = members.slice(1, 5);

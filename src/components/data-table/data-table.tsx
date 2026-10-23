@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
+import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
+import { cx } from '../../lib/cx.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { PaginationClient } from './pagination-client.tsx';
 import { readPersisted, writePersisted } from './persist.ts';
@@ -80,6 +81,13 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   linkComponent?: ActionMenuLinkComponent;
 }
+
+// Drag state as data attributes, present only when true, for the stylesheet.
+const dragAttributes = ({ inRange, isStart, isEnd }: RowDragState) => ({
+  'data-drag-range': inRange || undefined,
+  'data-drag-start': isStart || undefined,
+  'data-drag-end': isEnd || undefined,
+});
 
 export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   loading,
@@ -199,7 +207,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     handleRowMouseDown,
     handleRowMouseUp,
     handleRowMouseEnter,
-    getRowClassName,
+    isDragging,
+    isDragActive,
+    getRowDragState,
   } = useTableDragSelection({
     data,
     selection,
@@ -312,6 +322,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         <table
           className="data-table w-full"
           aria-busy={loading || undefined}
+          data-dragging={isDragActive || undefined}
           onMouseLeave={selection ? handleTableMouseLeave : undefined}
         >
           <thead>
@@ -486,7 +497,11 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     onMouseDown={selection ? e => handleRowMouseDown(e, rowIndex) : undefined}
                     onMouseUp={selection ? e => handleRowMouseUp(e, rowIndex) : undefined}
                     onMouseEnter={selection ? () => handleRowMouseEnter(rowIndex) : undefined}
-                    className={`${selection ? getRowClassName(rowIndex) : ''} ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName ? rowClassName(row) : ''}`}
+                    {...dragAttributes(getRowDragState(rowIndex))}
+                    className={cx(
+                      ((selection && !isDragging) || onRowClick) && 'cursor-pointer',
+                      rowClassName?.(row)
+                    )}
                   >
                     {selection && (
                       <td className="data-table-sticky w-[40px] pl-4!">

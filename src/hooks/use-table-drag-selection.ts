@@ -21,7 +21,16 @@ export interface UseTableDragSelectionReturn<TData extends BaseTableRow> {
   handleRowMouseEnter: (rowIndex: number) => void;
   handleTableMouseLeave: () => void;
   isRowInDragRange: (rowIndex: number) => boolean;
-  getRowClassName: (rowIndex: number) => string;
+  /** True once a press has been dragged onto a different row. */
+  isDragActive: boolean;
+  /** A row's place in the active drag; all false when no drag is active. */
+  getRowDragState: (rowIndex: number) => RowDragState;
+}
+
+export interface RowDragState {
+  inRange: boolean;
+  isStart: boolean;
+  isEnd: boolean;
 }
 
 export function useTableDragSelection<TData extends BaseTableRow>({
@@ -207,34 +216,22 @@ export function useTableDragSelection<TData extends BaseTableRow>({
     [isDragging, dragEndRowIndex]
   );
 
-  // Get className for row based on drag state
-  const getRowClassName = useCallback(
-    (rowIndex: number) => {
-      if (!selection) {
-        return '';
-      }
+  // A drag counts once it is confirmed and has reached a row other than the
+  // one it started on, so a press within one row still allows text selection.
+  const isDragActive =
+    !!selection && isDragging && isDragConfirmed && dragStartRowIndex !== dragEndRowIndex;
 
-      const classes: string[] = [];
-
-      // Only apply drag-selection-dragging class when drag is confirmed AND mouse moved to different row
-      // The user-select: none will only apply when we're actively dragging across rows
-      if (isDragging && isDragConfirmed && dragStartRowIndex !== dragEndRowIndex) {
-        classes.push('drag-selection-dragging');
-      }
-
-      if (isDragging && isDragConfirmed && isRowInDragRange(rowIndex)) {
-        classes.push('drag-selection-range');
-        if (isDragStartRow(rowIndex) && dragStartRowIndex !== dragEndRowIndex) {
-          classes.push('drag-selection-range-start');
-        }
-        if (isDragEndRow(rowIndex) && dragStartRowIndex !== dragEndRowIndex) {
-          classes.push('drag-selection-range-end');
-        }
-      } else if (!isDragging) {
-        classes.push('cursor-pointer');
-      }
-
-      return classes.join(' ');
+  // A confirmed drag that returns to its start row keeps that row in range,
+  // but it no longer marks a start or an end.
+  const getRowDragState = useCallback(
+    (rowIndex: number): RowDragState => {
+      const inRange = !!selection && isDragging && isDragConfirmed && isRowInDragRange(rowIndex);
+      const spansRows = dragStartRowIndex !== dragEndRowIndex;
+      return {
+        inRange,
+        isStart: inRange && spansRows && isDragStartRow(rowIndex),
+        isEnd: inRange && spansRows && isDragEndRow(rowIndex),
+      };
     },
     [
       selection,
@@ -297,6 +294,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
     handleRowMouseEnter,
     handleTableMouseLeave,
     isRowInDragRange,
-    getRowClassName,
+    isDragActive,
+    getRowDragState,
   };
 }
