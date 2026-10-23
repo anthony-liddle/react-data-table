@@ -871,4 +871,142 @@ describe('DataTable', () => {
       expect(header.closest('th')).toHaveClass('custom-header-class');
     });
   });
+
+  // The rdt- classes and state attributes are the documented styling API, so
+  // these assert the contract consumers style against.
+  describe('styling contract', () => {
+    const selectionFor = (selected: TestRow[]): TableSelection<TestRow> => ({
+      selectedRows: selected,
+      handleSelectRow: vi.fn(),
+      handleSelectAll: vi.fn(),
+      handleDeselectAll: vi.fn(),
+      isRowSelected: row => selected.some(r => r.id === row.id),
+      findRowInSelection: row => selected.find(r => r.id === row.id),
+    });
+    const bodyRows = () => [...screen.getByRole('table').querySelectorAll('tbody tr')];
+
+    it('names the container, table, header, rows and cells', () => {
+      const { container } = render(<DataTable columns={baseColumns} data={baseData} />);
+      const root = container.firstElementChild;
+      expect(root).toHaveClass('rdt-table');
+      expect(root?.firstElementChild).toHaveClass('rdt-table__scroll');
+      const table = screen.getByRole('table');
+      expect(table).toHaveClass('rdt-table__table');
+      expect(table.querySelector('thead')).toHaveClass('rdt-table__head');
+      expect(table.querySelector('thead tr')).toHaveClass('rdt-table__header-row');
+      expect(table.querySelector('tbody')).toHaveClass('rdt-table__body');
+      for (const th of screen.getAllByRole('columnheader')) {
+        expect(th).toHaveClass('rdt-table__header-cell');
+      }
+      for (const row of bodyRows()) {
+        expect(row).toHaveClass('rdt-table__row');
+      }
+      for (const cell of screen.getAllByRole('cell')) {
+        expect(cell).toHaveClass('rdt-table__cell');
+      }
+    });
+
+    it('labels a header that cannot sort', () => {
+      render(<DataTable columns={baseColumns} data={baseData} />);
+      expect(screen.getByText('Role')).toHaveClass('rdt-table__header-label');
+    });
+
+    it('marks only selected rows with data-selected', () => {
+      render(
+        <DataTable
+          columns={baseColumns}
+          data={baseData}
+          selection={selectionFor([at(baseData, 1)])}
+        />
+      );
+      expect(bodyRows().map(row => row.hasAttribute('data-selected'))).toEqual([
+        false,
+        true,
+        false,
+      ]);
+    });
+
+    it('gives the selection, settings and action columns their modifiers', () => {
+      render(
+        <DataTable
+          columns={baseColumns}
+          data={baseData}
+          selection={selectionFor([])}
+          actionMenu={[{ label: 'View', callbackAction: vi.fn() }]}
+        />
+      );
+      const selectAll = screen.getByRole('checkbox', { name: 'Select all' });
+      expect(selectAll.parentElement).toHaveClass('rdt-table__select-all');
+      expect(selectAll.closest('th')).toHaveClass(
+        'rdt-table__header-cell--select',
+        'rdt-table__header-cell--sticky'
+      );
+      expect(screen.getByRole('button', { name: 'Column settings' }).closest('th')).toHaveClass(
+        'rdt-table__header-cell--settings',
+        'rdt-table__header-cell--sticky'
+      );
+      expect(screen.getByRole('checkbox', { name: 'Select row 1' }).closest('td')).toHaveClass(
+        'rdt-table__cell--select',
+        'rdt-table__cell--sticky'
+      );
+      expect(at(screen.getAllByRole('button', { name: 'Actions' }), 0).closest('td')).toHaveClass(
+        'rdt-table__cell--actions',
+        'rdt-table__cell--sticky'
+      );
+    });
+
+    it('makes rows clickable only when they respond to clicks', () => {
+      const { rerender } = render(<DataTable columns={baseColumns} data={baseData} />);
+      expect(at(bodyRows(), 0)).not.toHaveClass('rdt-table__row--clickable');
+
+      rerender(<DataTable columns={baseColumns} data={baseData} onRowClick={vi.fn()} />);
+      expect(at(bodyRows(), 0)).toHaveClass('rdt-table__row--clickable');
+
+      rerender(<DataTable columns={baseColumns} data={baseData} selection={selectionFor([])} />);
+      expect(at(bodyRows(), 0)).toHaveClass('rdt-table__row--clickable');
+    });
+
+    it('names expanded rows and the empty state', () => {
+      const { rerender } = render(
+        <DataTable
+          columns={baseColumns}
+          data={baseData}
+          renderExpandedRow={row => (row.id === '1' ? <p>Details</p> : null)}
+        />
+      );
+      const expandedCell = screen.getByText('Details').closest('td');
+      expect(expandedCell).toHaveClass('rdt-table__expanded-cell');
+      expect(expandedCell?.parentElement).toHaveClass('rdt-table__expanded-row');
+
+      rerender(<DataTable columns={baseColumns} data={[]} />);
+      expect(screen.getByText('No results found').closest('td')).toHaveClass('rdt-table__empty');
+    });
+
+    it('marks grouped parent headers', () => {
+      render(
+        <DataTable
+          columns={[
+            { header: 'Name', cell: ({ row }) => row.name },
+            {
+              header: 'Contact',
+              subColumns: [
+                { header: 'Email', cell: ({ row }) => row.email },
+                { header: 'Role', cell: ({ row }) => row.role },
+              ],
+            },
+          ]}
+          data={baseData}
+        />
+      );
+      expect(screen.getByText('Contact').closest('th')).toHaveClass(
+        'rdt-table__header-cell',
+        'rdt-table__header-cell--group'
+      );
+    });
+
+    it('appends rowClassName after the package classes', () => {
+      render(<DataTable columns={baseColumns} data={baseData} rowClassName={() => 'mine'} />);
+      expect(at(bodyRows(), 0).className).toBe('rdt-table__row mine');
+    });
+  });
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { cx } from '../../lib/cx.ts';
 import { SortableHeaderClient } from '../library/sortable-header-client/index.ts';
 import type {
   BaseTableRow,
@@ -31,9 +32,10 @@ export const TableHeader = <TData extends BaseTableRow = BaseTableRow>({
     }
   };
 
+  const headerClassName = cx('rdt-table__header-cell', className);
   const headerProps = {
     scope: 'col' as const,
-    className,
+    className: headerClassName,
     ...(rowSpan !== undefined ? { rowSpan } : {}),
   };
 
@@ -45,12 +47,12 @@ export const TableHeader = <TData extends BaseTableRow = BaseTableRow>({
       onSort={handleSort}
       title={column.header}
       headerIcon={column.headerIcon}
-      className={className}
+      className={headerClassName}
       rowSpan={rowSpan}
     />
   ) : (
     <th key={column.header} {...headerProps}>
-      <span className="inline-flex items-center gap-1">
+      <span className="rdt-table__header-label">
         {column.headerIcon}
         {column.header}
       </span>

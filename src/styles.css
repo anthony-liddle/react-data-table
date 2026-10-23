@@ -50,14 +50,7 @@
  *  token and falls back to the package default.
  */
 
-:where(
-  .rdt-table,
-  .rdt-pagination,
-  .rdt-sort-header,
-  .rdt-menu,
-  .rdt-column-panel,
-  .data-table-con
-) {
+:where(.rdt-table, .rdt-pagination, .rdt-sort-header, .rdt-menu, .rdt-column-panel) {
   --_rdt-background: var(--background, hsl(0 0% 100%));
   --_rdt-foreground: var(--foreground, hsl(0 0% 4%));
   --_rdt-card: var(--card, hsl(0 0% 100%));
@@ -77,15 +70,7 @@
   --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
 }
 
-:where(.dark)
-  :where(
-    .rdt-table,
-    .rdt-pagination,
-    .rdt-sort-header,
-    .rdt-menu,
-    .rdt-column-panel,
-    .data-table-con
-  ) {
+:where(.dark) :where(.rdt-table, .rdt-pagination, .rdt-sort-header, .rdt-menu, .rdt-column-panel) {
   --_rdt-background: var(--background, hsl(224 71% 4%));
   --_rdt-foreground: var(--foreground, hsl(213 31% 91%));
   --_rdt-card: var(--card, hsl(222 47% 11%));
@@ -105,94 +90,128 @@
 }
 
 /*
- *  Data Table
+ *  rdt-table
  */
 
-.data-table-con {
-  font-size: 0.875rem; /* text-sm */
-  line-height: 1.25rem;
-  border: 1px solid var(--_rdt-border);
+.rdt-table {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  border-radius: 0.5rem; /* rounded-lg */
   overflow: auto;
+  font-size: var(--rdt-font-size, 0.875rem);
+  line-height: 1.25rem;
   background-color: var(--_rdt-card);
+  border: 1px solid var(--_rdt-border);
+  border-radius: var(--rdt-radius, 0.5rem);
 }
-.data-table {
+
+.rdt-table__scroll {
+  overflow-x: auto;
+}
+
+.rdt-table__table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
-.data-table th {
-  font-size: 0.75rem; /* text-xs */
-  line-height: 1rem;
-  font-weight: 400;
-}
-.data-table thead {
+
+.rdt-table__head {
   white-space: nowrap;
 }
-.data-table tbody tr:hover th:not(.data-table-no-highlight),
-.data-table tbody tr:hover td:not(.data-table-no-highlight) {
-  background-color: var(--_rdt-accent);
-}
 
-/* Override hover effect for tables where we want more control */
-.data-table-no-auto-hover tbody tr:hover th,
-.data-table-no-auto-hover tbody tr:hover td {
-  background-color: transparent;
-}
-
-.data-table-no-auto-hover tbody tr:hover {
-  background-color: var(--_rdt-accent);
-}
-
-.data-table td,
-.data-table th {
+.rdt-table__header-cell,
+.rdt-table__cell,
+.rdt-table__empty,
+.rdt-table__expanded-cell {
+  padding: var(--rdt-cell-padding-y, 0.5rem) var(--rdt-cell-padding-x, 0.75rem);
   text-align: left;
-  border-bottom: 1px solid var(--_rdt-border);
   background-color: var(--_rdt-card);
-  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  border-bottom: 1px solid var(--_rdt-border);
 }
-.data-table td.data-table-tight,
-.data-table th.data-table-tight {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
+
+.rdt-table__header-cell {
+  font-size: var(--rdt-header-font-size, 0.75rem);
+  font-weight: 400;
+  line-height: 1rem;
 }
-.data-table td.data-table-sticky:first-child,
-.data-table th.data-table-sticky:first-child {
+
+.rdt-table__header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The selection column, and the settings and row-action column. */
+.rdt-table__header-cell--select,
+.rdt-table__cell--select {
+  width: 40px;
+  padding-left: 1rem;
+  vertical-align: middle;
+}
+
+.rdt-table__header-cell--settings,
+.rdt-table__cell--actions {
+  width: 32px;
+  padding-inline: 0.25rem;
+}
+
+.rdt-table__select-all {
+  display: flex;
+  align-items: center;
+}
+
+.rdt-table__expanded-cell {
+  padding: 0;
+  background-color: color-mix(in oklab, var(--_rdt-muted) 30%, transparent);
+}
+
+.rdt-table__cell:where(tr:last-child > *),
+.rdt-table__empty:where(tr:last-child > *),
+.rdt-table__expanded-cell:where(tr:last-child > *) {
+  border-bottom: 0;
+}
+
+.rdt-table__row--clickable {
+  cursor: pointer;
+}
+
+/* Sticky first and last columns, each with a soft edge over the scrolled
+   content. */
+.rdt-table__header-cell--sticky:first-child,
+.rdt-table__cell--sticky:first-child {
   position: sticky;
   left: 0;
   z-index: 10;
 }
-.data-table td.data-table-sticky:first-child::before,
-.data-table th.data-table-sticky:first-child::before {
-  display: block;
-  position: absolute;
-  width: 6px;
-  height: 100%;
-  top: 0;
-  right: -6px;
-  content: "";
-  background-image: linear-gradient(to right, var(--_rdt-card), transparent);
-}
-.data-table tr:hover td.data-table-sticky:first-child::before,
-.data-table tr:hover th.data-table-sticky:first-child::before {
-  background-image: none;
-}
-.data-table td.data-table-sticky:last-child,
-.data-table th.data-table-sticky:last-child {
+
+.rdt-table__header-cell--sticky:last-child,
+.rdt-table__cell--sticky:last-child {
   position: sticky;
   right: 0;
   z-index: 10;
 }
-.data-table td.data-table-sticky:last-child::before,
-.data-table th.data-table-sticky:last-child::before {
-  display: block;
+
+.rdt-table__header-cell--sticky:first-child::before,
+.rdt-table__cell--sticky:first-child::before {
+  content: "";
   position: absolute;
+  top: 0;
+  right: -6px;
+  display: block;
   width: 6px;
   height: 100%;
+  background-image: linear-gradient(to right, var(--_rdt-card), transparent);
+}
+
+.rdt-table__header-cell--sticky:last-child::before,
+.rdt-table__cell--sticky:last-child::before {
+  content: "";
+  position: absolute;
   top: 0;
   left: -6px;
-  content: "";
+  display: block;
+  width: 6px;
+  height: 100%;
   background-image: linear-gradient(
     to left,
     color-mix(in oklab, var(--_rdt-border) 30%, transparent),
@@ -200,77 +219,91 @@
   );
 }
 
-.data-table tr:last-child td {
-  border-bottom: 0;
+/* Row states. Each rule matches the specificity of the rule it overrides,
+   with the structure in a :where(), so the order below sets precedence:
+   hover, then selected, then a drag range. */
+.rdt-table__cell:where(.rdt-table__row:hover > :not(.rdt-table__cell--actions)) {
+  background-color: var(--_rdt-accent);
 }
 
-/* The modal portal breaks CSS inheritance here.
-tables rendered in portals need explicit styles to work outside the normal DOM hierarchy */
-.modal-table td,
-.modal-table th {
-  background-color: var(--_rdt-card) !important;
+.rdt-table__cell--sticky:first-child:where(tr:hover > *)::before,
+.rdt-table__header-cell--sticky:first-child:where(tr:hover > *)::before {
+  background-image: none;
 }
 
-/* Ensure borders on nested table cells */
-.modal-table tr:not(:last-child) td {
-  border-bottom: 1px solid var(--_rdt-border);
+.rdt-table__cell:where([data-selected] > *) {
+  background-color: var(--_rdt-row-selected);
 }
 
-/* Last row should not have a border */
-.modal-table tr:last-child td {
-  border-bottom: 0;
+.rdt-table__cell--sticky:first-child:where([data-selected] > *)::before,
+.rdt-table__cell--sticky:last-child:where([data-selected] > *)::before {
+  background-color: var(--_rdt-row-selected);
+  background-image: none;
 }
 
-/* Hover only for non-selected rows */
-.modal-table tr:not(.table-row-selected):hover td,
-.modal-table tr:not(.table-row-selected):hover {
-  background-color: var(--_rdt-accent) !important;
-}
-
-/* Table row selection - can be used as a class name */
-/* This is very funky but this is the way to make the data-table-sticky highlighted when selected */
-.data-table .table-row-selected td {
-  background-color: #dbeafe !important; /* blue-100 */
-}
-.dark .data-table .table-row-selected td {
-  background-color: #1e3a8a !important; /* blue-900 */
-}
-.data-table .table-row-selected td.data-table-sticky::before {
-  background-color: #dbeafe !important;
-  background-image: none !important;
-}
-.dark .data-table .table-row-selected td.data-table-sticky::before {
-  background-color: #1e3a8a !important;
-}
-
-/* Drag selection visual feedback using ::after pseudo-element */
-.data-table tbody tr[data-drag-range] {
+.rdt-table__row[data-drag-range] {
   position: relative;
 }
 
-.data-table tr[data-drag-range] td.data-table-sticky:first-child::before,
-.data-table tr[data-drag-range] td.data-table-sticky:last-child::before {
-  display: none;
-}
-
-.data-table tbody tr[data-drag-range]::after {
+.rdt-table__row[data-drag-range]::after {
   content: "";
   position: absolute;
-  left: 0;
   top: 0;
   bottom: 0;
+  left: 0;
+  z-index: 10;
   width: 4px;
   background-color: var(--_rdt-drag-selection);
-  z-index: 10;
   pointer-events: none;
 }
 
-.data-table tbody tr[data-drag-range] td {
+.rdt-table__cell:where([data-drag-range] > *) {
   position: relative;
-  background-color: var(--_rdt-accent) !important;
+  background-color: var(--_rdt-accent);
 }
 
-.data-table[data-dragging] tbody tr {
-  cursor: grabbing !important;
-  user-select: none !important;
+.rdt-table__cell--sticky:first-child:where([data-drag-range] > *)::before,
+.rdt-table__cell--sticky:last-child:where([data-drag-range] > *)::before {
+  display: none;
+}
+
+.rdt-table__table[data-dragging] :where(.rdt-table__row) {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/*
+ *  rdt-skeleton
+ */
+
+.rdt-skeleton {
+  background-color: var(--_rdt-skeleton);
+  border-radius: 0.375rem;
+  animation: rdt-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.rdt-skeleton--select {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.25rem;
+}
+
+.rdt-skeleton--action {
+  width: 0.75rem;
+  height: 1.25rem;
+}
+
+.rdt-skeleton--cell {
+  width: 80px;
+  height: 1.25rem;
+}
+
+/*
+ *  Keyframes
+ */
+
+@keyframes rdt-pulse {
+  50% {
+    opacity: 0.5;
+  }
 }

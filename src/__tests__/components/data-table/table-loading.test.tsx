@@ -313,7 +313,7 @@ describe('TableLoading', () => {
   });
 
   describe('column styling', () => {
-    it('should apply sticky class to selection column', () => {
+    it('should mark the selection cell and its skeleton', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
@@ -325,10 +325,11 @@ describe('TableLoading', () => {
 
       const cells = screen.getAllByRole('cell');
       const selectionCell = cells[0];
-      expect(selectionCell).toHaveClass('data-table-sticky');
+      expect(selectionCell).toHaveClass('rdt-table__cell--select', 'rdt-table__cell--sticky');
+      expect(selectionCell?.firstElementChild).toHaveClass('rdt-skeleton', 'rdt-skeleton--select');
     });
 
-    it('should apply sticky and no-highlight classes to action menu column', () => {
+    it('should mark the action cell and its skeleton', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
@@ -340,8 +341,8 @@ describe('TableLoading', () => {
 
       const cells = screen.getAllByRole('cell');
       const actionMenuCell = cells[cells.length - 1];
-      expect(actionMenuCell).toHaveClass('data-table-sticky');
-      expect(actionMenuCell).toHaveClass('data-table-no-highlight');
+      expect(actionMenuCell).toHaveClass('rdt-table__cell--actions', 'rdt-table__cell--sticky');
+      expect(actionMenuCell?.firstElementChild).toHaveClass('rdt-skeleton', 'rdt-skeleton--action');
     });
   });
 });
