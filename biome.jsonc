@@ -86,13 +86,7 @@
         "useKeyWithClickEvents": "warn",
         "noSvgWithoutTitle": "warn"
       },
-      "complexity": { "noImportantStyles": "warn" },
-      "style": {
-        "noNonNullAssertion": "warn",
-        // Inherent to the table cascade (hover/sticky/selected overrides are
-        // ordered by intent, not specificity).
-        "noDescendingSpecificity": "warn"
-      },
+      "style": { "noNonNullAssertion": "warn" },
       "suspicious": { "noArrayIndexKey": "warn" }
     }
   }
