@@ -23,7 +23,7 @@ import {
   type VisibleColumn,
 } from './types.ts';
 
-// Unit-separator control char — safe join delimiter for column-id signatures
+// Unit-separator control char: safe join delimiter for column-id signatures
 // (column ids are kebab-case or explicit strings, neither of which contains it).
 const COLUMN_LAYOUT_SEP = '\u001f';
 
@@ -55,13 +55,19 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    * selectors, which race Suspense re-streams and hydration.
    */
   getRowTestId?: (row: TData) => string | undefined;
+  /**
+   * Names a row for assistive technology. When set, the row's selection
+   * checkbox is announced as "Select <label>"; when omitted it falls back to
+   * "Select row <id>".
+   */
+  getRowLabel?: (row: TData) => string;
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
   showPageCount?: boolean;
   /**
    * Opt-in accordion rows: when set, each data row that returns non-null gets a
    * full-width companion row rendered directly beneath it with the returned
    * content. Expansion STATE belongs to the consumer (track the expanded row
-   * ids and return null for collapsed rows) — pair it with `onRowClick` to
+   * ids and return null for collapsed rows). Pair it with `onRowClick` to
    * toggle. Returning null for every row is equivalent to omitting the prop.
    */
   renderExpandedRow?: (row: TData) => React.ReactNode | null;
@@ -92,6 +98,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   persistKey,
   rowClassName,
   getRowTestId,
+  getRowLabel,
   showPageCount = false,
   renderExpandedRow,
   labels,
@@ -140,7 +147,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     return reconcileColumnOrder(p.order, currentIds);
   });
 
-  // Reconcile the ORDER used for layout against the current column set — e.g. a
+  // Reconcile the ORDER used for layout against the current column set, e.g. a
   // dynamic metric/category toggle that adds or removes columns. Derived at
   // render (no effect / no setState-in-effect): if the persisted `columnOrder`
   // set no longer matches the current columns, fall back to natural order so new
@@ -489,7 +496,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.handleSelectRow(row)}
                           className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                          aria-label={`Select row ${row.id}`}
+                          aria-label={
+                            getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
+                          }
                         />
                       </td>
                     )}

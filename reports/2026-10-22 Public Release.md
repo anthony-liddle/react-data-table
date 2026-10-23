@@ -1,10 +1,10 @@
-# Public Release — 2026-10-22
+# Public Release: 2026-10-22
 
 - **Repo:** https://github.com/anthony-liddle/react-data-table (public)
 - **npm:** https://www.npmjs.com/package/@anthony-liddle/react-data-table (`0.1.0`, with provenance)
 - **Storybook:** https://anthony-liddle.github.io/react-data-table/ (GitHub Pages)
 
-This repo's history begins with a single root commit (`8877418`). The pre-release history lives in a separate private archive and was never pushed here.
+This repo's history begins with a single root commit (`8877418`). It is SSH-signed with the maintainer's key, and GitHub shows it as Verified. The pre-release history lives in a separate private archive and was never pushed here. The npm provenance for 0.1.0 does not depend on commit signatures: npm signs it from the release workflow's OIDC identity (section 4). See *Signature check* under Followups for the evidence.
 
 ## 1. Inventory (before this pass)
 
@@ -196,3 +196,204 @@ I confirmed locally first that the break fails both `publint` and the smoke test
 - **Storybook UX.** Play functions run on every visit, so tables briefly animate on load, and the five hidden test-only stories are deployed and reachable by URL.
 - **Dependabot.** Three PRs opened on the new repo (#1–#3) and are untriaged.
 - **Lint backlog.** 34 Biome warnings remain, by design: `noSvgWithoutTitle`, `noImportantStyles`, `noDescendingSpecificity`, `noArrayIndexKey`, `noNonNullAssertion`, and one `useKeyWithClickEvents`.
+
+## Followups
+
+Done on 2026-10-22 in PR #6, plus repository administration that needed no PR.
+
+### Local clones
+
+- **Before:** `~/Development/react-data-table` had origin `https://github.com/anthony-liddle/react-data-table-private.git`, the renamed private archive, on `main` at `ea0eee4`. The public repo had no permanent local clone.
+- **Found:** no uncommitted changes and no unpushed commits. One local branch, `chore/apply-repo-conventions`, had a deleted upstream, but its commit `dae103a` is already merged into the archive's `main`.
+- **After:**
+  - `~/Development/react-data-table` is origin `https://github.com/anthony-liddle/react-data-table.git` (this repo), on `main`.
+  - `~/Development/react-data-table-private` is origin `https://github.com/anthony-liddle/react-data-table-private.git`, on `main`.
+  - The archive was moved with `mv` and nothing was deleted.
+
+### Em dashes
+
+- **Found:** 23 em dashes (U+2014) in tracked files: the 14 already listed, plus 9 in `CONTRIBUTING.md`.
+- **Fixed:** each was replaced with a comma, colon, or period, or split into two sentences, without restructuring the comment.
+- **Untouched:** the 85 in `reports/a11y/*.txt`, because that is captured tool output.
+- **Sweep result:** `git grep -n -I $'\u2014' -- . ':!reports/a11y'` finds **0**.
+
+**Guard.** The first step of the `test` job, "No em dashes", fails on any U+2014 in tracked files outside `reports/a11y/`, and annotates each hit with its file and line. To prove it, I put an em dash into a comment on purpose:
+
+- **Red:** https://github.com/anthony-liddle/react-data-table/actions/runs/39894565432 on `1030220`.
+  - `test` failed at "No em dashes", with an error annotation on `src/hooks/use-pagination.ts:15`.
+  - `storybook build` and `storybook tests` passed.
+
+  ```
+  ##[error]Em dash (U+2014). Use a comma, colon, period, or two sentences.
+  src/hooks/use-pagination.ts:15:// goToNext only needs the cursor [U+2014] and whether another page exists. Accepting this
+  ##[error]Process completed with exit code 1.
+  ```
+
+  The dash itself is shown as `[U+2014]` here, because this report has to pass the same guard.
+- **Green after the revert:** https://github.com/anthony-liddle/react-data-table/actions/runs/39895384672 on `f5b4d0c`. "No em dashes" passed.
+
+### Row checkbox names (`getRowLabel`)
+
+`DataTable` takes `getRowLabel?: (row) => string`.
+
+- **With it:** each row checkbox is named "Select ⟨label⟩".
+- **Without it:** the name falls back to "Select row ⟨id⟩", as before, so the change is not breaking.
+- **Tests:** a unit test for each case.
+- **Stories:** Features › Row Selection now has two, "With row labels" and "Id fallback". Each one's play function asserts the first checkbox's name.
+- **README:** the prop is in the props table, the fallback is described under Accessibility, and the item is gone from Known gaps.
+
+The labelled test was written before the prop existed. It failed with the raw id:
+
+```
+ FAIL  |unit| src/__tests__/components/data-table/data-table.test.tsx > DataTable > selection integration > should name each row checkbox from getRowLabel when it is provided
+Error: expect(element).toHaveAccessibleName()
+
+Expected element to have accessible name:
+  Select John Doe
+Received:
+  Select row 1
+ ❯ src/__tests__/components/data-table/data-table.test.tsx:181:36
+    179|
+```
+
+After the implementation, both tests pass: 197 unit tests and 30 story tests in total.
+
+### Signature check
+
+The prompt said `8877418` carries no signature and `7db1c37` is signed. I checked before changing anything:
+
+```
+$ git log --format='%h %G?' origin/main
+error: cannot run gpg: No such file or directory
+7db1c37 N
+8877418 G
+```
+
+| Commit | Signature in the commit object | Local `%G?` | GitHub verification |
+|---|---|---|---|
+| `8877418` (root) | SSH, the maintainer's key (`SHA256:KNZ80f...`) | `G` with `~/.ssh/allowed_signers`; `U` without it | verified, `valid` |
+| `7db1c37` (squash merge) | PGP, GitHub's web-flow key | `N`, only because this machine has no gpg to check it | verified, `valid` |
+
+So both commits are signed, and the root commit's signature verifies. This report's opening never actually said "signed"; that wording was in the release's chat summary. The opening now states the observed facts, and says that the 0.1.0 provenance attestation is independent of commit signatures and unaffected.
+
+### Scope
+
+The remaining Known issues and Known gaps were left as they are. None is a one-line fix:
+
+- **Mouse-only drag selection:** a keyboard range-select needs new key handling.
+- **`alwaysVisible`:** the one-line change was tried in the original port and reverted, because it breaks reordering.
+- **Multi-column sort:** `sort` holds one key, so this needs a new sort model.
+- **English-only accessible names:** routing them through `labels` adds four or more keys and touches several components.
+
+### Branch protection
+
+The required-review rule was removed (`DELETE .../protection/required_pull_request_reviews`, `204 No Content`). Before the change it required 1 approving review, code-owner review, last-push approval, and dismissal of stale reviews. Everything else is unchanged.
+
+The required checks are `test` (which runs the em dash guard, lint, typecheck, unit tests, build, package lint, and smoke test), `storybook build`, and `storybook tests`, in strict mode. The Dependabot merges below went through without an admin override.
+
+The config after the change (`gh api repos/anthony-liddle/react-data-table/branches/main/protection`, with the `url` fields removed):
+
+```json
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "test",
+      "storybook build",
+      "storybook tests"
+    ],
+    "checks": [
+      {
+        "context": "test",
+        "app_id": null
+      },
+      {
+        "context": "storybook build",
+        "app_id": null
+      },
+      {
+        "context": "storybook tests",
+        "app_id": null
+      }
+    ]
+  },
+  "required_signatures": {
+    "enabled": true
+  },
+  "enforce_admins": {
+    "enabled": false
+  },
+  "required_linear_history": {
+    "enabled": false
+  },
+  "allow_force_pushes": {
+    "enabled": false
+  },
+  "allow_deletions": {
+    "enabled": false
+  },
+  "block_creations": {
+    "enabled": false
+  },
+  "required_conversation_resolution": {
+    "enabled": true
+  },
+  "lock_branch": {
+    "enabled": false
+  },
+  "allow_fork_syncing": {
+    "enabled": false
+  }
+}
+```
+
+### Dependabot
+
+On each branch I read what changed, then ran `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test:storybook`, and `pnpm build-storybook` in a clean worktree. All passed. Each PR was then rebased onto current `main` through Dependabot, re-checked on the rebased SHA, and squash-merged once all three required checks were green on that exact SHA.
+
+| PR | What changed | Result |
+|---|---|---|
+| #3 happy-dom 20.14.5 → 21.0.3 | One breaking change: CSS-file and iframe loading are off by default (an SSRF fix). The unit tests load neither. | Merged as `c06377a`, after a rebase to `b6af254` |
+| #1 minor-and-patch group (15) | 12 patches, plus Radix minors: `react-checkbox` 1.3.11 → 1.4.1 (internal click-propagation refactor), `react-dropdown-menu` 2.1.24 → 2.2.1 (export cleanup, `react-menu` 2.2.1), `react-slot` 1.3.3 → 1.5.0 (unwraps nested lazy children, merges `aria-describedby`). The public types only widen (`\| undefined`, bivariant callbacks), and the peer ranges are unchanged (React 16.8 to 19). No install scripts were added. | Merged as `300e2f2`, after a rebase to `380940a`. The rebase reworded the title but kept the same 15 packages. |
+| #2 vite 7.3.6 → 8.3.4 | Rolldown replaces Rollup, Oxc replaces esbuild for transforms and minification, Lightning CSS becomes the CSS minifier, `rollupOptions` becomes `rolldownOptions`, and CommonJS default-import interop changes. This repo configures none of the renamed options. Vite runs only inside Storybook and Vitest; the library builds with `tsc`. | Merged as `8869e37`, after a rebase to `bfe2cf5`. Its Storybook build also served under `/react-data-table/` with 29/29 stories rendering and 0 axe violations. |
+
+No PR was closed.
+
+### Vercel
+
+The prompt named the project `react-data-table`, but no project by that name exists in either Vercel scope. The abandoned project was `react-data-table-storybook` (from the first Storybook pass), and I removed it: `vercel project rm react-data-table-storybook --scope anthony-liddles-projects`, which reported "Success! Project react-data-table-storybook removed".
+
+- `vercel project inspect` now reports "There is no project".
+- `https://react-data-table-storybook.vercel.app/` returns `404` with `x-vercel-error: DEPLOYMENT_NOT_FOUND`.
+
+### Scrub record
+
+The private archive holds `docs/scrub-record-2026-10-22.md` (commit `325b51e`, pushed). It is a verbatim record, generated from that repo's git history, of everything identifying the source app that was removed before going public:
+
+- the original commit message
+- the first scrub's full diff (comments, prop docs, tests, README examples)
+- the original domain-specific story data and story lines
+- the publish-pass items: the naming in one test, the modal z-index comment, and the provenance prose in comments and configs
+- the README's provenance section
+- the list of things kept deliberately
+
+The earlier Storybook report in that repo turned out to list locations, not strings. Every item was recovered from history; **nothing is unrecovered**. After the push, the private repo was archived (`gh repo archive`), so it is read-only and still private. None of this record is in this public repo.
+
+### For you to run
+
+Each command needs your 2FA. Run them in your own terminal, or add `--otp=<code>`:
+
+```bash
+npm deprecate @anthony-liddle/react-data-table@0.0.0 "Placeholder used to set up trusted publishing. Use 0.1.0 or later."
+npm deprecate @anthony-liddle/react-data-table@0.0.0-stage "Placeholder created by npm staged publishing. Use 0.1.0 or later."
+```
+
+Also confirm that the trusted publisher on npmjs.com now shows as validated.
+
+### Still open
+
+- **`getRowLabel` is on `main` but not on npm.** 0.1.0 does not have it. Shipping it means bumping to 0.2.0 (a new prop) and publishing a GitHub Release.
+- **The Known issues and gaps above,** unchanged by design.
+- **The release sections above are historical.** Sections 3 and 7 still list the row checkbox name as a gap, as it was at release. This section supersedes them.
+- **`src/styles.css` still points to "the README's Styling section".** That section is now called "Setup". The em dash pass changed punctuation only, so I left the wording.
+- **`vitest.config.ts` is not covered by `pnpm typecheck`.** It type-checks cleanly when included.

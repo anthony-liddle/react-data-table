@@ -92,6 +92,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
 | `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-test-id` for end-to-end tests |
+| `getRowLabel` | `(row: T) => string` | – | Names each row's selection checkbox "Select ⟨label⟩" for assistive technology. Without it, the name falls back to "Select row ⟨id⟩". |
 | `labels` | `Partial<DataTableLabels>` | English | Overrides the visible strings (empty state, page count, range text) |
 | `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link` |
 
@@ -143,6 +144,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 - Sort headers are buttons, and the sorted column's header carries `aria-sort`.
 - Header cells use `scope="col"`, and grouped parent headers use `scope="colgroup"`.
 - Checkboxes, pagination buttons ("Previous page" / "Next page"), the column settings trigger, and column drag handles ("Reorder ⟨column⟩") all have accessible names.
+- Row checkboxes are named "Select ⟨label⟩" when you pass `getRowLabel` (for example the row's name). Without it they fall back to "Select row ⟨id⟩", so pass it whenever rows have a human-readable name.
 - The column settings panel is a dialog: Tab reaches every checkbox and handle, Space toggles a column, and a focused handle reorders with Space, the arrow keys, and Space.
 - Row menus are Radix dropdown menus with arrow-key navigation.
 
@@ -150,7 +152,6 @@ Known gaps:
 
 - Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
 - `onRowClick` (and so row expansion) has no keyboard path of its own. Put a button in a cell if you need one.
-- Row checkboxes are named "Select row ⟨id⟩", using the row's `id`.
 - Accessible names are English-only; the `labels` prop covers visible text.
 
 ## Known issues

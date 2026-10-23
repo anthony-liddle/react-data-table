@@ -46,7 +46,7 @@ export const getColumnId = <TData extends BaseTableRow>(col: TableColumn<TData>)
  * Reconcile a persisted column order against the current set of column IDs.
  *
  * A persisted order can go stale when the table's columns change in code
- * (added, removed, or renamed — and header-derived IDs change with the header).
+ * (added, removed, or renamed, and header-derived IDs change with the header).
  * Naively rendering by the stale order strands any column missing from it at
  * the very end, which reads as "columns in the wrong order". This keeps the
  * user's saved order for columns that still exist, drops IDs that no longer do,
@@ -73,7 +73,7 @@ export const reconcileColumnOrder = (
     }
   }
 
-  // 2. Slot any columns missing from the saved order in at their natural position —
+  // 2. Slot any columns missing from the saved order in at their natural position:
   //    right after the nearest preceding column that's already placed.
   currentIds.forEach((id, naturalIdx) => {
     if (placed.has(id)) {

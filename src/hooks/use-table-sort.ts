@@ -19,7 +19,7 @@ interface UseTableSortProps {
 
 // The `sort`/`dir` params are shared across every table on the site (the URL
 // param names aren't namespaced), so a persisted value can belong to a DIFFERENT
-// table — e.g. a leaderboard sorted by `score`. Honor a persisted
+// table, e.g. a leaderboard sorted by `score`. Honor a persisted
 // sort key only when it names a real column of THIS table; otherwise a foreign
 // key flows into the query as an invalid sort enum (fetch fails) and server and
 // client disagree on the active column (hydration mismatch). Mirrors the

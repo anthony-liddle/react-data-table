@@ -17,7 +17,7 @@ export interface PersistedFiltersOptions {
    *
    * Set `false` for state that must reset to its default on every fresh
    * landing (e.g. a tab bar that should always open on its first tab).
-   * The URL half is unaffected either way — `?param=` still seeds the state
+   * The URL half is unaffected either way: `?param=` still seeds the state
    * and still tracks it via `replaceState`, so deep links keep working.
    */
   persistToStorage?: boolean;

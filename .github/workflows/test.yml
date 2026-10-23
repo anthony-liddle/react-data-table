@@ -16,6 +16,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # The repo uses no em dashes (U+2014), comments included. reports/a11y/
+      # holds captured tool output and is exempt. Each hit is annotated with
+      # its file and line.
+      - name: No em dashes
+        run: |
+          matches="$(git grep -n -I -e $'\u2014' -- . ':!reports/a11y' || true)"
+          if [ -n "$matches" ]; then
+            while IFS=: read -r file line _; do
+              echo "::error file=${file},line=${line}::Em dash (U+2014). Use a comma, colon, period, or two sentences."
+            done <<< "$matches"
+            echo "$matches"
+            exit 1
+          fi
+          echo "No em dashes in tracked files."
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
 

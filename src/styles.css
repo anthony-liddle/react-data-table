@@ -1,5 +1,5 @@
 /*
- * react-data-table — semantic table styles.
+ * react-data-table: semantic table styles.
  *
  * These are the `.data-table*` / `.drag-selection*` rules the components rely
  * on, written as plain CSS over shadcn-style theme tokens (no Tailwind
@@ -12,7 +12,7 @@
  * your theme applies automatically.
  *
  * NOTE: the component markup also uses Tailwind utility classes, so your app
- * must run Tailwind and scan this package — see the README's Styling section.
+ * must run Tailwind and scan this package. See the README's Styling section.
  */
 
 :where(:root) {

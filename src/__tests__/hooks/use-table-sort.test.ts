@@ -10,7 +10,7 @@ import { useTableSort } from '@/hooks/use-table-sort';
 // NAME/CREATED_AT/UPDATED_AT). Before this guard, that foreign key flowed
 // straight into the query as an invalid sort enum → a failed fetch, plus a
 // server/client hydration mismatch on the sort icon. The initializer must reject a persisted key that isn't a real
-// column of this table and fall back to the default — and NOT leak the foreign
+// column of this table and fall back to the default, and NOT leak the foreign
 // direction either.
 
 const PERSIST_KEY = 'example-table';
