@@ -18,6 +18,7 @@ interface TestRow extends BaseTableRow {
   name: string;
   email: string;
   role: string;
+  phone?: string;
 }
 
 describe('DataTable', () => {
@@ -140,11 +141,11 @@ describe('DataTable', () => {
   });
 
   describe('selection integration', () => {
-    const createSelection = (): TableSelection<TestRow> => {
+    const createSelection = (): TableSelection<TestRow> & { selectedRows: TestRow[] } => {
       const selectedRows: TestRow[] = [];
       return {
         selectedRows,
-        handleSelectRow: vi.fn((row: TestRow) => {
+        onToggleRow: vi.fn((row: TestRow) => {
           const index = selectedRows.findIndex(r => r.id === row.id);
           if (index === -1) {
             selectedRows.push(row);
@@ -152,18 +153,14 @@ describe('DataTable', () => {
             selectedRows.splice(index, 1);
           }
         }),
-        handleSelectAll: vi.fn((checked: boolean) => {
+        onToggleAll: vi.fn((checked: boolean) => {
           if (checked) {
             selectedRows.push(...baseData);
           } else {
             selectedRows.length = 0;
           }
         }),
-        handleDeselectAll: vi.fn(() => {
-          selectedRows.length = 0;
-        }),
         isRowSelected: vi.fn((row: TestRow) => selectedRows.some(r => r.id === row.id)),
-        findRowInSelection: vi.fn((row: TestRow) => selectedRows.find(r => r.id === row.id)),
       };
     };
 
@@ -199,7 +196,7 @@ describe('DataTable', () => {
       expect(checkboxes.length).toBeGreaterThan(0);
     });
 
-    it('should call handleSelectRow when row checkbox is clicked', async () => {
+    it('should call onToggleRow when row checkbox is clicked', async () => {
       const user = userEvent.setup();
       const selection = createSelection();
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -210,10 +207,10 @@ describe('DataTable', () => {
 
       await user.click(firstRowCheckbox);
 
-      expect(selection.handleSelectRow).toHaveBeenCalled();
+      expect(selection.onToggleRow).toHaveBeenCalled();
     });
 
-    it('should call handleSelectAll when select all checkbox is clicked', async () => {
+    it('should call onToggleAll when select all checkbox is clicked', async () => {
       const user = userEvent.setup();
       const selection = createSelection();
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -223,7 +220,7 @@ describe('DataTable', () => {
 
       await user.click(selectAllCheckbox);
 
-      expect(selection.handleSelectAll).toHaveBeenCalledWith(true);
+      expect(selection.onToggleAll).toHaveBeenCalledWith(true);
     });
 
     it('should render select all checkbox as checked when all rows are selected', () => {
@@ -501,12 +498,9 @@ describe('DataTable', () => {
           columns={groupedColumns}
           data={baseData}
           selection={{
-            selectedRows: [],
-            handleSelectRow: vi.fn(),
-            handleSelectAll: vi.fn(),
-            handleDeselectAll: vi.fn(),
+            onToggleRow: vi.fn(),
+            onToggleAll: vi.fn(),
             isRowSelected: () => false,
-            findRowInSelection: () => undefined,
           }}
         />
       );
@@ -552,12 +546,9 @@ describe('DataTable', () => {
     it('should enable row click selection when selectOnRowClick is true', async () => {
       const user = userEvent.setup();
       const selection = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(
@@ -575,19 +566,16 @@ describe('DataTable', () => {
 
       await user.click(firstDataRow);
 
-      expect(selection.handleSelectRow).toHaveBeenCalled();
+      expect(selection.onToggleRow).toHaveBeenCalled();
     });
 
     it('should not select disabled rows when clicking on row with selectOnRowClick', async () => {
       const user = userEvent.setup();
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(
@@ -605,20 +593,17 @@ describe('DataTable', () => {
 
       await user.click(firstDataRow);
 
-      expect(selection.handleSelectRow).not.toHaveBeenCalled();
+      expect(selection.onToggleRow).not.toHaveBeenCalled();
     });
   });
 
   describe('isRowDisabled functionality', () => {
     it('should render row checkbox as disabled when isRowDisabled returns true', () => {
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -637,13 +622,10 @@ describe('DataTable', () => {
       const selectedRows = baseData.filter(row => row.id !== '1');
 
       const selection: TableSelection<TestRow> = {
-        selectedRows,
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn((row: TestRow) => selectedRows.some(r => r.id === row.id)),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn((row: TestRow) => selectedRows.find(r => r.id === row.id)),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -660,13 +642,10 @@ describe('DataTable', () => {
       const selectedRows = [at(baseData, 1)]; // id: '2'
 
       const selection: TableSelection<TestRow> = {
-        selectedRows,
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn((row: TestRow) => selectedRows.some(r => r.id === row.id)),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn((row: TestRow) => selectedRows.find(r => r.id === row.id)),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -678,16 +657,13 @@ describe('DataTable', () => {
       expect(selectAllCheckbox).not.toBeChecked();
     });
 
-    it('should not call handleSelectRow when clicking disabled row checkbox', async () => {
+    it('should not call onToggleRow when clicking disabled row checkbox', async () => {
       const user = userEvent.setup();
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -699,18 +675,15 @@ describe('DataTable', () => {
       // Clicking a disabled checkbox should not trigger the handler
       await user.click(disabledCheckbox);
 
-      expect(selection.handleSelectRow).not.toHaveBeenCalled();
+      expect(selection.onToggleRow).not.toHaveBeenCalled();
     });
 
     it('should show select all as checked when all rows are disabled and none selected', () => {
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn(() => true), // All rows are disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);
@@ -727,13 +700,10 @@ describe('DataTable', () => {
       const user = userEvent.setup();
       const onRowClick = vi.fn();
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // First row is disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(
@@ -758,13 +728,10 @@ describe('DataTable', () => {
       const user = userEvent.setup();
       const onRowClick = vi.fn();
       const selection: TableSelection<TestRow> = {
-        selectedRows: [],
-        handleSelectRow: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleDeselectAll: vi.fn(),
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
         isRowSelected: vi.fn(() => false),
         isRowDisabled: vi.fn((row: TestRow) => row.id === '1'), // Only first row is disabled
-        findRowInSelection: vi.fn(() => undefined),
       };
 
       render(
@@ -897,12 +864,9 @@ describe('DataTable', () => {
   // these assert the contract consumers style against.
   describe('styling contract', () => {
     const selectionFor = (selected: TestRow[]): TableSelection<TestRow> => ({
-      selectedRows: selected,
-      handleSelectRow: vi.fn(),
-      handleSelectAll: vi.fn(),
-      handleDeselectAll: vi.fn(),
+      onToggleRow: vi.fn(),
+      onToggleAll: vi.fn(),
       isRowSelected: row => selected.some(r => r.id === row.id),
-      findRowInSelection: row => selected.find(r => r.id === row.id),
     });
     const bodyRows = () => [...screen.getByRole('table').querySelectorAll('tbody tr')];
 

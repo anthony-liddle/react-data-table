@@ -2,91 +2,72 @@
 
 import { useCallback, useState } from 'react';
 
-export interface BaseTableSelection {
-  id: string | number;
-  [key: string]: unknown;
-}
+import type { BaseTableRow } from '../components/data-table/types.ts';
 
 export interface UseTableSelectionOptions<T> {
   isRowDisabled?: (row: T) => boolean;
   initialSelection?: T[];
 }
 
-export const useTableSelection = <T extends BaseTableSelection>(
+/**
+ * Selection state for `DataTable`. The result is the `selection` prop as it
+ * is, plus the selected rows and ways to change them from outside the table.
+ */
+export const useTableSelection = <T extends BaseTableRow>(
   data: T[],
   options?: UseTableSelectionOptions<T>
 ) => {
   const { isRowDisabled, initialSelection } = options ?? {};
-  const [selection, setSelection] = useState<T[]>(initialSelection ?? []);
+  const [selectedRows, setSelectedRows] = useState<T[]>(initialSelection ?? []);
 
   const isRowSelected = useCallback(
-    (row: T) => {
-      return selection.some(selectedRow => selectedRow.id === row.id);
-    },
-    [selection]
+    (row: T) => selectedRows.some(selectedRow => selectedRow.id === row.id),
+    [selectedRows]
   );
 
   const findRowInSelection = useCallback(
-    (row: T) => {
-      return selection.find(selectedRow => selectedRow.id === row.id);
-    },
-    [selection]
+    (row: T) => selectedRows.find(selectedRow => selectedRow.id === row.id),
+    [selectedRows]
   );
 
-  const selectRow = useCallback((row: T) => {
-    setSelection(prev => {
-      const isSelected = prev.some(selectedRow => selectedRow.id === row.id);
-      if (isSelected) {
-        return prev.filter(selectedRow => selectedRow.id !== row.id);
-      } else {
-        return [...prev, row];
-      }
-    });
+  const onToggleRow = useCallback((row: T) => {
+    setSelectedRows(prev =>
+      prev.some(selectedRow => selectedRow.id === row.id)
+        ? prev.filter(selectedRow => selectedRow.id !== row.id)
+        : [...prev, row]
+    );
   }, []);
 
-  const selectAll = useCallback(() => {
-    // Use a Map to deduplicate by ID, keeping the latest version of each row
-    const selectionMap = new Map<string | number, T>();
-
-    // First add existing selections
-    selection.forEach(row => {
-      selectionMap.set(row.id, row);
-    });
-
-    // Then add all data rows, overwriting any existing selections with the latest version
-    // Skip disabled rows
-    data.forEach(row => {
-      const rowIsDisabled = isRowDisabled?.(row) ?? false;
-      if (!rowIsDisabled) {
-        selectionMap.set(row.id, row);
-      }
-    });
-
-    setSelection(Array.from(selectionMap.values()));
-  }, [data, selection, isRowDisabled]);
-
-  const deselectAll = useCallback(() => {
-    setSelection([]);
+  const clearSelection = useCallback(() => {
+    setSelectedRows([]);
   }, []);
 
-  const handleSelectAll = useCallback(
+  const onToggleAll = useCallback(
     (checked: boolean) => {
-      if (checked) {
-        selectAll();
-      } else {
-        deselectAll();
+      if (!checked) {
+        clearSelection();
+        return;
       }
+      // Keyed by id so a row already selected is kept once, as its latest version.
+      const byId = new Map<T['id'], T>(selectedRows.map(row => [row.id, row]));
+      for (const row of data) {
+        if (!isRowDisabled?.(row)) {
+          byId.set(row.id, row);
+        }
+      }
+      setSelectedRows(Array.from(byId.values()));
     },
-    [selectAll, deselectAll]
+    [data, selectedRows, isRowDisabled, clearSelection]
   );
 
   return {
-    selection,
-    handleSelectAll,
-    handleSelectRow: selectRow,
-    handleDeselectAll: deselectAll,
+    selectedRows,
     isRowSelected,
+    isRowDisabled,
+    onToggleRow,
+    onToggleAll,
+    clearSelection,
+    setSelectedRows,
     findRowInSelection,
-    setSelection,
   };
 };

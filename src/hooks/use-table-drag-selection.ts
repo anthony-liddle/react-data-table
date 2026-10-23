@@ -59,7 +59,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
       rowsToSelect.forEach((row: TData) => {
         const isDisabled = selection.isRowDisabled?.(row) ?? false;
         if (!isDisabled && !selection.isRowSelected(row)) {
-          selection.handleSelectRow(row);
+          selection.onToggleRow(row);
         }
       });
     },
@@ -277,7 +277,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
       // Only perform click selection if a drag selection didn't just occur
       // checkAndClearDragSelection atomically checks and resets the flag
       if (!checkAndClearDragSelection()) {
-        selection.handleSelectRow(row);
+        selection.onToggleRow(row);
       }
     },
     [selectOnRowClick, selection, checkAndClearDragSelection]

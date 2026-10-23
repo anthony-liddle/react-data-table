@@ -281,8 +281,8 @@ export const sortMembers = (
   }
   const dir = direction === 'asc' ? 1 : -1;
   return [...rows].sort((a, b) => {
-    const av = a[sortKey] as string | number | null;
-    const bv = b[sortKey] as string | number | null;
+    const av = a[sortKey as keyof Member] as string | number | null;
+    const bv = b[sortKey as keyof Member] as string | number | null;
     if (av === bv) {
       return 0;
     }

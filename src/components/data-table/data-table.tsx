@@ -345,7 +345,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                               .filter(row => !selection.isRowDisabled?.(row))
                               .every(row => selection.isRowSelected(row))
                           }
-                          onCheckedChange={selection.handleSelectAll}
+                          onCheckedChange={selection.onToggleAll}
                           disabled={!!loading}
                           aria-label="Select all"
                         />
@@ -429,7 +429,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                             .filter(row => !selection.isRowDisabled?.(row))
                             .every(row => selection.isRowSelected(row))
                         }
-                        onCheckedChange={selection.handleSelectAll}
+                        onCheckedChange={selection.onToggleAll}
                         disabled={!!loading}
                         aria-label="Select all"
                       />
@@ -507,7 +507,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           id={`select-${row.id}`}
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
-                          onCheckedChange={() => selection.handleSelectRow(row)}
+                          onCheckedChange={() => selection.onToggleRow(row)}
                           aria-label={
                             getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
                           }

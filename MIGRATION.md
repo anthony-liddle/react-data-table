@@ -36,3 +36,29 @@ A column's `className` styled its header and its `rowClassName` styled its body 
 ### `PaginationClient` is now `Pagination`, with `onNextPage` and `onPreviousPage`
 
 The component lost its framework-style suffix. The pagination object's `handleNextPage` and `handlePreviousPage` are now `onNextPage` and `onPreviousPage`, both on the `pagination` prop and on `Pagination`. `usePagination`'s `getPagination` returns the new names, so code that passes it straight through needs no change.
+
+### `useTableSelection` returns the `selection` prop
+
+The hook's result now goes straight to the table, with no renaming and no second `isRowDisabled`:
+
+```diff
+- const { selection, ...handlers } = useTableSelection(rows, { isRowDisabled });
+- <DataTable selection={{ selectedRows: selection, isRowDisabled, ...handlers }} />
++ const selection = useTableSelection(rows, { isRowDisabled });
++ <DataTable selection={selection} />
+```
+
+The hook's fields are renamed to match: `selection` is `selectedRows`, `handleSelectRow` is `onToggleRow`, `handleSelectAll` is `onToggleAll`, `handleDeselectAll` is `clearSelection`, and `setSelection` is `setSelectedRows`. `isRowSelected` and `findRowInSelection` are unchanged.
+
+If you build the `selection` prop yourself, `TableSelection` now holds only what the table uses: `isRowSelected`, `isRowDisabled` (optional), `onToggleRow` and `onToggleAll`.
+
+### `BaseTableRow` is just `{ id }`
+
+Rows no longer need to extend `BaseTableRow`: any interface or type with an `id` fits, including types generated from an API schema. The type lost its index signature, so code that read arbitrary fields off an untyped row now gets a type error:
+
+```diff
+- const columns: TableColumn[] = [{ header: 'Name', cell: ({ row }) => String(row.name) }];
++ const columns: TableColumn<Member>[] = [{ header: 'Name', cell: ({ row }) => row.name }];
+```
+
+Give `TableColumn`, `DataTable` and the hooks your row type and the error goes away. `BaseTableSelection`, which duplicated `BaseTableRow`, is removed.

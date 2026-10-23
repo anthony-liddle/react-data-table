@@ -99,7 +99,7 @@ const PlaygroundTable = ({
   const { offset, limit, reset, getPagination } = usePagination(pageSize);
   const sorted = useMemo(() => sortMembers(members, sort, direction), [sort, direction]);
   const rows = withPagination ? sorted.slice(offset, offset + limit) : sorted.slice(0, 25);
-  const { selection, ...selectionHandlers } = useTableSelection(rows, {
+  const selection = useTableSelection(rows, {
     isRowDisabled: isSuspended,
   });
 
@@ -110,7 +110,7 @@ const PlaygroundTable = ({
         on and off.
       </Intro>
       <p className="demo-note" aria-live="polite">
-        {withSelection ? `${selection.length} selected` : 'Selection off'}
+        {withSelection ? `${selection.selectedRows.length} selected` : 'Selection off'}
       </p>
       <DataTable
         columns={defaultColumns}
@@ -131,11 +131,7 @@ const PlaygroundTable = ({
               }
             : undefined
         }
-        selection={
-          withSelection
-            ? { selectedRows: selection, isRowDisabled: isSuspended, ...selectionHandlers }
-            : undefined
-        }
+        selection={withSelection ? selection : undefined}
         actionMenu={withActionMenu ? actionMenu : undefined}
         pagination={withPagination ? getPagination(sorted.length) : undefined}
       />

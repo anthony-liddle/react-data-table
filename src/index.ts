@@ -46,7 +46,6 @@ export {
   useTableDragSelection,
 } from './hooks/use-table-drag-selection.ts';
 export {
-  type BaseTableSelection,
   type UseTableSelectionOptions,
   useTableSelection,
 } from './hooks/use-table-selection.ts';

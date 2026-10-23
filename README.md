@@ -52,9 +52,9 @@ Import it here rather than from JavaScript, so the order line always comes first
 ## Quick start
 
 ```tsx
-import { DataTable, type BaseTableRow, type TableColumn } from '@anthony-liddle/react-data-table';
+import { DataTable, type TableColumn } from '@anthony-liddle/react-data-table';
 
-interface Member extends BaseTableRow {
+interface Member {
   id: string;
   name: string;
   email: string;
@@ -81,7 +81,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `{ sortKey, direction, handleSort }` | – | Sort state and handler. `useTableSort` returns these. |
-| `selection` | `TableSelection<T>` | – | Selection state and handlers (`useTableSelection`). Enables checkboxes and drag selection. |
+| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
 | `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
@@ -123,7 +123,7 @@ interface TableColumn<T> {
 | Hook | Returns | Use |
 |---|---|---|
 | `useTableSort({ sortableColumns, defaultSortKey, defaultSortDirection, persistKey })` | `{ sort, direction, handleSort, reset, … }` | Pass to the `sort` prop; feed `sort` / `direction` into your query |
-| `useTableSelection(rows, { isRowDisabled })` | `{ selection, handleSelectRow, handleSelectAll, … }` | Spread into the `selection` prop |
+| `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
 | `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |

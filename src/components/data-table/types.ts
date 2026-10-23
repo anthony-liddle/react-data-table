@@ -6,10 +6,12 @@ import type { SortDirection } from '../library/sortable-header-client/index.ts';
 // Re-export SortDirection for consistent usage
 export type { SortDirection };
 
-// Base interface that all table data must have
+/**
+ * All a row needs is a stable `id`. Any interface or type with one fits, with
+ * no need to extend this.
+ */
 export interface BaseTableRow {
   id: string | number;
-  [key: string]: unknown;
 }
 
 export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
@@ -101,14 +103,15 @@ export interface TableSort {
   handleSort: (sortKey: string) => void;
 }
 
+/** What the table needs to show and change a selection. `useTableSelection` returns it. */
 export interface TableSelection<TData extends BaseTableRow = BaseTableRow> {
-  selectedRows: TData[];
-  handleSelectRow: (row: TData) => void;
-  handleSelectAll: (checked: boolean) => void;
-  handleDeselectAll: () => void;
   isRowSelected: (row: TData) => boolean;
+  /** A disabled row's checkbox is disabled, and select-all and drag selection skip it. */
   isRowDisabled?: (row: TData) => boolean;
-  findRowInSelection: (row: TData) => TData | undefined;
+  /** Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag toggles it. */
+  onToggleRow: (row: TData) => void;
+  /** Called when the select-all checkbox changes. */
+  onToggleAll: (checked: boolean) => void;
 }
 
 export interface VisibleColumn {

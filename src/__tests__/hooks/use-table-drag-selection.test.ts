@@ -16,12 +16,9 @@ interface Row {
 const rows: Row[] = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 
 const selection: TableSelection<Row> = {
-  selectedRows: [],
-  handleSelectRow: () => {},
-  handleSelectAll: () => {},
-  handleDeselectAll: () => {},
+  onToggleRow: () => {},
+  onToggleAll: () => {},
   isRowSelected: () => false,
-  findRowInSelection: () => undefined,
 };
 
 // A press that lands on a plain cell, not a checkbox or button.

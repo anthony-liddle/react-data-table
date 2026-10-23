@@ -8,6 +8,8 @@ import type { BaseTableRow, TableColumn, VisibleColumn } from '@/components/data
 interface TestRow extends BaseTableRow {
   id: string;
   name: string;
+  email?: string;
+  role?: string;
 }
 
 describe('TableMenu', () => {
