@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { SortOrder as SortDirection } from '@/components/data-table/types';
@@ -92,7 +92,7 @@ describe('useTableSort persisted sort-key validation', () => {
       })
     );
     expect(result.current.sort).toBe('NAME');
-    expect(result.current.direction).toBe(SortDirection.Asc);
+    expect(result.current.direction).toBe('asc');
   });
 
   it('honors the persisted direction when the persisted sort key is a real column', () => {
@@ -107,6 +107,44 @@ describe('useTableSort persisted sort-key validation', () => {
       })
     );
     expect(result.current.sort).toBe('NAME');
-    expect(result.current.direction).toBe(SortDirection.Desc);
+    expect(result.current.direction).toBe('desc');
+  });
+});
+
+// The hook reports lowercase directions, the common REST and client-side
+// convention. Uppercase SortOrder values are still accepted wherever a direction
+// goes in, so GraphQL callers can keep passing them.
+describe('useTableSort directions', () => {
+  it('cycles a column ascending, descending, then unsorted', () => {
+    const { result } = renderHook(() => useTableSort({ sortableColumns: COLUMNS }));
+
+    act(() => result.current.handleSort('NAME'));
+    expect(result.current.direction).toBe('asc');
+
+    act(() => result.current.handleSort('NAME'));
+    expect(result.current.direction).toBe('desc');
+
+    act(() => result.current.handleSort('NAME'));
+    expect(result.current.sort).toBeNull();
+    expect(result.current.direction).toBeNull();
+  });
+
+  it.each([
+    ['DESC', 'desc'],
+    ['desc', 'desc'],
+    ['ASC', 'asc'],
+  ] as const)('reports a %s default direction as %s', (input, expected) => {
+    const { result } = renderHook(() =>
+      useTableSort({ defaultSortKey: 'NAME', defaultSortDirection: input })
+    );
+    expect(result.current.direction).toBe(expected);
+  });
+
+  it('reports a direction set from either case in lowercase', () => {
+    const { result } = renderHook(() => useTableSort({ defaultSortKey: 'NAME' }));
+    act(() => result.current.setSortDirection('DESC'));
+    expect(result.current.direction).toBe('desc');
+    act(() => result.current.setSortDirection('asc'));
+    expect(result.current.direction).toBe('asc');
   });
 });

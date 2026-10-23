@@ -59,6 +59,15 @@ A few things worth knowing before you touch the config:
 Use the `@/` path alias for internal imports (`@/components/...`) rather than
 long relative paths.
 
+### Stories
+
+A play function runs every time someone opens its story, including on the
+published Storybook. Visible stories should stay still for visitors, so a play
+function that clicks, types, or drags goes on a hidden twin story instead: spread
+the visible story, add `tags: ['!dev', '!autodocs']`, and give it the play
+function. `pnpm test:storybook` runs the twin, and axe still checks both. A play
+function that only reads the screen can stay on the visible story.
+
 ## Commit conventions
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and

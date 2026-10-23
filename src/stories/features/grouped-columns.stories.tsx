@@ -85,7 +85,14 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const GroupedColumns: Story = {
+export const GroupedColumns: Story = {};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: checks the two-row header, then sorts a sub-column.
+ */
+export const GroupedColumnsInteraction: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const table = canvasElement.querySelector('table') as HTMLElement;
     const inTable = within(table);

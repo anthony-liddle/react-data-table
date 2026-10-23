@@ -65,7 +65,14 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const DragSelection: Story = {
+export const DragSelection: Story = {};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: drags across four rows, then clears the selection.
+ */
+export const DragSelectionInteraction: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const nameCell = (i: number) =>

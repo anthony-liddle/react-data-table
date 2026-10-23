@@ -92,7 +92,14 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const ColumnManagement: Story = {
+export const ColumnManagement: Story = {};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: shows a hidden column from the panel, then hides it again.
+ */
+export const ColumnManagementInteraction: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const headers = () => [...canvasElement.querySelectorAll('thead th')].map(th => th.textContent);

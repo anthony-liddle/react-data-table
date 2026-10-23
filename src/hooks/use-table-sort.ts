@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readPersistedString, writePersisted } from '../components/data-table/persist.ts';
-import { SortOrder } from '../components/data-table/types.ts';
+import type { SortDirection, SortOrder } from '../components/data-table/types.ts';
 
 interface UseTableSortProps {
   sortableColumns?: string[];
   defaultSortKey?: string;
-  defaultSortDirection?: SortOrder;
+  /** Either case is accepted; the hook always reports lowercase. */
+  defaultSortDirection?: SortDirection | SortOrder;
   persistKey?: string;
   /**
    * Called when the sort handler throws. Route it to your own error reporter;
@@ -37,6 +38,13 @@ const readValidatedSortKey = (
   return null;
 };
 
+// Directions come in as 'asc'/'desc' or the uppercase SortOrder values (and, from
+// a URL or storage, as any string). The hook reports lowercase only.
+const toSortDirection = (value: string | null | undefined): SortDirection => {
+  const lower = value?.toLowerCase();
+  return lower === 'asc' || lower === 'desc' ? lower : null;
+};
+
 export const useTableSort = ({
   sortableColumns,
   defaultSortKey,
@@ -52,24 +60,18 @@ export const useTableSort = ({
     return readValidatedSortKey(persistKey, sortableColumns) ?? defaultSortKey ?? null;
   });
 
-  const [direction, setDirection] = useState<SortOrder | null>(() => {
+  const [direction, setDirection] = useState<SortDirection>(() => {
     if (typeof window === 'undefined' || !persistKey) {
-      return defaultSortDirection ?? null;
+      return toSortDirection(defaultSortDirection);
     }
     // Only honor the persisted direction when the persisted sort key belongs to
     // THIS table. Otherwise a foreign `?sort=score&dir=desc` would still flip the
     // default column's direction even though the foreign key was rejected above.
     if (readValidatedSortKey(persistKey, sortableColumns) == null) {
-      return defaultSortDirection ?? null;
+      return toSortDirection(defaultSortDirection);
     }
     const dir = readPersistedString('dir', `tablesort:${persistKey}:dir`);
-    if (dir === 'desc' || dir === 'DESC') {
-      return SortOrder.Desc;
-    }
-    if (dir === 'asc' || dir === 'ASC') {
-      return SortOrder.Asc;
-    }
-    return defaultSortDirection ?? null;
+    return toSortDirection(dir) ?? toSortDirection(defaultSortDirection);
   });
 
   // Persist sort state to URL + localStorage when it changes
@@ -82,11 +84,9 @@ export const useTableSort = ({
       isFirstPersist.current = false;
       return;
     }
-    const dirStr =
-      direction === SortOrder.Desc ? 'desc' : direction === SortOrder.Asc ? 'asc' : null;
-    writePersisted({ sort: sort, dir: dirStr }, `tablesort:${persistKey}:key`, sort);
+    writePersisted({ sort: sort, dir: direction }, `tablesort:${persistKey}:key`, sort);
     try {
-      localStorage.setItem(`tablesort:${persistKey}:dir`, JSON.stringify(dirStr));
+      localStorage.setItem(`tablesort:${persistKey}:dir`, JSON.stringify(direction));
     } catch {
       // ignore
     }
@@ -98,16 +98,16 @@ export const useTableSort = ({
         if (!sortableColumns || sortableColumns.includes(key)) {
           if (sort !== key) {
             setSort(key);
-            setDirection(SortOrder.Asc);
+            setDirection('asc');
           } else {
-            if (direction === SortOrder.Asc) {
-              setDirection(SortOrder.Desc);
-            } else if (direction === SortOrder.Desc) {
+            if (direction === 'asc') {
+              setDirection('desc');
+            } else if (direction === 'desc') {
               setSort(null);
               setDirection(null);
             } else {
               setSort(key);
-              setDirection(SortOrder.Asc);
+              setDirection('asc');
             }
           }
         }
@@ -118,8 +118,8 @@ export const useTableSort = ({
     [sort, direction, sortableColumns, onError]
   );
 
-  const setSortDirection = useCallback((direction: SortOrder) => {
-    setDirection(direction);
+  const setSortDirection = useCallback((direction: SortDirection | SortOrder) => {
+    setDirection(toSortDirection(direction));
   }, []);
 
   const setSortKey = useCallback((key: string) => {

@@ -11,7 +11,6 @@ import { at } from '../test-support/at.ts';
 import { Demo, Intro } from './support/demo-ui.tsx';
 import {
   defaultColumns,
-  fetchMemberPage,
   formatDate,
   isSuspended,
   type Member,
@@ -97,13 +96,10 @@ const PlaygroundTable = ({
 }: PlaygroundArgs) => {
   const pageSize = 10;
   const { sort, direction, handleSort } = useTableSort({ sortableColumns: SORT_KEYS });
-  const { pagination, pageIndex, goToNext, goToPrevious, hasPreviousPage, reset } =
-    usePagination(pageSize);
+  const { offset, limit, reset, getPagination } = usePagination(pageSize);
   const sorted = useMemo(() => sortMembers(members, sort, direction), [sort, direction]);
-  const page = withPagination
-    ? fetchMemberPage(sorted, pagination.first, pagination.after)
-    : { items: sorted.slice(0, 25), totalCount: 25, hasNextPage: false, endCursor: null };
-  const { selection, ...selectionHandlers } = useTableSelection(page.items, {
+  const rows = withPagination ? sorted.slice(offset, offset + limit) : sorted.slice(0, 25);
+  const { selection, ...selectionHandlers } = useTableSelection(rows, {
     isRowDisabled: isSuspended,
   });
 
@@ -118,7 +114,7 @@ const PlaygroundTable = ({
       </p>
       <DataTable
         columns={defaultColumns}
-        data={page.items}
+        data={rows}
         loading={loading}
         hideTableSettings={hideTableSettings}
         selectOnRowClick={selectOnRowClick}
@@ -141,20 +137,7 @@ const PlaygroundTable = ({
             : undefined
         }
         actionMenu={withActionMenu ? actionMenu : undefined}
-        pagination={
-          withPagination
-            ? {
-                totalCount: page.totalCount,
-                pageIndex,
-                pageSize,
-                hasNextPage: page.hasNextPage,
-                hasPreviousPage,
-                handleNextPage: () =>
-                  goToNext({ hasNextPage: page.hasNextPage, endCursor: page.endCursor }),
-                handlePreviousPage: goToPrevious,
-              }
-            : undefined
-        }
+        pagination={withPagination ? getPagination(sorted.length) : undefined}
       />
     </Demo>
   );
@@ -173,7 +156,7 @@ export const Playground: StoryObj<PlaygroundArgs> = {
     loading: false,
   },
   argTypes: {
-    // Turning pagination off and on again remounts so the cursor stack resets.
+    // Turning pagination off and on again remounts, so paging starts over.
     withPagination: { control: 'boolean' },
   },
   render: args => <PlaygroundTable key={String(args.withPagination)} {...args} />,
@@ -266,6 +249,15 @@ export const ExpandedRows: StoryObj<{ rowCount: number }> = {
   args: { rowCount: 10 },
   argTypes: { rowCount: { control: { type: 'range', min: 3, max: 40, step: 1 } } },
   render: ({ rowCount }) => <ExpandedRowsDemo rowCount={rowCount} />,
+};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: opens and closes the first row.
+ */
+export const ExpandedRowsInteraction: StoryObj<{ rowCount: number }> = {
+  ...ExpandedRows,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const first = at(members, 0);
@@ -295,6 +287,15 @@ export const WithActionMenu: StoryObj<{ rowCount: number }> = {
       />
     </Demo>
   ),
+};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
+ * still for visitors: opens the first row's menu and picks Edit.
+ */
+export const WithActionMenuInteraction: StoryObj<{ rowCount: number }> = {
+  ...WithActionMenu,
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     onEdit.mockClear();
     const canvas = within(canvasElement);

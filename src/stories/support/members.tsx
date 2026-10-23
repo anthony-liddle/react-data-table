@@ -293,15 +293,3 @@ export const sortMembers = (
       : dir * String(av).localeCompare(String(bv));
   });
 };
-
-/** Deterministic cursor-paginated "server": the cursor is a row offset. */
-export const fetchMemberPage = (rows: Member[], first: number, after: string | null) => {
-  const start = after ? Number(after) : 0;
-  const items = rows.slice(start, start + first);
-  return {
-    items,
-    endCursor: String(start + items.length),
-    hasNextPage: start + first < rows.length,
-    totalCount: rows.length,
-  };
-};
