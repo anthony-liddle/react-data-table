@@ -1,26 +1,13 @@
 /*
- * Storybook preview stylesheet. The package needs no Tailwind; Tailwind here
- * styles only the stories' own demo chrome.
+ * Storybook preview stylesheet. No Tailwind: the package brings its own
+ * styles, and the stories' demo chrome is plain CSS below.
  *
- * It also shows the layered setup the README gives Tailwind users: the
- * package's rules sit in a react-data-table layer between Tailwind's base
- * (so preflight can't undo them) and its utilities (so a utility passed
- * through className wins).
+ * The package loads into a cascade layer, the setup the README describes for
+ * apps that manage layers. The unlayered rules here, like the stories'
+ * alignment classes, then win over it the way a consumer's own CSS would.
  */
 
-@layer theme, base, react-data-table, components, utilities;
-
-@import "tailwindcss" source(none);
 @import "../src/styles.css" layer(react-data-table);
-
-/* Utilities for the stories only. source(none) stops Tailwind's automatic
-   detection from scanning the components, so a utility left behind in one
-   would render unstyled instead of being silently generated. */
-@source "../src/stories";
-
-/* Class-based dark mode: `dark:` utilities follow the `.dark` class that the
-   theme toolbar toggles on <html>, matching the package's `.dark` defaults. */
-@custom-variant dark (&:where(.dark, .dark *));
 
 /* The demo theme: shadcn-style tokens as full colour values, the way an app
    using the package would declare them. The values match the package's own
@@ -65,30 +52,253 @@
   --ring: hsl(216 34% 50%);
 }
 
-/* Map the tokens to Tailwind colour utilities (bg-card, border-border,
-   text-muted-foreground, ...). `inline` resolves the var() at use-site, so the
-   `.dark` swap propagates without a second block. */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+/* Page basics. These reach the table only by inheritance, as any app's would. */
+html {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  line-height: 1.5;
+  tab-size: 4;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--background);
+  margin: 0;
   color: var(--foreground);
+  background-color: var(--background);
+}
+
+/* Elements only the demo chrome uses; the package renders none of them. */
+:where(p, dl, dd) {
+  margin: 0;
+}
+
+:where(code) {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 1em;
+}
+
+:where([class^="demo-"], [class*=" demo-"], .demo) {
+  box-sizing: border-box;
+}
+
+/* Consumer-style utilities the stories pass through column props. */
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+/* Demo chrome */
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.demo-intro {
+  max-width: 65ch;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.demo-note {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.demo-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.demo-muted {
+  color: var(--muted-foreground);
+}
+
+.demo-toolbar,
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-toolbar {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.demo-actions {
+  margin-top: 0.5rem;
+}
+
+.demo-button,
+.demo-select,
+.demo-input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.demo-button {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: var(--card);
+}
+
+.demo-select {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--card);
+}
+
+.demo-input {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+@media (hover: hover) {
+  .demo-button:hover {
+    background-color: var(--accent);
+  }
+}
+
+.demo-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.demo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.demo-panel {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.demo-panel__label {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.demo-keyvalues {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.demo-keyvalues__row {
+  display: contents;
+}
+
+.demo-keyvalues__value {
+  word-break: break-all;
+}
+
+.demo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.demo-status__dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+}
+
+.demo-status__dot--active {
+  background-color: oklch(69.6% 0.17 162.48);
+}
+
+.demo-status__dot--invited {
+  background-color: oklch(76.9% 0.188 70.08);
+}
+
+.demo-status__dot--suspended {
+  background-color: oklch(70.9% 0.01 56.259);
+}
+
+.demo-name {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.demo-expanded {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (width >= 40rem) {
+  .demo-expanded {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.demo-mini-table {
+  width: 16rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: left;
+  text-indent: 0;
+  border-collapse: collapse;
+}
+
+.demo-mini-table__row {
+  border-bottom: 1px solid currentColor;
+}
+
+.demo-mini-table__cell {
+  padding: 0.5rem 0;
+  color: var(--muted-foreground);
 }
