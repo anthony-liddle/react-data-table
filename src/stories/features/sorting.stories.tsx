@@ -71,7 +71,7 @@ const SortingDemo = (props: SortingDemoProps) => (
 );
 
 const meta = {
-  title: 'Features/Sorting',
+  title: `Features/${'Sorting'}`,
   component: SortingDemo,
   args: { defaultSortKey: 'none', defaultSortDirection: 'asc', rowCount: 15 },
   argTypes: {
