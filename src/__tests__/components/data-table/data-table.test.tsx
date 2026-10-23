@@ -167,6 +167,30 @@ describe('DataTable', () => {
       };
     };
 
+    it('should name each row checkbox from getRowLabel when it is provided', () => {
+      render(
+        <DataTable
+          columns={baseColumns}
+          data={baseData}
+          selection={createSelection()}
+          getRowLabel={row => row.name}
+        />
+      );
+
+      const rowCheckboxes = screen.getAllByRole('checkbox').slice(1); // [0] is select-all
+      expect(at(rowCheckboxes, 0)).toHaveAccessibleName('Select John Doe');
+      expect(at(rowCheckboxes, 1)).toHaveAccessibleName('Select Jane Smith');
+      expect(at(rowCheckboxes, 2)).toHaveAccessibleName('Select Bob Johnson');
+    });
+
+    it('should fall back to the row id when getRowLabel is not provided', () => {
+      render(<DataTable columns={baseColumns} data={baseData} selection={createSelection()} />);
+
+      const rowCheckboxes = screen.getAllByRole('checkbox').slice(1); // [0] is select-all
+      expect(at(rowCheckboxes, 0)).toHaveAccessibleName('Select row 1');
+      expect(at(rowCheckboxes, 2)).toHaveAccessibleName('Select row 3');
+    });
+
     it('should render selection checkboxes when selection prop is provided', () => {
       const selection = createSelection();
       render(<DataTable columns={baseColumns} data={baseData} selection={selection} />);

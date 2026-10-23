@@ -55,6 +55,12 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    * selectors, which race Suspense re-streams and hydration.
    */
   getRowTestId?: (row: TData) => string | undefined;
+  /**
+   * Names a row for assistive technology. When set, the row's selection
+   * checkbox is announced as "Select <label>"; when omitted it falls back to
+   * "Select row <id>".
+   */
+  getRowLabel?: (row: TData) => string;
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
   showPageCount?: boolean;
   /**
@@ -92,6 +98,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   persistKey,
   rowClassName,
   getRowTestId,
+  getRowLabel,
   showPageCount = false,
   renderExpandedRow,
   labels,
@@ -489,7 +496,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.handleSelectRow(row)}
                           className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                          aria-label={`Select row ${row.id}`}
+                          aria-label={
+                            getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
+                          }
                         />
                       </td>
                     )}

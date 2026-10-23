@@ -3,6 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../../components/data-table/data-table.tsx';
 import { useTableSelection } from '../../hooks/use-table-selection.ts';
+import { at } from '../../test-support/at.ts';
 import { Demo, DemoButton, Intro, StatePanel, Toolbar } from '../support/demo-ui.tsx';
 import { defaultColumns, isSuspended, members } from '../support/members.tsx';
 
@@ -12,12 +13,15 @@ interface RowSelectionDemoProps {
   /** Suspended members cannot be selected by any method. */
   disableSuspended: boolean;
   rowCount: number;
+  /** Name each row checkbox after its member through `getRowLabel`. */
+  labelRows: boolean;
 }
 
 const RowSelectionTable = ({
   selectOnRowClick,
   disableSuspended,
   rowCount,
+  labelRows,
 }: RowSelectionDemoProps) => {
   const rows = members.slice(0, rowCount);
   const isRowDisabled = disableSuspended ? isSuspended : undefined;
@@ -31,7 +35,10 @@ const RowSelectionTable = ({
         {selectOnRowClick ? ' Clicking anywhere on a row also toggles it.' : ''}
         {disabledCount > 0
           ? ` The ${disabledCount} suspended member${disabledCount === 1 ? ' is' : 's are'} disabled and skipped by select-all.`
-          : ''}
+          : ''}{' '}
+        {labelRows
+          ? `Each checkbox is named for screen readers through getRowLabel, so the first row's is "Select ${at(rows, 0).name}".`
+          : `This table passes no getRowLabel, so each checkbox falls back to its row id: the first row's is "Select row ${at(rows, 0).id}".`}
       </Intro>
       <StatePanel label="Selection">
         <Toolbar>
@@ -51,6 +58,7 @@ const RowSelectionTable = ({
         data={rows}
         selectOnRowClick={selectOnRowClick}
         selection={{ selectedRows: selection, isRowDisabled, ...handlers }}
+        getRowLabel={labelRows ? member => member.name : undefined}
         hideTableSettings
       />
     </Demo>
@@ -65,7 +73,7 @@ const RowSelectionDemo = (props: RowSelectionDemoProps) => (
 const meta = {
   title: 'Features/Row Selection',
   component: RowSelectionDemo,
-  args: { selectOnRowClick: true, disableSuspended: true, rowCount: 15 },
+  args: { selectOnRowClick: true, disableSuspended: true, rowCount: 15, labelRows: true },
   argTypes: {
     rowCount: { control: { type: 'range', min: 5, max: members.length, step: 5 } },
   },
@@ -75,8 +83,10 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const RowSelection: Story = {
-  play: async ({ canvasElement, args }) => {
+/** Selects the first row through its checkbox, then selects and clears all. */
+const selectThroughCheckboxes =
+  (firstRowCheckboxName: string): Story['play'] =>
+  async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const count = () => canvas.getByTestId('selected-count').textContent ?? '';
     const rows = members.slice(0, args.rowCount);
@@ -84,7 +94,7 @@ export const RowSelection: Story = {
       ? rows.filter(m => !isSuspended(m)).length
       : rows.length;
 
-    await userEvent.click(canvas.getByRole('checkbox', { name: 'Select row m-001' }));
+    await userEvent.click(canvas.getByRole('checkbox', { name: firstRowCheckboxName }));
     await waitFor(() => expect(count()).toMatch(/^1 of/));
 
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Select all' }));
@@ -92,5 +102,16 @@ export const RowSelection: Story = {
 
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Select all' }));
     await waitFor(() => expect(count()).toMatch(/^0 of/));
-  },
+  };
+
+export const RowSelection: Story = {
+  name: 'With row labels',
+  play: selectThroughCheckboxes(`Select ${at(members, 0).name}`),
+};
+
+/** The same table without getRowLabel: checkboxes fall back to the row id. */
+export const RowSelectionIdFallback: Story = {
+  name: 'Id fallback',
+  args: { labelRows: false },
+  play: selectThroughCheckboxes(`Select row ${at(members, 0).id}`),
 };

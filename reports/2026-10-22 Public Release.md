@@ -4,7 +4,7 @@
 - **npm:** https://www.npmjs.com/package/@anthony-liddle/react-data-table (`0.1.0`, with provenance)
 - **Storybook:** https://anthony-liddle.github.io/react-data-table/ (GitHub Pages)
 
-This repo's history begins with a single root commit (`8877418`). The pre-release history lives in a separate private archive and was never pushed here.
+This repo's history begins with a single root commit (`8877418`). It is SSH-signed with the maintainer's key, and GitHub shows it as Verified. The pre-release history lives in a separate private archive and was never pushed here. The npm provenance for 0.1.0 does not depend on commit signatures: npm signs it from the release workflow's OIDC identity (section 4). See *Signature check* under Followups for the evidence.
 
 ## 1. Inventory (before this pass)
 
