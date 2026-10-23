@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { DragIndicator, TableEdit } from '../icon.tsx';
 import { Checkbox } from '../ui/checkbox.tsx';
@@ -43,6 +43,8 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
   onToggle,
 }: SortableColumnItemProps<TData>) => {
   const columnId = getColumnId(column);
+  // A generated id: a column id could match an element elsewhere on the page.
+  const checkboxId = useId();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: columnId,
@@ -60,8 +62,8 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
       className="rdt-column-panel__item"
       data-dragging={isDragging || undefined}
     >
-      <Checkbox id={columnId} checked={isVisible} onCheckedChange={() => onToggle(column)} />
-      <label htmlFor={columnId} className="rdt-column-panel__label">
+      <Checkbox id={checkboxId} checked={isVisible} onCheckedChange={() => onToggle(column)} />
+      <label htmlFor={checkboxId} className="rdt-column-panel__label">
         {column.headerIcon}
         {column.header}
       </label>

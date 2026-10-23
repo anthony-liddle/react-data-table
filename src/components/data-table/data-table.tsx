@@ -338,7 +338,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     <th scope="col" rowSpan={2} className={SELECT_HEADER_CLASS}>
                       <div className="rdt-table__select-all">
                         <Checkbox
-                          id="select-all"
                           checked={
                             data.length > 0
                             && data
@@ -422,7 +421,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   <th scope="col" className={SELECT_HEADER_CLASS}>
                     <div className="rdt-table__select-all">
                       <Checkbox
-                        id="select-all"
                         checked={
                           data.length > 0
                           && data
@@ -504,7 +502,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     {selection && (
                       <td className="rdt-table__cell rdt-table__cell--select rdt-table__cell--sticky">
                         <Checkbox
-                          id={`select-${row.id}`}
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.onToggleRow(row)}

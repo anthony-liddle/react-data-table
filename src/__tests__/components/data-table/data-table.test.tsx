@@ -1016,6 +1016,22 @@ describe('DataTable', () => {
       expect(at(bodyRows(), 0).className).toBe('rdt-table__row mine');
     });
 
+    it('keeps element ids unique with two tables on the page', () => {
+      const selection = {
+        isRowSelected: () => false,
+        onToggleRow: vi.fn(),
+        onToggleAll: vi.fn(),
+      };
+      const { container } = render(
+        <>
+          <DataTable columns={baseColumns} data={baseData} selection={selection} />
+          <DataTable columns={baseColumns} data={baseData} selection={selection} />
+        </>
+      );
+      const ids = [...container.querySelectorAll('[id]')].map(element => element.id);
+      expect(ids.length).toBe(new Set(ids).size);
+    });
+
     it('sets getRowTestId as data-testid, the attribute test libraries look up', () => {
       render(
         <DataTable columns={baseColumns} data={baseData} getRowTestId={row => `member-${row.id}`} />
