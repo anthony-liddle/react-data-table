@@ -12,7 +12,7 @@ export interface PaginationInput {
   after: string | null;
 }
 
-// goToNext only needs the cursor and whether another page exists. Accepting this
+// goToNext only needs the cursor — and whether another page exists. Accepting this
 // structural subset (rather than the full PageInfo) lets callers select just
 // `hasNextPage`/`endCursor` without over-fetching the unused page-info fields.
 // A full PageInfo is still assignable.
