@@ -516,6 +516,9 @@ describe('SortableHeaderClient', () => {
       expect(header.querySelector('button')).toHaveClass('rdt-sort-header__button');
       expect(screen.getByText('Name')).toHaveClass('rdt-sort-header__label');
       expect(header.querySelector('.rdt-sort-header__icon')).not.toHaveAttribute('data-direction');
+      expect(header.querySelector('.rdt-sort-header__icon svg')).toHaveClass(
+        'rdt-sort-header__arrow'
+      );
     });
 
     it.each([

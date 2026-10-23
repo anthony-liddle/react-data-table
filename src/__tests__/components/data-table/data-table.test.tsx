@@ -979,7 +979,9 @@ describe('DataTable', () => {
       expect(expandedCell?.parentElement).toHaveClass('rdt-table__expanded-row');
 
       rerender(<DataTable columns={baseColumns} data={[]} />);
-      expect(screen.getByText('No results found').closest('td')).toHaveClass('rdt-table__empty');
+      const emptyCell = screen.getByText('No results found').closest('td');
+      expect(emptyCell).toHaveClass('rdt-table__empty');
+      expect(emptyCell?.parentElement).toHaveClass('rdt-table__empty-row');
     });
 
     it('marks grouped parent headers', () => {

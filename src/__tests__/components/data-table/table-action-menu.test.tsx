@@ -808,6 +808,7 @@ describe('TableActionMenu', () => {
       render(<TableActionMenu items={items} row={mockRow} />);
       const trigger = screen.getByRole('button', { name: 'Actions' });
       expect(trigger).toHaveClass('rdt-action-menu__trigger');
+      expect(trigger.querySelector('svg')).toHaveClass('rdt-action-menu__trigger-icon');
 
       await user.click(trigger);
       expect(screen.getByRole('menu')).toHaveClass('rdt-menu');

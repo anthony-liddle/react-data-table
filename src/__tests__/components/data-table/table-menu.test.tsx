@@ -445,6 +445,7 @@ describe('TableMenu', () => {
       );
       const trigger = screen.getByRole('button', { name: 'Column settings' });
       expect(trigger).toHaveClass('rdt-column-panel__trigger');
+      expect(trigger.querySelector('svg')).toHaveClass('rdt-column-panel__trigger-icon');
 
       await user.click(trigger);
       const panel = screen.getByRole('dialog', { name: 'Columns' });

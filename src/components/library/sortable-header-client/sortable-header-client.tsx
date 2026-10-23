@@ -97,9 +97,15 @@ export const SortableHeaderClient = ({
               className="rdt-sort-header__icon"
               data-direction={(isActive && sortDirection) || undefined}
             >
-              {(!isActive || sortDirection === null) && <SwapVert />}
-              {isActive && sortDirection === 'asc' && <ArrowDownward />}
-              {isActive && sortDirection === 'desc' && <ArrowUpward />}
+              {(!isActive || sortDirection === null) && (
+                <SwapVert className="rdt-sort-header__arrow" />
+              )}
+              {isActive && sortDirection === 'asc' && (
+                <ArrowDownward className="rdt-sort-header__arrow" />
+              )}
+              {isActive && sortDirection === 'desc' && (
+                <ArrowUpward className="rdt-sort-header__arrow" />
+              )}
             </span>
           </span>
         </button>

@@ -86,7 +86,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button type="button" className="rdt-action-menu__trigger" aria-label="Actions">
-          <MoreVert />
+          <MoreVert className="rdt-action-menu__trigger-icon" />
         </button>
       </DropdownMenuTrigger>
       {/* A high z-index keeps row actions above modal overlays, so the menu

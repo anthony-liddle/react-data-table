@@ -469,7 +469,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               />
             )}
             {!loading && data.length === 0 && (
-              <tr>
+              <tr className="rdt-table__empty-row">
                 <td
                   className="rdt-table__empty"
                   colSpan={

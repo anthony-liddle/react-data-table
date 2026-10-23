@@ -133,7 +133,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" className="rdt-column-panel__trigger" aria-label="Column settings">
-          <TableEdit />
+          <TableEdit className="rdt-column-panel__trigger-icon" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="rdt-column-panel" align="end" sideOffset={5} aria-label="Columns">

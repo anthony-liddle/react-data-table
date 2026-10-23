@@ -245,11 +245,18 @@
 
 /* Row states. Each rule matches the specificity of the rule it overrides,
    with the structure in a :where(), so the order below sets precedence:
-   selected, then hover, then a drag range. A selected row is highlighted only
+   selected, then hover, then a drag range. A selected row is tinted only
    when --rdt-row-selected is set; by default it keeps the card colour. */
 .rdt-table__cell:where([data-selected] > *) {
   --_rdt-edge: var(--_rdt-row-selected);
   background-color: var(--_rdt-row-selected);
+}
+
+/* Selected rows are always marked by a bar on their first cell, which leaves
+   the row's background, and so its text contrast, alone. The tint above is
+   opt-in. */
+.rdt-table__cell:where([data-selected] > :first-child) {
+  box-shadow: inset 3px 0 0 var(--_rdt-primary);
 }
 
 .rdt-table__cell:where(.rdt-table__row:hover > :not(.rdt-table__cell--actions)),
@@ -354,7 +361,7 @@
   height: 0.75rem;
 }
 
-.rdt-sort-header__icon :where(svg) {
+.rdt-sort-header__arrow {
   display: block;
   width: 100%;
   height: 100%;
@@ -449,8 +456,8 @@
   cursor: pointer;
 }
 
-.rdt-column-panel__trigger :where(svg),
-.rdt-action-menu__trigger :where(svg) {
+.rdt-column-panel__trigger-icon,
+.rdt-action-menu__trigger-icon {
   display: block;
 }
 
