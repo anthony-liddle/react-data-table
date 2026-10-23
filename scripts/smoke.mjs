@@ -7,7 +7,7 @@
  *   - the exports map pointing somewhere the built files are not
  *   - the `files` array leaving out something `dist` needs
  *   - relative imports in `dist` missing their `.js` extensions
- *   - the `./styles.css` subpath not resolving
+ *   - the `./styles.css` or `./styles.layer.css` subpath not resolving
  *   - `'use client'` directives lost in the build (React Server Components
  *     consumers need them on the interactive modules)
  *
@@ -114,12 +114,19 @@ for (const fragment of ['<table', 'Ada', 'bram@example.com', 'aria-sort="ascendi
 }
 
 const cssPath = fileURLToPath(import.meta.resolve('${name}/styles.css'));
-assert.match(readFileSync(cssPath, 'utf8'), /\\.data-table\\b/, 'styles.css should contain the table rules');
+const css = readFileSync(cssPath, 'utf8');
+assert.match(css, /\\.data-table\\b/, 'styles.css should contain the table rules');
+
+// The layered copy is the same rules inside one cascade layer.
+const layerPath = fileURLToPath(import.meta.resolve('${name}/styles.layer.css'));
+const layered = readFileSync(layerPath, 'utf8');
+assert.ok(layered.startsWith('@layer react-data-table {'), 'styles.layer.css should open the react-data-table layer');
+assert.ok(layered.includes(css), 'styles.layer.css should wrap the whole of styles.css');
 
 const tablePath = fileURLToPath(new URL('./components/data-table/data-table.js', import.meta.resolve('${name}')));
 assert.match(readFileSync(tablePath, 'utf8'), /^'use client';/, "data-table.js should keep its 'use client' directive");
 
-console.log('    exports, server render, styles.css and use-client directive OK');
+console.log('    exports, server render, both stylesheets and use-client directive OK');
 `
   );
   console.log(run('node', ['check.mjs'], consumer).trimEnd());

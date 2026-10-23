@@ -38,7 +38,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./styles.layer.css": "./dist/styles.layer.css"
   },
   "files": [
     "dist",
@@ -50,7 +51,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/styles.css dist/styles.css",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/build-css.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:storybook": "vitest run --project storybook",
@@ -62,7 +63,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "prepare": "husky",
-    "lint:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css",
+    "lint:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./styles.layer.css",
     "smoke": "node scripts/smoke.mjs",
     "prepublishOnly": "pnpm run lint:ci && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run lint:package && pnpm run smoke"
   },
