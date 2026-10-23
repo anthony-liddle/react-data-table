@@ -37,13 +37,15 @@ import '@anthony-liddle/react-data-table/styles.css';
 
 That is the whole setup. The table needs no Tailwind and no build step of its own.
 
-If your app orders its own cascade layers (Tailwind v4 does), import the layered copy instead and give it a place in the order. Between Tailwind's `base` and `utilities`, preflight leaves the table alone and a utility you pass through `className` wins:
+**Using Tailwind, or any cascade layers of your own?** Import the layered copy instead, from your CSS entry, after a line that orders the layers. Between Tailwind's `base` and `utilities`, preflight leaves the table alone and a utility you pass through `className` wins:
 
 ```css
 @layer theme, base, react-data-table, components, utilities;
 @import "tailwindcss";
 @import "@anthony-liddle/react-data-table/styles.layer.css";
 ```
+
+Import it here rather than from JavaScript, so the order line always comes first. A layer used before it is ordered goes to the bottom, under Tailwind's preflight, and the table loses its padding and borders. With the unlayered `styles.css`, Tailwind's utilities (which sit in a layer) can't override the table, so the layered copy is the one to use with Tailwind.
 
 `styles.layer.css` is the same rules as `styles.css` inside `@layer react-data-table`. See [Styling](#styling) for theming and overrides.
 
@@ -157,13 +159,13 @@ Every element the table renders has a documented class, and runtime state lives 
 
 ### Theme
 
-Colours come from shadcn-style tokens, read as full colour values: `--background`, `--foreground`, `--card`, `--popover`, `--popover-foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--border`, `--input` and `--ring`. The package never declares them. It reads each one with a built-in default, so a theme you declare anywhere wins, even inside a cascade layer, and `.dark` on any ancestor switches the defaults. A current shadcn/ui theme applies as it is.
+Colours come from shadcn-style tokens, read as full colour values: `--background`, `--foreground`, `--card`, `--popover`, `--popover-foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--border` and `--ring`. The package never declares them. It reads each one with a built-in default, so a theme you declare anywhere wins, even inside a cascade layer, and `.dark` on any ancestor switches the defaults. A current shadcn/ui theme applies as it is.
 
 Older shadcn themes wrote bare HSL triplets (`--card: 0 0% 100%`). Wrap each value in `hsl()`: `--card: hsl(0 0% 100%)`.
 
 ### Custom properties
 
-Set these on `:root` or on any ancestor of the table.
+Set these on `:root`, on any ancestor of the table, or on a single row through `rowClassName`.
 
 | Property | Default | |
 |---|---|---|
@@ -181,7 +183,7 @@ Set these on `:root` or on any ancestor of the table.
 | Block | Elements and modifiers | State |
 |---|---|---|
 | `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
-| `rdt-sort-header` (`--sticky`) | `__button`, `__content`, `__label`, `__icon` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
+| `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
 | `rdt-column-panel` | `__trigger`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
 | `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
@@ -201,9 +203,13 @@ Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-
   --rdt-radius: 0;
 }
 
-/* Highlight selected rows */
+/* Highlight selected rows, in both themes */
 :root {
   --rdt-row-selected: oklch(0.96 0.02 250);
+}
+
+.dark {
+  --rdt-row-selected: oklch(0.3 0.05 250);
 }
 
 /* Bold the sorted column's header */
