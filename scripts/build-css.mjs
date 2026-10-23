@@ -18,7 +18,9 @@ const css = readFileSync(join(root, 'src/styles.css'), 'utf8');
 
 const nested = css.match(/^@(import|layer)\b.*$/m);
 if (nested) {
-  console.error(`src/styles.css can't be wrapped in a layer: it has "${nested[0]}" at the top level.`);
+  console.error(
+    `src/styles.css can't be wrapped in a layer: it has "${nested[0]}" at the top level.`
+  );
   process.exit(1);
 }
 
