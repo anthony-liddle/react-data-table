@@ -176,7 +176,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `--rdt-cell-padding-y` | `0.5rem` | Vertical cell padding |
 | `--rdt-row-selected` | unset | Background tint for selected rows. Selected rows always show a 3px bar in `--primary` on their first cell; the tint is extra. Keep your cell text readable against it: with shadcn's default muted text, a light tint has to stay very pale to reach 4.5:1. |
 | `--rdt-skeleton` | stone, light and dark | Loading placeholders |
-| `--drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
+| `--rdt-drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
 
 ### Classes and state
 

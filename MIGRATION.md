@@ -62,3 +62,19 @@ Rows no longer need to extend `BaseTableRow`: any interface or type with an `id`
 ```
 
 Give `TableColumn`, `DataTable` and the hooks your row type and the error goes away. `BaseTableSelection`, which duplicated `BaseTableRow`, is removed.
+
+### Internal pieces are no longer exported
+
+These were exported in 0.4 but only make sense inside `DataTable`, so they are gone from the package root:
+
+- `TableHeader`, `TableLoading`, `TableMenu` and `SortableHeaderClient`
+- `useTableDragSelection`, `UseTableDragSelectionReturn` and `RowDragState`
+- `readPersisted`, `readPersistedString` and `writePersisted`
+- `reconcileColumnOrder`
+- `SortOrder` and `BaseTableSelection` (see above)
+
+If you used one of them directly, open an issue describing what for: it may belong in the public API in a form that can be kept stable.
+
+### `--drag-selection` is now `--rdt-drag-selection`
+
+It was the only custom property without the package prefix. Rename it where you set it.

@@ -28,31 +28,52 @@ const run = (command, args, cwd) =>
   execFileSync(command, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 const step = label => console.log(`\n  ${label}`);
 
-// What a consumer should get from the package root. A missing or renamed
-// export fails here rather than in someone's app.
+// Exactly what a consumer gets from the package root at runtime. A missing or
+// renamed export fails here rather than in someone's app, and so does an
+// internal one that leaks out: every export is API that has to be kept.
 const EXPECTED_EXPORTS = {
   function: [
     'DataTable',
-    'PaginationClient',
+    'Pagination',
     'TableActionMenu',
-    'TableHeader',
-    'TableLoading',
-    'TableMenu',
-    'SortableHeaderClient',
+    'getColumnId',
     'useCursorPagination',
     'usePagination',
     'usePersistedFilters',
-    'useTableDragSelection',
     'useTableSelection',
     'useTableSort',
-    'readPersisted',
-    'readPersistedString',
-    'writePersisted',
-    'getColumnId',
-    'reconcileColumnOrder',
   ],
-  object: ['SortOrder', 'defaultLabels'],
+  object: ['defaultLabels'],
 };
+
+// The custom properties the stylesheet reads: its own private and public ones,
+// and the shadcn theme tokens it falls back through.
+const THEME_TOKENS = [
+  'accent',
+  'accent-foreground',
+  'background',
+  'border',
+  'card',
+  'foreground',
+  'muted',
+  'muted-foreground',
+  'popover',
+  'popover-foreground',
+  'primary',
+  'primary-foreground',
+  'ring',
+];
+const BLOCKS = [
+  'rdt-table',
+  'rdt-sort-header',
+  'rdt-checkbox',
+  'rdt-column-panel',
+  'rdt-menu',
+  'rdt-action-menu',
+  'rdt-pagination',
+  'rdt-button',
+  'rdt-skeleton',
+];
 
 let failed = false;
 try {
@@ -90,6 +111,11 @@ for (const [type, names] of Object.entries(expected)) {
     assert.equal(typeof pkg[exportName], type, \`export \${exportName} should be a \${type}\`);
   }
 }
+assert.deepEqual(
+  Object.keys(pkg).sort(),
+  Object.values(expected).flat().sort(),
+  'the package root should export exactly the public API'
+);
 
 const html = renderToString(
   createElement(pkg.DataTable, {
@@ -101,11 +127,11 @@ const html = renderToString(
       { id: 'a', name: 'Ada', email: 'ada@example.com' },
       { id: 'b', name: 'Bram', email: 'bram@example.com' },
     ],
-    sort: { sortKey: 'name', direction: pkg.SortOrder.Asc, handleSort: () => {} },
+    sort: { sortKey: 'name', direction: 'asc', handleSort: () => {} },
     pagination: {
       totalCount: 2, pageIndex: 0, pageSize: 10,
       hasNextPage: false, hasPreviousPage: false,
-      handleNextPage: () => {}, handlePreviousPage: () => {},
+      onNextPage: () => {}, onPreviousPage: () => {},
     },
   })
 );
@@ -115,8 +141,16 @@ for (const fragment of ['<table', 'Ada', 'bram@example.com', 'aria-sort="ascendi
 
 const cssPath = fileURLToPath(import.meta.resolve('${name}/styles.css'));
 const css = readFileSync(cssPath, 'utf8');
-for (const block of ['rdt-table', 'rdt-pagination', 'rdt-menu', 'rdt-column-panel']) {
-  assert.match(css, new RegExp(\`\\\\.\${block}\\\\b\`), \`styles.css should style .\${block}\`);
+for (const block of ${JSON.stringify(BLOCKS)}) {
+  // The block or one of its elements: rdt-action-menu has no root of its own.
+  assert.match(css, new RegExp(\`\\\\.\${block}(?![a-z0-9-])\`), \`styles.css should style .\${block}\`);
+}
+const themeTokens = new Set(${JSON.stringify(THEME_TOKENS)});
+for (const [, name] of css.matchAll(/var\\(--([a-z0-9_-]+)/g)) {
+  assert.ok(
+    name.startsWith('_rdt-') || name.startsWith('rdt-') || themeTokens.has(name),
+    \`styles.css reads --\${name}, which is neither an rdt- property nor a theme token\`
+  );
 }
 
 // The layered copy is the same rules inside one cascade layer.

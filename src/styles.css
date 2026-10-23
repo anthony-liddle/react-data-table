@@ -74,7 +74,7 @@
   --_rdt-accent-foreground: var(--accent-foreground, hsl(0 0% 9%));
   --_rdt-border: var(--border, hsl(24 5.7% 82.9%));
   --_rdt-ring: var(--ring, hsl(0 0% 4%));
-  --_rdt-drag-selection: var(--drag-selection, hsl(216 100% 58.4%));
+  --_rdt-drag-selection: var(--rdt-drag-selection, hsl(216 100% 58.4%));
   --_rdt-row-selected: var(--rdt-row-selected, var(--_rdt-card));
   --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
   --_rdt-surface-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
