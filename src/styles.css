@@ -46,11 +46,21 @@
  *  Tokens
  *
  *  Private `--_rdt-*` properties, set on every block that can render on its
- *  own (menus and the column panel portal to <body>). Each reads the public
- *  token and falls back to the package default.
+ *  own (menus and the column panel portal to <body>, and the header and
+ *  loading exports can sit in a table of yours), and on each row so a row can
+ *  carry its own --rdt-row-selected. Each reads the public token and falls
+ *  back to the package default.
  */
 
-:where(.rdt-table, .rdt-pagination, .rdt-sort-header, .rdt-menu, .rdt-column-panel) {
+:where(
+  .rdt-table,
+  .rdt-pagination,
+  .rdt-sort-header,
+  .rdt-menu,
+  .rdt-column-panel,
+  .rdt-table__row,
+  .rdt-table__header-cell
+) {
   --_rdt-background: var(--background, hsl(0 0% 100%));
   --_rdt-foreground: var(--foreground, hsl(0 0% 4%));
   --_rdt-card: var(--card, hsl(0 0% 100%));
@@ -63,7 +73,6 @@
   --_rdt-accent: var(--accent, hsl(0 0% 96.1%));
   --_rdt-accent-foreground: var(--accent-foreground, hsl(0 0% 9%));
   --_rdt-border: var(--border, hsl(24 5.7% 82.9%));
-  --_rdt-input: var(--input, hsl(24 5.7% 82.9%));
   --_rdt-ring: var(--ring, hsl(0 0% 4%));
   --_rdt-drag-selection: var(--drag-selection, hsl(216 100% 58.4%));
   --_rdt-row-selected: var(--rdt-row-selected, var(--_rdt-card));
@@ -71,7 +80,16 @@
   --_rdt-surface-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-:where(.dark) :where(.rdt-table, .rdt-pagination, .rdt-sort-header, .rdt-menu, .rdt-column-panel) {
+:where(.dark)
+  :where(
+    .rdt-table,
+    .rdt-pagination,
+    .rdt-sort-header,
+    .rdt-menu,
+    .rdt-column-panel,
+    .rdt-table__row,
+    .rdt-table__header-cell
+  ) {
   --_rdt-background: var(--background, hsl(224 71% 4%));
   --_rdt-foreground: var(--foreground, hsl(213 31% 91%));
   --_rdt-card: var(--card, hsl(222 47% 11%));
@@ -84,7 +102,6 @@
   --_rdt-accent: var(--accent, hsl(216 34% 17%));
   --_rdt-accent-foreground: var(--accent-foreground, hsl(210 40% 98%));
   --_rdt-border: var(--border, hsl(216 34% 17%));
-  --_rdt-input: var(--input, hsl(216 34% 17%));
   --_rdt-ring: var(--ring, hsl(216 34% 50%));
   --_rdt-skeleton: var(--rdt-skeleton, oklch(37.4% 0.01 67.558));
   --_rdt-surface-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.2);
@@ -126,6 +143,7 @@
 .rdt-table__expanded-cell {
   padding: var(--rdt-cell-padding-y, 0.5rem) var(--rdt-cell-padding-x, 0.75rem);
   text-align: left;
+  vertical-align: middle;
   background-color: var(--_rdt-card);
   border-bottom: 1px solid var(--_rdt-border);
 }
@@ -234,7 +252,8 @@
   background-color: var(--_rdt-row-selected);
 }
 
-.rdt-table__cell:where(.rdt-table__row:hover > :not(.rdt-table__cell--actions)) {
+.rdt-table__cell:where(.rdt-table__row:hover > :not(.rdt-table__cell--actions)),
+.rdt-table__empty:where(tr:hover > *) {
   background-color: var(--_rdt-accent);
 }
 
@@ -285,22 +304,35 @@
   position: relative;
 }
 
-.rdt-sort-header__button,
-.rdt-sort-header__content {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
+/* The sticky variant is used outside DataTable too, so it brings its own
+   background for content to scroll under. */
+.rdt-sort-header--sticky {
+  background-color: var(--_rdt-card);
 }
 
+/* The button spans the cell, so the whole cell is clickable, and its content
+   follows the header's text-align. */
 .rdt-sort-header__button {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0;
   padding: 0;
   font: inherit;
+  letter-spacing: inherit;
   color: inherit;
-  text-align: left;
+  text-align: inherit;
+  text-transform: none;
   background-color: transparent;
   border: 0;
   cursor: pointer;
+}
+
+.rdt-sort-header__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: top;
 }
 
 @media (hover: hover) {
@@ -322,7 +354,7 @@
   height: 0.75rem;
 }
 
-.rdt-sort-header__icon svg {
+.rdt-sort-header__icon :where(svg) {
   display: block;
   width: 100%;
   height: 100%;
@@ -333,12 +365,14 @@
  */
 
 .rdt-checkbox {
+  box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 1rem;
   height: 1rem;
+  margin: 0;
   padding: 0;
   color: inherit;
   background-color: transparent;
@@ -401,19 +435,22 @@
 /* The two triggers that open them: a bare 24px icon button. */
 .rdt-column-panel__trigger,
 .rdt-action-menu__trigger {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
+  margin: 0;
   padding: 0;
+  color: inherit;
   background-color: transparent;
   border: 0;
   cursor: pointer;
 }
 
-.rdt-column-panel__trigger svg,
-.rdt-action-menu__trigger svg {
+.rdt-column-panel__trigger :where(svg),
+.rdt-action-menu__trigger :where(svg) {
   display: block;
 }
 
@@ -454,7 +491,9 @@
 }
 
 .rdt-column-panel__handle {
+  box-sizing: border-box;
   display: flex;
+  margin: 0;
   padding: 0.25rem;
   color: var(--_rdt-muted-foreground);
   background-color: transparent;
@@ -546,8 +585,8 @@
   opacity: 0.5;
 }
 
-.rdt-menu__item svg,
-.rdt-menu__sub-trigger svg {
+.rdt-menu__item :where(svg),
+.rdt-menu__sub-trigger :where(svg) {
   display: block;
   flex-shrink: 0;
   width: 1rem;
@@ -575,11 +614,19 @@
 }
 
 .rdt-action-menu__button {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   width: 100%;
-  padding-block: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
   text-align: left;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
   cursor: pointer;
 }
 
@@ -607,17 +654,23 @@
  */
 
 .rdt-button {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   height: 32px;
-  padding-inline: 12px;
+  margin: 0;
+  padding: 0 12px;
+  font: inherit;
   font-size: 0.875rem;
   line-height: 1.25rem;
+  letter-spacing: inherit;
   color: var(--_rdt-primary);
+  text-transform: none;
   white-space: nowrap;
   background-color: transparent;
+  border: 0;
   border-radius: 0.375rem;
   cursor: pointer;
   transition-property: color, background-color, border-color, outline-color, text-decoration-color;
@@ -637,7 +690,7 @@
   opacity: 0.5;
 }
 
-.rdt-button svg {
+.rdt-button :where(svg) {
   flex-shrink: 0;
   width: 20px;
   pointer-events: none;

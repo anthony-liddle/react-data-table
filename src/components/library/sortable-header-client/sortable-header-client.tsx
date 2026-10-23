@@ -87,16 +87,20 @@ export const SortableHeaderClient = ({
         </div>
       ) : (
         <button type="button" onClick={handleClick} className="rdt-sort-header__button">
-          {headerIcon}
-          <span className="rdt-sort-header__label">{title || children}</span>
-          <span
-            aria-hidden="true"
-            className="rdt-sort-header__icon"
-            data-direction={(isActive && sortDirection) || undefined}
-          >
-            {(!isActive || sortDirection === null) && <SwapVert />}
-            {isActive && sortDirection === 'asc' && <ArrowDownward />}
-            {isActive && sortDirection === 'desc' && <ArrowUpward />}
+          {/* The button spans the cell; the content follows the header's
+              text-align, so a column's alignment class moves it. */}
+          <span className="rdt-sort-header__content">
+            {headerIcon}
+            <span className="rdt-sort-header__label">{title || children}</span>
+            <span
+              aria-hidden="true"
+              className="rdt-sort-header__icon"
+              data-direction={(isActive && sortDirection) || undefined}
+            >
+              {(!isActive || sortDirection === null) && <SwapVert />}
+              {isActive && sortDirection === 'asc' && <ArrowDownward />}
+              {isActive && sortDirection === 'desc' && <ArrowUpward />}
+            </span>
           </span>
         </button>
       )}

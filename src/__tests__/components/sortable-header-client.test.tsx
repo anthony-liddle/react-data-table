@@ -551,6 +551,14 @@ describe('SortableHeaderClient', () => {
       ).not.toHaveAttribute('data-direction');
     });
 
+    it('wraps the button contents in the content element', () => {
+      renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
+      const content = screen.getByText('Name').parentElement;
+      expect(content).toHaveClass('rdt-sort-header__content');
+      expect(content?.parentElement).toHaveClass('rdt-sort-header__button');
+      expect(content?.querySelector('.rdt-sort-header__icon')).not.toBeNull();
+    });
+
     it('wraps a disabled header in its content element', () => {
       renderInTable(
         <SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} disabled />
