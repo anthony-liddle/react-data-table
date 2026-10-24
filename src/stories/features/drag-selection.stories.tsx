@@ -22,7 +22,7 @@ const DragSelectionTable = ({
 }: DragSelectionDemoProps) => {
   const rows = members.slice(0, rowCount);
   const isRowDisabled = disableSuspended ? isSuspended : undefined;
-  const { selection, ...handlers } = useTableSelection(rows, { isRowDisabled });
+  const selection = useTableSelection(rows, { isRowDisabled });
 
   return (
     <Demo>
@@ -33,15 +33,15 @@ const DragSelectionTable = ({
       </Intro>
       <StatePanel label="Selection">
         <Toolbar>
-          <span data-testid="selected-count">{selection.length} selected</span>
-          <DemoButton onClick={handlers.handleDeselectAll}>Clear selection</DemoButton>
+          <span data-testid="selected-count">{selection.selectedRows.length} selected</span>
+          <DemoButton onClick={selection.clearSelection}>Clear selection</DemoButton>
         </Toolbar>
       </StatePanel>
       <DataTable
         columns={defaultColumns}
         data={rows}
         selectOnRowClick={selectOnRowClick}
-        selection={{ selectedRows: selection, isRowDisabled, ...handlers }}
+        selection={selection}
         hideTableSettings
       />
     </Demo>

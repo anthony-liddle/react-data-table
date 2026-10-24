@@ -21,13 +21,13 @@ const groupedColumns: TableColumn<Member>[] = [
   {
     id: 'activity',
     header: 'Activity',
-    className: 'text-center',
+    headerClassName: 'text-center',
     subColumns: [memberColumn.joined, memberColumn.lastActive],
   },
   {
     id: 'usage',
     header: 'Usage',
-    className: 'text-center',
+    headerClassName: 'text-center',
     subColumns: [memberColumn.projects, memberColumn.storage],
   },
   memberColumn.status,
@@ -51,7 +51,7 @@ const GroupedColumnsDemo = ({
     () => sortMembers(members.slice(0, rowCount), sort, direction),
     [rowCount, sort, direction]
   );
-  const { selection, ...selectionHandlers } = useTableSelection(rows);
+  const selection = useTableSelection(rows);
 
   return (
     <Demo>
@@ -66,7 +66,7 @@ const GroupedColumnsDemo = ({
         data={rows}
         sort={{ sortKey: sort, direction, handleSort }}
         hideTableSettings={hideTableSettings}
-        selection={withSelection ? { selectedRows: selection, ...selectionHandlers } : undefined}
+        selection={withSelection ? selection : undefined}
       />
     </Demo>
   );

@@ -27,6 +27,8 @@ A data-dense React table for admin and reporting screens. It was extracted from 
 
 ESM only, strict TypeScript, React 18 or 19. No Tailwind required: the package ships its own CSS.
 
+Upgrading from an earlier version? [MIGRATION.md](https://github.com/anthony-liddle/react-data-table/blob/main/MIGRATION.md) lists every breaking change and what to do.
+
 ## Setup
 
 Import the stylesheet once, for example in your root layout:
@@ -52,9 +54,9 @@ Import it here rather than from JavaScript, so the order line always comes first
 ## Quick start
 
 ```tsx
-import { DataTable, type BaseTableRow, type TableColumn } from '@anthony-liddle/react-data-table';
+import { DataTable, type TableColumn } from '@anthony-liddle/react-data-table';
 
-interface Member extends BaseTableRow {
+interface Member {
   id: string;
   name: string;
   email: string;
@@ -81,7 +83,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `{ sortKey, direction, handleSort }` | – | Sort state and handler. `useTableSort` returns these. |
-| `selection` | `TableSelection<T>` | – | Selection state and handlers (`useTableSelection`). Enables checkboxes and drag selection. |
+| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
 | `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
@@ -95,10 +97,10 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `onRowClick` | `(row: T) => void` | – | Row click callback |
 | `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
-| `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-test-id` for end-to-end tests |
+| `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |
 | `getRowLabel` | `(row: T) => string` | – | Names each row's selection checkbox "Select ⟨label⟩" for assistive technology. Without it, the name falls back to "Select row ⟨id⟩". |
 | `labels` | `Partial<DataTableLabels>` | English | Overrides the visible strings (empty state, page count, range text) |
-| `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link` |
+| `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link`. It must spread the props it doesn't use onto the anchor and forward its ref, which the menu needs for keyboard focus |
 
 ### Columns
 
@@ -110,8 +112,8 @@ interface TableColumn<T> {
   cell?: ({ row }) => ReactNode;
   loadingCell?: () => ReactNode;
   headerIcon?: ReactNode;
-  className?: string;        // header cell classes
-  rowClassName?: string;     // body cell classes
+  headerClassName?: string;  // header cell classes
+  cellClassName?: string;    // body cell classes
   subColumns?: TableColumn<T>[]; // makes this a grouped parent column
   hideByDefault?: boolean;   // starts hidden; can be shown from the panel
   alwaysVisible?: boolean;   // cannot be hidden (see Known issues)
@@ -123,12 +125,12 @@ interface TableColumn<T> {
 | Hook | Returns | Use |
 |---|---|---|
 | `useTableSort({ sortableColumns, defaultSortKey, defaultSortDirection, persistKey })` | `{ sort, direction, handleSort, reset, … }` | Pass to the `sort` prop; feed `sort` / `direction` into your query |
-| `useTableSelection(rows, { isRowDisabled })` | `{ selection, handleSelectRow, handleSelectAll, … }` | Spread into the `selection` prop |
+| `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
 | `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
 
-`useTableSort` reports directions as lowercase `'asc'` / `'desc'`. Everything that takes a direction also accepts the uppercase `SortOrder` values (`'ASC'` / `'DESC'`), for GraphQL sort enums.
+`useTableSort` reports directions as lowercase `'asc'` / `'desc'`, and every option that takes a direction expects lowercase too. If your API wants an uppercase enum, convert at the call.
 
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
@@ -176,7 +178,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `--rdt-cell-padding-y` | `0.5rem` | Vertical cell padding |
 | `--rdt-row-selected` | unset | Background tint for selected rows. Selected rows always show a 3px bar in `--primary` on their first cell; the tint is extra. Keep your cell text readable against it: with shadcn's default muted text, a light tint has to stay very pale to reach 4.5:1. |
 | `--rdt-skeleton` | stone, light and dark | Loading placeholders |
-| `--drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
+| `--rdt-drag-selection` | `hsl(216 100% 58.4%)` | The bar beside rows in a drag range |
 
 ### Classes and state
 
@@ -187,7 +189,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
 | `rdt-column-panel` | `__trigger`, `__trigger-icon`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
 | `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
-| `rdt-action-menu` | `__trigger`, `__trigger-icon`, `__link`, `__button`, `__icon` (`--link`) | |
+| `rdt-action-menu` | `__trigger`, `__trigger-icon`, `__link`, `__content`, `__icon` (`--link`) | |
 | `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
 | `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
 | `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |

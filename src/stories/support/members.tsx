@@ -1,4 +1,8 @@
-import type { BaseTableRow, SortOrder, TableColumn } from '../../components/data-table/types.ts';
+import type {
+  BaseTableRow,
+  SortDirection,
+  TableColumn,
+} from '../../components/data-table/types.ts';
 import { at } from '../../test-support/at.ts';
 
 /**
@@ -234,16 +238,16 @@ export const memberColumn = {
     id: 'projects',
     header: 'Projects',
     sortKey: 'projects',
-    className: 'text-right',
-    rowClassName: 'text-right tabular-nums',
+    headerClassName: 'text-right',
+    cellClassName: 'text-right tabular-nums',
     cell: ({ row }) => row.projects,
   },
   storage: {
     id: 'storage',
     header: 'Storage',
     sortKey: 'storageGb',
-    className: 'text-right',
-    rowClassName: 'text-right tabular-nums whitespace-nowrap',
+    headerClassName: 'text-right',
+    cellClassName: 'text-right tabular-nums whitespace-nowrap',
     cell: ({ row }) => `${row.storageGb.toFixed(1)} GB`,
   },
 } satisfies Record<string, TableColumn<Member>>;
@@ -270,15 +274,15 @@ export const sortKeysOf = (columns: TableColumn<Member>[]) =>
 export const sortMembers = (
   rows: Member[],
   sortKey: string | null,
-  direction: SortOrder | 'asc' | 'desc' | null
+  direction: SortDirection
 ): Member[] => {
   if (!sortKey || !direction) {
     return rows;
   }
-  const dir = direction.toLowerCase() === 'asc' ? 1 : -1;
+  const dir = direction === 'asc' ? 1 : -1;
   return [...rows].sort((a, b) => {
-    const av = a[sortKey] as string | number | null;
-    const bv = b[sortKey] as string | number | null;
+    const av = a[sortKey as keyof Member] as string | number | null;
+    const bv = b[sortKey as keyof Member] as string | number | null;
     if (av === bv) {
       return 0;
     }

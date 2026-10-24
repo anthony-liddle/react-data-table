@@ -28,15 +28,15 @@ type Story = StoryObj<typeof meta>;
 
 const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'View profile', href: ({ row }) => `#/members/${row.id}` },
-  { label: 'Edit', callbackAction: fn() },
+  { label: 'Edit', onSelect: fn() },
   {
     label: 'Change role',
     subItems: [
-      { label: 'Make admin', callbackAction: fn() },
-      { label: 'Make viewer', callbackAction: fn() },
+      { label: 'Make admin', onSelect: fn() },
+      { label: 'Make viewer', onSelect: fn() },
     ],
   },
-  { label: 'Delete', callbackAction: fn(), disabled: ({ row }) => isSuspended(row) },
+  { label: 'Delete', onSelect: fn(), disabled: ({ row }) => isSuspended(row) },
 ];
 
 const FullTable = () => {
@@ -49,16 +49,13 @@ const FullTable = () => {
       showPageCount
       sort={{ sortKey: 'name', direction: 'asc', handleSort: fn() }}
       selection={{
-        selectedRows: selected,
-        handleSelectRow: row =>
+        onToggleRow: row =>
           setSelected(prev =>
             prev.some(r => r.id === row.id) ? prev.filter(r => r.id !== row.id) : [...prev, row]
           ),
-        handleSelectAll: checked => setSelected(checked ? rows.filter(r => !isSuspended(r)) : []),
-        handleDeselectAll: () => setSelected([]),
+        onToggleAll: checked => setSelected(checked ? rows.filter(r => !isSuspended(r)) : []),
         isRowSelected: row => selected.some(r => r.id === row.id),
         isRowDisabled: isSuspended,
-        findRowInSelection: row => selected.find(r => r.id === row.id),
       }}
       pagination={{
         totalCount: 42,
@@ -66,8 +63,8 @@ const FullTable = () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: fn(),
-        handlePreviousPage: fn(),
+        onNextPage: fn(),
+        onPreviousPage: fn(),
       }}
     />
   );

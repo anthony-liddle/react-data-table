@@ -43,23 +43,23 @@ const onDelete = fn();
 
 const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'View profile', href: ({ row }) => `#/members/${row.id}` },
-  { label: ({ row }) => `Edit ${row.name.split(' ')[0]}`, callbackAction: onEdit },
+  { label: ({ row }) => `Edit ${row.name.split(' ')[0]}`, onSelect: onEdit },
   {
     label: 'Change role',
     subItems: [
       {
         label: 'Make admin',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Admin',
       },
       {
         label: 'Make editor',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Editor',
       },
       {
         label: 'Make viewer',
-        callbackAction: onChangeRole,
+        onSelect: onChangeRole,
         hidden: ({ row }) => row.role === 'Viewer',
       },
     ],
@@ -67,7 +67,7 @@ const actionMenu: TableActionMenuItem<Member>[] = [
   },
   {
     label: 'Remove from workspace',
-    callbackAction: onDelete,
+    onSelect: onDelete,
     hidden: ({ row }) => row.role === 'Owner',
     disabled: ({ row }) => isSuspended(row),
   },
@@ -99,7 +99,7 @@ const PlaygroundTable = ({
   const { offset, limit, reset, getPagination } = usePagination(pageSize);
   const sorted = useMemo(() => sortMembers(members, sort, direction), [sort, direction]);
   const rows = withPagination ? sorted.slice(offset, offset + limit) : sorted.slice(0, 25);
-  const { selection, ...selectionHandlers } = useTableSelection(rows, {
+  const selection = useTableSelection(rows, {
     isRowDisabled: isSuspended,
   });
 
@@ -110,7 +110,7 @@ const PlaygroundTable = ({
         on and off.
       </Intro>
       <p className="demo-note" aria-live="polite">
-        {withSelection ? `${selection.length} selected` : 'Selection off'}
+        {withSelection ? `${selection.selectedRows.length} selected` : 'Selection off'}
       </p>
       <DataTable
         columns={defaultColumns}
@@ -131,11 +131,7 @@ const PlaygroundTable = ({
               }
             : undefined
         }
-        selection={
-          withSelection
-            ? { selectedRows: selection, isRowDisabled: isSuspended, ...selectionHandlers }
-            : undefined
-        }
+        selection={withSelection ? selection : undefined}
         actionMenu={withActionMenu ? actionMenu : undefined}
         pagination={withPagination ? getPagination(sorted.length) : undefined}
       />

@@ -7,6 +7,7 @@ import type { BaseTableRow, TableColumn } from '@/components/data-table/types';
 interface TestRow extends BaseTableRow {
   id: string;
   name: string;
+  email?: string;
 }
 
 describe('TableLoading', () => {

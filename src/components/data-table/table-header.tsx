@@ -2,17 +2,12 @@
 
 import { cx } from '../../lib/cx.ts';
 import { SortableHeaderClient } from '../library/sortable-header-client/index.ts';
-import type {
-  BaseTableRow,
-  SortOrder,
-  TableColumn,
-  SortDirection as TableSortDirection,
-} from './types.ts';
+import type { BaseTableRow, TableColumn, SortDirection as TableSortDirection } from './types.ts';
 
 interface TableHeaderProps<TData extends BaseTableRow = BaseTableRow> {
   column: TableColumn<TData>;
   currentSortKey?: string | null;
-  currentDirection?: TableSortDirection | SortOrder;
+  currentDirection?: TableSortDirection;
   onSort?: (sortKey: string) => void;
   className: string;
   rowSpan?: number;

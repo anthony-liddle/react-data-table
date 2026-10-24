@@ -1,7 +1,7 @@
 /**
  * User-facing strings rendered by the table. The package ships English
  * defaults and lets consumers override any of them (or wire them into their
- * own i18n layer) via the `labels` prop on `DataTable` / `PaginationClient`.
+ * own i18n layer) via the `labels` prop on `DataTable` / `Pagination`.
  */
 export interface DataTableLabels {
   /** Empty-state message shown when the table has no rows. */

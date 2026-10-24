@@ -8,6 +8,8 @@ import type { BaseTableRow, TableColumn, VisibleColumn } from '@/components/data
 interface TestRow extends BaseTableRow {
   id: string;
   name: string;
+  email?: string;
+  role?: string;
 }
 
 describe('TableMenu', () => {
@@ -459,6 +461,25 @@ describe('TableMenu', () => {
       expect(item).not.toBeNull();
       expect(item).not.toHaveAttribute('data-dragging');
       expect(screen.getByText('Email').closest('label')).toHaveClass('rdt-column-panel__label');
+    });
+
+    it('labels its checkboxes even when the page has an element with a column id', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <input id="name" aria-label="Page field" />
+          <TableMenu
+            visibleColumns={baseVisibleColumns}
+            columns={baseColumns}
+            toggleHeaders={mockToggleHeaders}
+          />
+        </>
+      );
+      await user.click(screen.getByRole('button', { name: 'Column settings' }));
+
+      const nameCheckbox = await screen.findByLabelText('Name');
+      expect(nameCheckbox).toHaveRole('checkbox');
+      expect(nameCheckbox.id).not.toBe('name');
     });
   });
 });

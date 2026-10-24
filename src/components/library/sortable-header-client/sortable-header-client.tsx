@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 
 import { cx } from '../../../lib/cx.ts';
-import type { SortOrder } from '../../data-table/types.ts';
 import { ArrowDownward, ArrowUpward, SwapVert } from '../../icon.tsx';
 
 export type SortDirection = 'asc' | 'desc' | null;
@@ -14,17 +13,12 @@ interface SortableHeaderClientProps {
   headerIcon?: ReactNode;
   sortKey: string;
   currentSortKey?: string | null;
-  currentDirection?: SortDirection | SortOrder;
+  currentDirection?: SortDirection;
   onSort: (key: string) => void;
   className?: string;
   sticky?: boolean;
   disabled?: boolean;
   rowSpan?: number;
-  /**
-   * Called when the sort handler throws. Route it to your own error reporter;
-   * defaults to console.error.
-   */
-  onSortError?: (context: string, error: unknown, extra?: Record<string, unknown>) => void;
 }
 
 /**
@@ -42,24 +36,15 @@ export const SortableHeaderClient = ({
   sticky = false,
   disabled = false,
   rowSpan,
-  onSortError = (context, error, extra) => console.error(context, error, extra),
 }: SortableHeaderClientProps) => {
   const isActive = currentSortKey === sortKey;
-  const sortDirection: SortDirection = currentDirection
-    ? (currentDirection.toLowerCase() as SortDirection)
-    : null;
+  // A value outside the type (an uppercase enum cast through, say) shows as unsorted.
+  const sortDirection =
+    currentDirection === 'asc' || currentDirection === 'desc' ? currentDirection : null;
 
   const handleClick = () => {
-    try {
-      if (!disabled) {
-        onSort(sortKey);
-      }
-    } catch (error) {
-      onSortError('SortableHeaderClient.handleClick', error, {
-        sortKey,
-        currentSortKey,
-        sortDirection,
-      });
+    if (!disabled) {
+      onSort(sortKey);
     }
   };
 

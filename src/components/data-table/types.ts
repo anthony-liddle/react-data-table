@@ -7,20 +7,11 @@ import type { SortDirection } from '../library/sortable-header-client/index.ts';
 export type { SortDirection };
 
 /**
- * Uppercase sort direction, mirroring the shape of a GraphQL SortDirection
- * enum. Everywhere a direction is accepted, both this and the lowercase
- * client-side `SortDirection` ('asc' | 'desc') are tolerated.
+ * All a row needs is a stable `id`. Any interface or type with one fits, with
+ * no need to extend this.
  */
-export const SortOrder = {
-  Asc: 'ASC',
-  Desc: 'DESC',
-} as const;
-export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
-
-// Base interface that all table data must have
 export interface BaseTableRow {
   id: string | number;
-  [key: string]: unknown;
 }
 
 export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
@@ -31,8 +22,10 @@ export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
   sortKey?: string;
   cell?: (params: { row: TData }) => React.ReactNode;
   loadingCell?: () => React.ReactNode;
-  className?: string;
-  rowClassName?: string;
+  /** Extra classes on the column's header cell (the group header for a column with sub-columns). */
+  headerClassName?: string;
+  /** Extra classes on each of the column's body cells. */
+  cellClassName?: string;
   subColumns?: TableColumn<TData>[];
   hideByDefault?: boolean;
   alwaysVisible?: boolean;
@@ -100,24 +93,25 @@ export interface TablePagination {
   pageSize: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  handleNextPage: () => void;
-  handlePreviousPage: () => void;
+  onNextPage: () => void;
+  onPreviousPage: () => void;
 }
 
 export interface TableSort {
   sortKey: string | null;
-  direction: SortDirection | SortOrder | null;
+  direction: SortDirection;
   handleSort: (sortKey: string) => void;
 }
 
+/** What the table needs to show and change a selection. `useTableSelection` returns it. */
 export interface TableSelection<TData extends BaseTableRow = BaseTableRow> {
-  selectedRows: TData[];
-  handleSelectRow: (row: TData) => void;
-  handleSelectAll: (checked: boolean) => void;
-  handleDeselectAll: () => void;
   isRowSelected: (row: TData) => boolean;
+  /** A disabled row's checkbox is disabled, and select-all and drag selection skip it. */
   isRowDisabled?: (row: TData) => boolean;
-  findRowInSelection: (row: TData) => TData | undefined;
+  /** Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag toggles it. */
+  onToggleRow: (row: TData) => void;
+  /** Called when the select-all checkbox changes. */
+  onToggleAll: (checked: boolean) => void;
 }
 
 export interface VisibleColumn {
@@ -127,18 +121,26 @@ export interface VisibleColumn {
 
 export interface TableActionMenuSubItem<TData extends BaseTableRow = BaseTableRow> {
   label: string;
-  callbackAction: (params: { row: TData }) => void;
-  hidden?: boolean | ((params: { row: TData }) => boolean);
-}
-
-export interface TableActionMenuItem<TData extends BaseTableRow = BaseTableRow> {
+  /** Renders the item as a link, through `linkComponent`. */
   href?: string | ((params: { row: TData }) => string);
-  label: string | ((params: { row: TData }) => string);
   icon?: ReactNode | ((params: { row: TData }) => ReactNode);
-  callbackAction?: (params: { row: TData }) => void;
+  /** Runs when the item is chosen, by pointer or keyboard. */
+  onSelect?: (params: { row: TData }) => void;
   hidden?: boolean | ((params: { row: TData }) => boolean);
   /** When true the item is shown but greyed out and non-interactive (vs. `hidden`, which removes it). */
   disabled?: boolean | ((params: { row: TData }) => boolean);
-  /** Sub-items for creating a submenu. When present, clicking the main item opens a submenu instead of triggering callbackAction */
+}
+
+export interface TableActionMenuItem<TData extends BaseTableRow = BaseTableRow> {
+  /** Renders the item as a link, through `linkComponent`. */
+  href?: string | ((params: { row: TData }) => string);
+  label: string | ((params: { row: TData }) => string);
+  icon?: ReactNode | ((params: { row: TData }) => ReactNode);
+  /** Runs when the item is chosen, by pointer or keyboard. */
+  onSelect?: (params: { row: TData }) => void;
+  hidden?: boolean | ((params: { row: TData }) => boolean);
+  /** When true the item is shown but greyed out and non-interactive (vs. `hidden`, which removes it). */
+  disabled?: boolean | ((params: { row: TData }) => boolean);
+  /** Sub-items for creating a submenu. When present, choosing the item opens the submenu instead of running onSelect */
   subItems?: TableActionMenuSubItem<TData>[];
 }

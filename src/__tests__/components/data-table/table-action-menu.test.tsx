@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { forwardRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TableActionMenu } from '@/components/data-table/table-action-menu';
+import {
+  type ActionMenuLinkProps,
+  TableActionMenu,
+} from '@/components/data-table/table-action-menu';
 import type { BaseTableRow, TableActionMenuItem } from '@/components/data-table/types';
 
 interface TestRow extends BaseTableRow {
@@ -23,7 +27,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'View',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -38,11 +42,11 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'View',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
         {
           label: 'Edit',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -60,7 +64,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Static Label',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -77,7 +81,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: ({ row }) => `Edit ${row.name}`,
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -96,7 +100,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           icon: <TestIcon />,
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -115,7 +119,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           icon: ({ row }) => (row.status === 'active' ? <TestIcon /> : null),
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -133,7 +137,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           icon: ({ row }) => (row.status === 'inactive' ? <span>Icon</span> : null),
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -151,7 +155,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           href: '/users/1',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -172,7 +176,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           href: ({ row }) => `/users/${row.id}`,
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -187,12 +191,12 @@ describe('TableActionMenu', () => {
       expect(link).toHaveAttribute('href', '/users/1');
     });
 
-    it('should render button when href is not provided', async () => {
+    it('renders an item without href as a plain menu item, with no control inside', async () => {
       const user = userEvent.setup();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Edit',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -201,20 +205,20 @@ describe('TableActionMenu', () => {
       const button = screen.getByRole('button', { name: 'Actions' });
       await user.click(button);
 
-      const menuButton = screen.getByRole('button', { name: 'Edit' });
-      expect(menuButton).toBeInTheDocument();
-      expect(menuButton.tagName).toBe('BUTTON');
+      const item = screen.getByRole('menuitem', { name: 'Edit' });
+      expect(item.tagName).not.toBe('A');
+      expect(item.querySelector('button, a')).toBeNull();
     });
   });
 
   describe('interactions', () => {
-    it('should call callbackAction when item is clicked', async () => {
+    it('should call onSelect when item is clicked', async () => {
       const user = userEvent.setup();
-      const callbackAction = vi.fn();
+      const onSelect = vi.fn();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Edit',
-          callbackAction,
+          onSelect,
         },
       ];
 
@@ -223,21 +227,60 @@ describe('TableActionMenu', () => {
       const button = screen.getByRole('button', { name: 'Actions' });
       await user.click(button);
 
-      const menuButton = screen.getByRole('button', { name: 'Edit' });
+      const menuButton = screen.getByRole('menuitem', { name: 'Edit' });
       await user.click(menuButton);
 
-      expect(callbackAction).toHaveBeenCalledTimes(1);
-      expect(callbackAction).toHaveBeenCalledWith({ row: mockRow });
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
     });
 
-    it('should call callbackAction when link item is clicked', async () => {
+    it('runs an item chosen from the keyboard', async () => {
       const user = userEvent.setup();
-      const callbackAction = vi.fn();
+      const onSelect = vi.fn();
+      render(<TableActionMenu items={[{ label: 'Edit', onSelect }]} row={mockRow} />);
+
+      screen.getByRole('button', { name: 'Actions' }).focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('menu');
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
+    });
+
+    it('runs a link item through a custom linkComponent from the keyboard', async () => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
+      // A router link that follows the documented contract: spread the rest,
+      // forward the ref.
+      const RouterLink = forwardRef<HTMLAnchorElement, ActionMenuLinkProps>((props, ref) => (
+        <a ref={ref} data-router="yes" {...props} />
+      ));
+      render(
+        <TableActionMenu
+          items={[{ label: 'View', href: '/users/1', onSelect }]}
+          row={mockRow}
+          linkComponent={RouterLink}
+        />
+      );
+
+      screen.getByRole('button', { name: 'Actions' }).focus();
+      await user.keyboard('{Enter}');
+      const link = await screen.findByRole('menuitem', { name: 'View' });
+      expect(link).toHaveAttribute('data-router', 'yes');
+      await user.keyboard('{Enter}');
+
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
+    });
+
+    it('should call onSelect when link item is clicked', async () => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'View',
           href: '/users/1',
-          callbackAction,
+          onSelect,
         },
       ];
 
@@ -250,11 +293,11 @@ describe('TableActionMenu', () => {
       const link = screen.getByRole('menuitem', { name: 'View' });
       await user.click(link);
 
-      expect(callbackAction).toHaveBeenCalledTimes(1);
-      expect(callbackAction).toHaveBeenCalledWith({ row: mockRow });
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
     });
 
-    it('should not call callbackAction when it is not provided', async () => {
+    it('should not call onSelect when it is not provided', async () => {
       const user = userEvent.setup();
       const items: TableActionMenuItem<TestRow>[] = [
         {
@@ -272,8 +315,8 @@ describe('TableActionMenu', () => {
       const link = screen.getByRole('menuitem', { name: 'View' });
       await user.click(link);
 
-      // Should not throw an error
-      expect(link).toBeInTheDocument();
+      // Choosing it closes the menu without needing an onSelect
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
     it('should handle multiple items with different configurations', async () => {
@@ -286,15 +329,15 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           href: ({ row }) => `/users/${row.id}`,
-          callbackAction: viewCallback,
+          onSelect: viewCallback,
         },
         {
           label: ({ row }) => `Edit ${row.name}`,
-          callbackAction: editCallback,
+          onSelect: editCallback,
         },
         {
           label: 'Delete',
-          callbackAction: deleteCallback,
+          onSelect: deleteCallback,
         },
       ];
 
@@ -307,7 +350,7 @@ describe('TableActionMenu', () => {
       expect(screen.getByText('Edit Test User')).toBeInTheDocument();
       expect(screen.getByText('Delete')).toBeInTheDocument();
 
-      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      const deleteButton = screen.getByRole('menuitem', { name: 'Delete' });
       await user.click(deleteButton);
 
       expect(deleteCallback).toHaveBeenCalledTimes(1);
@@ -321,11 +364,11 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Visible',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
         {
           label: 'Hidden',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: true,
         },
       ];
@@ -344,7 +387,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Visible',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: false,
         },
       ];
@@ -362,12 +405,12 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Active Only',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: ({ row }) => row.status !== 'active',
         },
         {
           label: 'Inactive Only',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: ({ row }) => row.status !== 'inactive',
         },
       ];
@@ -387,12 +430,12 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Hidden 1',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: true,
         },
         {
           label: 'Hidden 2',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           hidden: ({ row }) => row.status === 'active',
         },
       ];
@@ -409,7 +452,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Delete',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           disabled: true,
         },
       ];
@@ -428,7 +471,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Delete',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
           disabled: ({ row }) => row.status === 'active',
         },
       ];
@@ -447,11 +490,11 @@ describe('TableActionMenu', () => {
 
     it('should keep the item interactive when disabled is false', async () => {
       const user = userEvent.setup();
-      const callbackAction = vi.fn();
+      const onSelect = vi.fn();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Delete',
-          callbackAction,
+          onSelect,
           disabled: false,
         },
       ];
@@ -461,11 +504,11 @@ describe('TableActionMenu', () => {
       const button = screen.getByRole('button', { name: 'Actions' });
       await user.click(button);
 
-      const menuButton = screen.getByRole('button', { name: 'Delete' });
+      const menuButton = screen.getByRole('menuitem', { name: 'Delete' });
       await user.click(menuButton);
 
-      expect(callbackAction).toHaveBeenCalledTimes(1);
-      expect(callbackAction).toHaveBeenCalledWith({ row: mockRow });
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
     });
   });
 
@@ -483,7 +526,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: () => '',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -503,7 +546,7 @@ describe('TableActionMenu', () => {
         {
           label: 'View',
           href: () => '',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
       ];
 
@@ -526,8 +569,8 @@ describe('TableActionMenu', () => {
         {
           label: 'Change role',
           subItems: [
-            { label: 'Make editor', callbackAction: vi.fn() },
-            { label: 'Make viewer', callbackAction: vi.fn() },
+            { label: 'Make editor', onSelect: vi.fn() },
+            { label: 'Make viewer', onSelect: vi.fn() },
           ],
         },
       ];
@@ -546,8 +589,8 @@ describe('TableActionMenu', () => {
         {
           label: 'Change role',
           subItems: [
-            { label: 'Make admin', callbackAction: vi.fn() },
-            { label: 'Make viewer', callbackAction: vi.fn() },
+            { label: 'Make admin', onSelect: vi.fn() },
+            { label: 'Make viewer', onSelect: vi.fn() },
           ],
         },
       ];
@@ -564,15 +607,15 @@ describe('TableActionMenu', () => {
       expect(screen.getByText('Make viewer')).toBeInTheDocument();
     });
 
-    it('should call subItem callbackAction when clicked', async () => {
+    it('should call subItem onSelect when clicked', async () => {
       const user = userEvent.setup();
       const makeAdminCallback = vi.fn();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Change role',
           subItems: [
-            { label: 'Make admin', callbackAction: makeAdminCallback },
-            { label: 'Make viewer', callbackAction: vi.fn() },
+            { label: 'Make admin', onSelect: makeAdminCallback },
+            { label: 'Make viewer', onSelect: vi.fn() },
           ],
         },
       ];
@@ -594,15 +637,59 @@ describe('TableActionMenu', () => {
       expect(makeAdminCallback).toHaveBeenCalledWith({ row: mockRow });
     });
 
+    it('gives sub-items the same href, icon and disabled options as items', async () => {
+      const user = userEvent.setup();
+      const items: TableActionMenuItem<TestRow>[] = [
+        {
+          label: 'More',
+          subItems: [
+            { label: 'Profile', href: ({ row }) => `/users/${row.id}` },
+            { label: 'Copy id', icon: <svg data-testid="copy-icon" />, onSelect: vi.fn() },
+            { label: 'Remove', onSelect: vi.fn(), disabled: ({ row }) => row.status === 'active' },
+          ],
+        },
+      ];
+      render(<TableActionMenu items={items} row={mockRow} />);
+      await user.click(screen.getByRole('button', { name: 'Actions' }));
+      await user.hover(screen.getByText('More'));
+
+      const profile = await screen.findByRole('menuitem', { name: 'Profile' });
+      expect(profile.tagName).toBe('A');
+      expect(profile).toHaveAttribute('href', '/users/1');
+      expect(screen.getByTestId('copy-icon').parentElement).toHaveClass('rdt-action-menu__icon');
+      expect(screen.getByRole('menuitem', { name: 'Remove' })).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
+    });
+
+    it('runs a sub-item chosen from the keyboard', async () => {
+      const user = userEvent.setup();
+      const makeAdmin = vi.fn();
+      const items: TableActionMenuItem<TestRow>[] = [
+        { label: 'Change role', subItems: [{ label: 'Make admin', onSelect: makeAdmin }] },
+      ];
+      render(<TableActionMenu items={items} row={mockRow} />);
+
+      screen.getByRole('button', { name: 'Actions' }).focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('menu');
+      await user.keyboard('{ArrowRight}');
+      await screen.findByRole('menuitem', { name: 'Make admin' });
+      await user.keyboard('{Enter}');
+
+      expect(makeAdmin).toHaveBeenCalledWith({ row: mockRow });
+    });
+
     it('should not render subItems with hidden: true', async () => {
       const user = userEvent.setup();
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Change role',
           subItems: [
-            { label: 'Make admin', callbackAction: vi.fn() },
-            { label: 'Hidden role', callbackAction: vi.fn(), hidden: true },
-            { label: 'Make viewer', callbackAction: vi.fn() },
+            { label: 'Make admin', onSelect: vi.fn() },
+            { label: 'Hidden role', onSelect: vi.fn(), hidden: true },
+            { label: 'Make viewer', onSelect: vi.fn() },
           ],
         },
       ];
@@ -625,7 +712,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Change role',
-          subItems: [{ label: 'Make admin', callbackAction: vi.fn(), hidden: false }],
+          subItems: [{ label: 'Make admin', onSelect: vi.fn(), hidden: false }],
         },
       ];
 
@@ -648,15 +735,15 @@ describe('TableActionMenu', () => {
           subItems: [
             {
               label: 'Active only role',
-              callbackAction: vi.fn(),
+              onSelect: vi.fn(),
               hidden: ({ row }) => row.status !== 'active',
             },
             {
               label: 'Inactive only role',
-              callbackAction: vi.fn(),
+              onSelect: vi.fn(),
               hidden: ({ row }) => row.status !== 'inactive',
             },
-            { label: 'Always Visible', callbackAction: vi.fn() },
+            { label: 'Always Visible', onSelect: vi.fn() },
           ],
         },
       ];
@@ -680,15 +767,15 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Regular Action',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
         {
           label: 'Change role',
           subItems: [
-            { label: 'Hidden 1', callbackAction: vi.fn(), hidden: true },
+            { label: 'Hidden 1', onSelect: vi.fn(), hidden: true },
             {
               label: 'Hidden 2',
-              callbackAction: vi.fn(),
+              onSelect: vi.fn(),
               hidden: ({ row }) => row.status === 'active',
             },
           ],
@@ -711,8 +798,8 @@ describe('TableActionMenu', () => {
         {
           label: 'Change role',
           subItems: [
-            { label: 'Hidden 1', callbackAction: vi.fn(), hidden: true },
-            { label: 'Hidden 2', callbackAction: vi.fn(), hidden: true },
+            { label: 'Hidden 1', onSelect: vi.fn(), hidden: true },
+            { label: 'Hidden 2', onSelect: vi.fn(), hidden: true },
           ],
         },
       ];
@@ -729,7 +816,7 @@ describe('TableActionMenu', () => {
         {
           label: 'Change role',
           icon: <TestIcon />,
-          subItems: [{ label: 'Make admin', callbackAction: vi.fn() }],
+          subItems: [{ label: 'Make admin', onSelect: vi.fn() }],
         },
       ];
 
@@ -746,7 +833,7 @@ describe('TableActionMenu', () => {
       const items: TableActionMenuItem<TestRow>[] = [
         {
           label: 'Regular Action',
-          callbackAction: vi.fn(),
+          onSelect: vi.fn(),
         },
         {
           label: 'Empty Submenu',
@@ -776,11 +863,11 @@ describe('TableActionMenu', () => {
         },
         {
           label: 'Edit',
-          callbackAction: regularCallback,
+          onSelect: regularCallback,
         },
         {
           label: 'Change role',
-          subItems: [{ label: 'Make admin', callbackAction: subItemCallback }],
+          subItems: [{ label: 'Make admin', onSelect: subItemCallback }],
         },
       ];
 
@@ -799,8 +886,8 @@ describe('TableActionMenu', () => {
   describe('styling contract', () => {
     const items: TableActionMenuItem<TestRow>[] = [
       { label: 'View', href: '/users/1', icon: <svg data-testid="view-icon" /> },
-      { label: 'Edit', callbackAction: vi.fn(), icon: <svg data-testid="edit-icon" /> },
-      { label: 'Change role', subItems: [{ label: 'Make admin', callbackAction: vi.fn() }] },
+      { label: 'Edit', onSelect: vi.fn(), icon: <svg data-testid="edit-icon" /> },
+      { label: 'Change role', subItems: [{ label: 'Make admin', onSelect: vi.fn() }] },
     ];
 
     it('names the trigger, the menu and its items', async () => {
@@ -820,9 +907,10 @@ describe('TableActionMenu', () => {
         'rdt-action-menu__icon',
         'rdt-action-menu__icon--link'
       );
-      const editButton = screen.getByText('Edit').closest('button');
-      expect(editButton).toHaveClass('rdt-action-menu__button');
-      expect(editButton?.closest('[role="menuitem"]')).toHaveClass('rdt-menu__item');
+      const editItem = screen.getByRole('menuitem', { name: 'Edit' });
+      expect(editItem).toHaveClass('rdt-menu__item');
+      expect(screen.getByText('Edit')).toHaveClass('rdt-action-menu__content');
+      expect(screen.getByText('Edit').parentElement).toBe(editItem);
       expect(screen.getByTestId('edit-icon').parentElement).toHaveClass('rdt-action-menu__icon');
       const subTrigger = screen.getByRole('menuitem', { name: 'Change role' });
       expect(subTrigger).toHaveClass('rdt-menu__sub-trigger');

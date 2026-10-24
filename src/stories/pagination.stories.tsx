@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
 
-import { PaginationClient } from '../components/data-table/pagination-client.tsx';
+import { Pagination } from '../components/data-table/pagination.tsx';
 
 const meta = {
-  title: 'Components/PaginationClient',
-  component: PaginationClient,
+  title: 'Components/Pagination',
+  component: Pagination,
   parameters: { layout: 'padded' },
   args: {
     totalCount: 100,
@@ -14,10 +14,10 @@ const meta = {
     pageSize: 10,
     hasNextPage: true,
     hasPreviousPage: true,
-    handleNextPage: fn(),
-    handlePreviousPage: fn(),
+    onNextPage: fn(),
+    onPreviousPage: fn(),
   },
-} satisfies Meta<typeof PaginationClient>;
+} satisfies Meta<typeof Pagination>;
 
 export default meta;
 
@@ -64,14 +64,14 @@ const InteractiveDemo = () => {
   const [pageIndex, setPageIndex] = useState(0);
 
   return (
-    <PaginationClient
+    <Pagination
       totalCount={totalCount}
       pageIndex={pageIndex}
       pageSize={pageSize}
       hasNextPage={(pageIndex + 1) * pageSize < totalCount}
       hasPreviousPage={pageIndex > 0}
-      handleNextPage={() => setPageIndex(i => i + 1)}
-      handlePreviousPage={() => setPageIndex(i => Math.max(0, i - 1))}
+      onNextPage={() => setPageIndex(i => i + 1)}
+      onPreviousPage={() => setPageIndex(i => Math.max(0, i - 1))}
       showPageCount
     />
   );

@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PaginationClient } from '@/components/data-table/pagination-client';
+import { Pagination } from '@/components/data-table/pagination';
 
-describe('PaginationClient', () => {
+describe('Pagination', () => {
   describe('rendering', () => {
     it('should render pagination component', () => {
       const props = {
@@ -13,11 +13,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText(/Showing.*of.*results/)).toBeInTheDocument();
     });
@@ -29,11 +29,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 1-10 of 100 results')).toBeInTheDocument();
     });
@@ -45,11 +45,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 41-50 of 100 results')).toBeInTheDocument();
     });
@@ -61,11 +61,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 91-100 of 100 results')).toBeInTheDocument();
     });
@@ -77,11 +77,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 91-95 of 95 results')).toBeInTheDocument();
     });
@@ -93,11 +93,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 1-0 of 0 results')).toBeInTheDocument();
     });
@@ -109,12 +109,12 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
         className: 'custom-pagination-class',
       };
 
-      const { container } = render(<PaginationClient {...props} />);
+      const { container } = render(<Pagination {...props} />);
       const paginationDiv = container.querySelector('.custom-pagination-class');
       expect(paginationDiv).toBeInTheDocument();
     });
@@ -126,11 +126,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const buttons = screen.getAllByRole('button');
       expect(buttons).toHaveLength(2);
@@ -145,11 +145,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const previousButton = screen.getByRole('button', { name: 'Previous page' });
       expect(previousButton).toBeDisabled();
@@ -162,11 +162,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const previousButton = screen.getByRole('button', { name: 'Previous page' });
       expect(previousButton).not.toBeDisabled();
@@ -179,11 +179,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const nextButton = screen.getByRole('button', { name: 'Next page' });
       expect(nextButton).toBeDisabled();
@@ -196,11 +196,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const nextButton = screen.getByRole('button', { name: 'Next page' });
       expect(nextButton).not.toBeDisabled();
@@ -213,11 +213,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toBeDisabled();
@@ -226,88 +226,88 @@ describe('PaginationClient', () => {
   });
 
   describe('interactions', () => {
-    it('should call handleNextPage when next button is clicked', async () => {
+    it('should call onNextPage when next button is clicked', async () => {
       const user = userEvent.setup();
-      const handleNextPage = vi.fn();
+      const onNextPage = vi.fn();
       const props = {
         totalCount: 100,
         pageIndex: 0,
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage,
-        handlePreviousPage: vi.fn(),
+        onNextPage,
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const nextButton = screen.getByRole('button', { name: 'Next page' });
       await user.click(nextButton);
 
-      expect(handleNextPage).toHaveBeenCalledTimes(1);
+      expect(onNextPage).toHaveBeenCalledTimes(1);
     });
 
-    it('should call handlePreviousPage when previous button is clicked', async () => {
+    it('should call onPreviousPage when previous button is clicked', async () => {
       const user = userEvent.setup();
-      const handlePreviousPage = vi.fn();
+      const onPreviousPage = vi.fn();
       const props = {
         totalCount: 100,
         pageIndex: 5,
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage,
+        onNextPage: vi.fn(),
+        onPreviousPage,
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const previousButton = screen.getByRole('button', { name: 'Previous page' });
       await user.click(previousButton);
 
-      expect(handlePreviousPage).toHaveBeenCalledTimes(1);
+      expect(onPreviousPage).toHaveBeenCalledTimes(1);
     });
 
-    it('should not call handleNextPage when button is disabled', async () => {
+    it('should not call onNextPage when button is disabled', async () => {
       const user = userEvent.setup();
-      const handleNextPage = vi.fn();
+      const onNextPage = vi.fn();
       const props = {
         totalCount: 100,
         pageIndex: 9,
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: true,
-        handleNextPage,
-        handlePreviousPage: vi.fn(),
+        onNextPage,
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const nextButton = screen.getByRole('button', { name: 'Next page' });
       await user.click(nextButton);
 
-      expect(handleNextPage).not.toHaveBeenCalled();
+      expect(onNextPage).not.toHaveBeenCalled();
     });
 
-    it('should not call handlePreviousPage when button is disabled', async () => {
+    it('should not call onPreviousPage when button is disabled', async () => {
       const user = userEvent.setup();
-      const handlePreviousPage = vi.fn();
+      const onPreviousPage = vi.fn();
       const props = {
         totalCount: 100,
         pageIndex: 0,
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage,
+        onNextPage: vi.fn(),
+        onPreviousPage,
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const previousButton = screen.getByRole('button', { name: 'Previous page' });
       await user.click(previousButton);
 
-      expect(handlePreviousPage).not.toHaveBeenCalled();
+      expect(onPreviousPage).not.toHaveBeenCalled();
     });
   });
 
@@ -319,11 +319,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: false,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       // Should use default values: totalCount = 0, pageIndex = 0
       expect(screen.getByText('Showing 1-0 of 0 results')).toBeInTheDocument();
@@ -336,11 +336,11 @@ describe('PaginationClient', () => {
         pageSize: 1,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 3-3 of 5 results')).toBeInTheDocument();
     });
@@ -352,11 +352,11 @@ describe('PaginationClient', () => {
         pageSize: 100,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       expect(screen.getByText('Showing 1-100 of 1000 results')).toBeInTheDocument();
     });
@@ -368,11 +368,11 @@ describe('PaginationClient', () => {
         pageSize: 1000,
         hasNextPage: true,
         hasPreviousPage: true,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       // pageIndex 500, pageSize 1000: start = 500 * 1000 + 1 = 500001, end = min(501000, 999999) = 501000
       expect(screen.getByText('Showing 500001-501000 of 999999 results')).toBeInTheDocument();
@@ -387,11 +387,11 @@ describe('PaginationClient', () => {
         pageSize: 10,
         hasNextPage: true,
         hasPreviousPage: false,
-        handleNextPage: vi.fn(),
-        handlePreviousPage: vi.fn(),
+        onNextPage: vi.fn(),
+        onPreviousPage: vi.fn(),
       };
 
-      render(<PaginationClient {...props} />);
+      render(<Pagination {...props} />);
 
       const buttons = screen.getAllByRole('button');
       expect(buttons).toHaveLength(2);
@@ -409,12 +409,12 @@ describe('PaginationClient', () => {
       pageSize: 10,
       hasNextPage: true,
       hasPreviousPage: false,
-      handleNextPage: vi.fn(),
-      handlePreviousPage: vi.fn(),
+      onNextPage: vi.fn(),
+      onPreviousPage: vi.fn(),
     };
 
     it('names the footer and its parts', () => {
-      const { container } = render(<PaginationClient {...props} showPageCount />);
+      const { container } = render(<Pagination {...props} showPageCount />);
       const root = container.firstElementChild;
       expect(root).toHaveClass('rdt-pagination');
       expect(screen.getByText(/^Showing/)).toHaveClass('rdt-pagination__range');
@@ -426,18 +426,24 @@ describe('PaginationClient', () => {
     });
 
     it('marks the bordered layout exactly when the page count shows', () => {
-      const { container, rerender } = render(<PaginationClient {...props} />);
+      const { container, rerender } = render(<Pagination {...props} />);
       expect(container.firstElementChild).not.toHaveClass('rdt-pagination--bordered');
       expect(screen.getByRole('button', { name: 'Next page' })).toHaveClass('rdt-button--ghost');
 
-      rerender(<PaginationClient {...props} showPageCount />);
+      rerender(<Pagination {...props} showPageCount />);
       expect(container.firstElementChild).toHaveClass('rdt-pagination--bordered');
       expect(screen.getByRole('button', { name: 'Next page' })).toHaveClass('rdt-button--outline');
     });
 
     it('appends className after the package classes', () => {
-      const { container } = render(<PaginationClient {...props} className="mine" />);
+      const { container } = render(<Pagination {...props} className="mine" />);
       expect(container.firstElementChild?.className).toBe('rdt-pagination mine');
+    });
+
+    it('gives the bordered controls data-testid hooks', () => {
+      render(<Pagination {...props} showPageCount />);
+      expect(screen.getByTestId('btn.pagination.previous')).toHaveAccessibleName('Previous page');
+      expect(screen.getByTestId('btn.pagination.next')).toHaveAccessibleName('Next page');
     });
   });
 });

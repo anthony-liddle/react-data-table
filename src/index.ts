@@ -1,20 +1,15 @@
+// The public API. Everything exported here is a promise to keep; the scripts/smoke.mjs
+// export list must match it.
+
 // Components
 export { DataTable } from './components/data-table/data-table.tsx';
-export { PaginationClient } from './components/data-table/pagination-client.tsx';
-// Persistence helpers (URL params + localStorage)
-export {
-  readPersisted,
-  readPersistedString,
-  writePersisted,
-} from './components/data-table/persist.ts';
+export { Pagination } from './components/data-table/pagination.tsx';
 export {
   type ActionMenuLinkComponent,
   type ActionMenuLinkProps,
   TableActionMenu,
 } from './components/data-table/table-action-menu.tsx';
-export { TableHeader } from './components/data-table/table-header.tsx';
-export { TableLoading } from './components/data-table/table-loading.tsx';
-export { TableMenu } from './components/data-table/table-menu.tsx';
+// Types
 export type {
   BaseTableRow,
   SortDirection,
@@ -26,13 +21,7 @@ export type {
   TableSort,
   VisibleColumn,
 } from './components/data-table/types.ts';
-// Types
-export {
-  getColumnId,
-  reconcileColumnOrder,
-  SortOrder,
-} from './components/data-table/types.ts';
-export { SortableHeaderClient } from './components/library/sortable-header-client/index.ts';
+export { getColumnId } from './components/data-table/types.ts';
 // Hooks
 export { type CursorPaginationInput, useCursorPagination } from './hooks/use-cursor-pagination.ts';
 export { usePagination } from './hooks/use-pagination.ts';
@@ -42,12 +31,6 @@ export {
   usePersistedFilters,
 } from './hooks/use-persisted-filters.ts';
 export {
-  type RowDragState,
-  type UseTableDragSelectionReturn,
-  useTableDragSelection,
-} from './hooks/use-table-drag-selection.ts';
-export {
-  type BaseTableSelection,
   type UseTableSelectionOptions,
   useTableSelection,
 } from './hooks/use-table-selection.ts';

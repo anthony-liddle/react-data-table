@@ -25,7 +25,7 @@ const RowSelectionTable = ({
 }: RowSelectionDemoProps) => {
   const rows = members.slice(0, rowCount);
   const isRowDisabled = disableSuspended ? isSuspended : undefined;
-  const { selection, ...handlers } = useTableSelection(rows, { isRowDisabled });
+  const selection = useTableSelection(rows, { isRowDisabled });
   const disabledCount = isRowDisabled ? rows.filter(isRowDisabled).length : 0;
 
   return (
@@ -43,19 +43,21 @@ const RowSelectionTable = ({
       <StatePanel label="Selection">
         <Toolbar>
           <span data-testid="selected-count">
-            {selection.length} of {rows.length - disabledCount} selected
+            {selection.selectedRows.length} of {rows.length - disabledCount} selected
           </span>
-          <DemoButton onClick={handlers.handleDeselectAll}>Clear selection</DemoButton>
+          <DemoButton onClick={selection.clearSelection}>Clear selection</DemoButton>
         </Toolbar>
-        {selection.length > 0 && (
-          <p className="demo-hint">{selection.map(member => member.name).join(', ')}</p>
+        {selection.selectedRows.length > 0 && (
+          <p className="demo-hint">
+            {selection.selectedRows.map(member => member.name).join(', ')}
+          </p>
         )}
       </StatePanel>
       <DataTable
         columns={defaultColumns}
         data={rows}
         selectOnRowClick={selectOnRowClick}
-        selection={{ selectedRows: selection, isRowDisabled, ...handlers }}
+        selection={selection}
         getRowLabel={labelRows ? member => member.name : undefined}
         hideTableSettings
       />
