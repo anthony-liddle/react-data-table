@@ -85,7 +85,9 @@ published Storybook. Visible stories should stay still for visitors, so a play
 function that clicks, types, or drags goes on a hidden twin story instead: spread
 the visible story, add `tags: ['!dev', '!autodocs']`, and give it the play
 function. `pnpm test:storybook` runs the twin, and axe still checks both. A play
-function that only reads the screen can stay on the visible story.
+function that only reads the screen can stay on the visible story if you tag it
+`'read-only-play'`. CI checks the built Storybook (`node
+scripts/check-story-plays.mjs`) and fails on any other visible play function.
 
 ## Commit conventions
 
