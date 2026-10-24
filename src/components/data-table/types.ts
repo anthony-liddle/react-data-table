@@ -89,6 +89,20 @@ export const reconcileColumnOrder = (
   return result;
 };
 
+/**
+ * The column order after a drag in the column panel, which lists only the
+ * columns that can move. `reordered` fills the unpinned places in `order`, and
+ * pinned (`alwaysVisible`) columns keep theirs.
+ */
+export const placeReorderedColumns = (
+  order: string[],
+  pinned: ReadonlySet<string>,
+  reordered: string[]
+): string[] => {
+  let next = 0;
+  return order.map(id => (pinned.has(id) ? id : (reordered[next++] ?? id)));
+};
+
 export interface TablePagination {
   /**
    * Rows across every page. Cursor APIs often have none: without it the footer

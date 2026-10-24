@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { expect, fn, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../components/data-table/data-table.tsx';
 import type { TableColumn } from '../components/data-table/types.ts';
+import { type Member, memberColumn, members } from './support/members.tsx';
 
 /**
  * Test-only stories (hidden from the sidebar by `!dev`) for conditions a
@@ -94,5 +95,62 @@ export const ExpandCellHitArea: Story = {
     for (const [x, y] of corners) {
       await expect(document.elementFromPoint(x, y)?.closest('.rdt-expand-button')).not.toBeNull();
     }
+  },
+};
+
+// The top header row's labels, left to right.
+const headers = (root: HTMLElement) =>
+  [...root.querySelectorAll('thead tr:first-child th')]
+    .map(th => th.textContent?.trim())
+    .filter(Boolean);
+
+/** Moves a column one place down in the open column panel, by keyboard. */
+const moveDownInPanel = async (canvasElement: HTMLElement, column: string) => {
+  await userEvent.click(within(canvasElement).getByRole('button', { name: 'Column settings' }));
+  const panel = within(await within(document.body).findByRole('dialog', { name: 'Columns' }));
+  panel.getByRole('button', { name: `Reorder ${column}` }).focus();
+  await userEvent.keyboard(' ');
+  await userEvent.keyboard('{ArrowDown}');
+  await userEvent.keyboard(' ');
+  return panel;
+};
+
+/**
+ * A pinned (alwaysVisible) column stays out of the column panel and keeps its
+ * place while the others are reordered around it.
+ */
+export const PinnedColumnReorder: Story = {
+  render: () => (
+    <DataTable
+      columns={[
+        { ...memberColumn.name, alwaysVisible: true },
+        memberColumn.email,
+        memberColumn.team,
+        memberColumn.role,
+      ]}
+      data={members.slice(0, 5)}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const panel = await moveDownInPanel(canvasElement, 'Email');
+    await expect(panel.queryByRole('checkbox', { name: 'Name' })).toBeNull();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(headers(canvasElement)).toEqual(['Name', 'Team', 'Email', 'Role']));
+  },
+};
+
+const groupedPinned: TableColumn<Member>[] = [
+  { ...memberColumn.name, alwaysVisible: true },
+  { id: 'contact', header: 'Contact', subColumns: [memberColumn.email, memberColumn.role] },
+  memberColumn.team,
+];
+
+/** The same with grouped columns, where reordering used to do nothing. */
+export const PinnedColumnReorderGrouped: Story = {
+  render: () => <DataTable columns={groupedPinned} data={members.slice(0, 5)} />,
+  play: async ({ canvasElement }) => {
+    await moveDownInPanel(canvasElement, 'Contact');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(headers(canvasElement)).toEqual(['Name', 'Team', 'Contact']));
   },
 };

@@ -19,6 +19,7 @@ import { TableLoading } from './table-loading.tsx';
 import { TableMenu } from './table-menu.tsx';
 import {
   type BaseTableRow,
+  placeReorderedColumns,
   reconcileColumnOrder,
   type TableActionMenuItem,
   type TableColumn,
@@ -314,14 +315,16 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     [columns, onVisibleColumnsChange, setColumnLayout]
   );
 
+  // The panel lists only the columns that can move, so its order fills their
+  // places and pinned (alwaysVisible) columns stay where they are.
   const handleColumnReorder = useCallback(
-    (newOrder: string[]) => {
+    (panelOrder: string[]) => {
+      const pinned = new Set(columns.filter(column => column.alwaysVisible).map(c => c.id));
+      const newOrder = placeReorderedColumns(effectiveColumnOrder, pinned, panelOrder);
       setColumnLayout(prev => ({ ...prev, order: newOrder }));
-      if (onColumnReorder) {
-        onColumnReorder(newOrder);
-      }
+      onColumnReorder?.(newOrder);
     },
-    [onColumnReorder, setColumnLayout]
+    [columns, effectiveColumnOrder, onColumnReorder, setColumnLayout]
   );
 
   // Flatten columns to include sub-columns for cell rendering
@@ -356,32 +359,40 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     [selection, onRowClick, expandOnRowClick, activeExpansion, handleRowClick]
   );
 
-  const visibleColumnsData = useMemo(() => {
-    // Sort columns based on the reconciled column order (see `effectiveColumnOrder`).
-    const sortedColumns = [...columns].sort((a, b) => {
-      const aIndex = effectiveColumnOrder.indexOf(a.id);
-      const bIndex = effectiveColumnOrder.indexOf(b.id);
-      // Columns not in the order (should not happen post-reconciliation) sort to the end
-      const aPos = aIndex === -1 ? effectiveColumnOrder.length : aIndex;
-      const bPos = bIndex === -1 ? effectiveColumnOrder.length : bIndex;
-      return aPos - bPos;
-    });
+  // Every column, in the reconciled order (see `effectiveColumnOrder`).
+  const orderedColumns = useMemo(
+    () =>
+      [...columns].sort((a, b) => {
+        const aIndex = effectiveColumnOrder.indexOf(a.id);
+        const bIndex = effectiveColumnOrder.indexOf(b.id);
+        // Columns not in the order (should not happen post-reconciliation) sort to the end
+        const aPos = aIndex === -1 ? effectiveColumnOrder.length : aIndex;
+        const bPos = bIndex === -1 ? effectiveColumnOrder.length : bIndex;
+        return aPos - bPos;
+      }),
+    [columns, effectiveColumnOrder]
+  );
 
-    return sortedColumns.filter(column => {
-      if (column.alwaysVisible) {
-        return true;
-      }
-      const columnId = column.id;
-      return visibleColumns.find(vc => vc.id === columnId)?.visible ?? true;
-    });
-  }, [columns, visibleColumns, effectiveColumnOrder]);
+  const visibleColumnsData = useMemo(
+    () =>
+      orderedColumns.filter(
+        column =>
+          column.alwaysVisible || (visibleColumns.find(vc => vc.id === column.id)?.visible ?? true)
+      ),
+    [orderedColumns, visibleColumns]
+  );
 
   // Flattened columns for cell rendering
   const flattenedColumnsData = useMemo(() => {
     return flattenColumns(visibleColumnsData);
   }, [visibleColumnsData, flattenColumns]);
 
-  const menuColumns = useMemo(() => columns.filter(col => !col.alwaysVisible), [columns]);
+  // The column panel lists the columns that can be hidden or moved, in the
+  // table's current order. Pinned (alwaysVisible) columns stay out of it.
+  const menuColumns = useMemo(
+    () => orderedColumns.filter(column => !column.alwaysVisible),
+    [orderedColumns]
+  );
 
   const layout = getTableLayout({
     expand: !!activeExpansion,
@@ -538,7 +549,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   <th scope="col" className={SETTINGS_HEADER_CLASS}>
                     <TableMenu
                       visibleColumns={visibleColumns}
-                      columns={columns}
+                      columns={menuColumns}
                       toggleHeaders={toggleHeaders}
                       onColumnReorder={handleColumnReorder}
                       labels={t}

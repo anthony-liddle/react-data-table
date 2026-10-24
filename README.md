@@ -118,7 +118,7 @@ interface TableColumn<T> {
   cellClassName?: string;    // body cell classes
   subColumns?: TableColumn<T>[]; // makes this a grouped parent column
   hideByDefault?: boolean;   // starts hidden; can be shown from the panel
-  alwaysVisible?: boolean;   // cannot be hidden (see Known issues)
+  alwaysVisible?: boolean;   // pinned: can't be hidden or moved, and stays out of the column panel
 }
 ```
 
@@ -279,7 +279,7 @@ Known gaps:
 
 ## Known issues
 
-- **`alwaysVisible`.** With a single header row, the pinned column still appears in the column panel with a checkbox that does nothing. With grouped columns it is left out, but then reordering has no visible effect.
+None at the moment. Report one on [GitHub](https://github.com/anthony-liddle/react-data-table/issues).
 
 ## Development
 
