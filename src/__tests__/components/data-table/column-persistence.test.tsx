@@ -95,6 +95,62 @@ describe('column layout persistence', () => {
     expect(headers()).toEqual(['Role', 'Name']);
   });
 
+  describe('with a pinned column', () => {
+    const pinnedColumns = columns.map(column =>
+      column.id === 'name' ? { ...column, alwaysVisible: true } : column
+    );
+
+    it('keeps it in place when a saved order moved it, keeping the rest of the order', () => {
+      const key = freshKey();
+      localStorage.setItem(
+        `rdt:1:${key}:columns`,
+        JSON.stringify({ toggles: {}, order: ['role', 'email', 'name'], orderSig: SIG })
+      );
+      render(<DataTable columns={pinnedColumns} data={rows} persistKey={key} />);
+      expect(headers()).toEqual(['Name', 'Role', 'Email']);
+    });
+
+    it('keeps it in place when a saved order left it out', () => {
+      const key = freshKey();
+      localStorage.setItem(
+        `rdt:1:${key}:columns`,
+        JSON.stringify({ toggles: {}, order: ['role', 'email'], orderSig: SIG })
+      );
+      render(<DataTable columns={pinnedColumns} data={rows} persistKey={key} />);
+      expect(headers()).toEqual(['Name', 'Role', 'Email']);
+    });
+
+    it('reports it visible when the saved layout hid it', async () => {
+      const key = freshKey();
+      localStorage.setItem(
+        `rdt:1:${key}:columns`,
+        JSON.stringify({
+          toggles: { name: false },
+          order: ['name', 'email', 'role'],
+          orderSig: SIG,
+        })
+      );
+      const onVisibleColumnsChange = vi.fn();
+      render(
+        <DataTable
+          columns={pinnedColumns}
+          data={rows}
+          persistKey={key}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Column settings' }));
+      const panel = await screen.findByRole('dialog', { name: 'Columns' });
+      await userEvent.click(within(panel).getByRole('checkbox', { name: 'Email' }));
+
+      expect(onVisibleColumnsChange).toHaveBeenLastCalledWith([
+        { id: 'name', visible: true },
+        { id: 'email', visible: false },
+        { id: 'role', visible: true },
+      ]);
+    });
+  });
+
   it('drops a saved order when the column set changed, keeping visibility', () => {
     const key = freshKey();
     localStorage.setItem(
