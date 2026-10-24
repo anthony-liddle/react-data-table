@@ -744,16 +744,18 @@
   text-decoration: none;
 }
 
-/* A top-level item's content box: its icon and label in a row. Every item,
-   plain, link or submenu, takes its height from the item's own padding. */
+/* A top-level item's content box: its icon and label in a row, spaced like
+   the items that hold them directly. Every item, plain, link or submenu, takes
+   its height from the item's own padding. */
 .rdt-action-menu__content {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   width: 100%;
 }
 
-/* The icon slot before an item's label. */
+/* The icon slot before an item's label. The item's gap spaces it. */
 .rdt-action-menu__icon {
   display: flex;
   flex-shrink: 0;
@@ -761,7 +763,6 @@
   justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  margin-right: 0.5rem;
 }
 
 /*

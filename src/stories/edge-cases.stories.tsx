@@ -238,8 +238,28 @@ export const DarkOnTheElementItself: Story = {
 const menuItems: TableActionMenuItem<Row>[] = [
   { label: 'Profile', href: '#profile', icon: <span aria-hidden="true">P</span> },
   { label: 'Edit', onSelect: fn(), icon: <span aria-hidden="true">E</span> },
-  { label: 'Move', subItems: [{ label: 'To the top', onSelect: fn() }] },
+  {
+    label: 'Move',
+    icon: <span aria-hidden="true">M</span>,
+    subItems: [{ label: 'To the top', onSelect: fn(), icon: <span aria-hidden="true">T</span> }],
+  },
 ];
+
+// The space between a menu item's icon and its label.
+const labelGap = (item: Element, label: string): number => {
+  const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node && node.textContent?.trim() !== label) {
+    node = walker.nextNode();
+  }
+  const icon = item.querySelector('.rdt-action-menu__icon');
+  if (!node || !icon) {
+    return Number.NaN;
+  }
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  return Math.round(range.getBoundingClientRect().left - icon.getBoundingClientRect().right);
+};
 
 /** Open menus and the column panel follow the `.dark` section their table is in. */
 export const MenusFollowADarkSection: Story = {
@@ -263,7 +283,10 @@ export const MenusFollowADarkSection: Story = {
   },
 };
 
-/** Plain items, link items and submenu items are all the same height. */
+/**
+ * Plain items, link items and submenu items are all the same height, and their
+ * labels sit the same distance from their icons.
+ */
 export const MenuItemHeights: Story = {
   render: () => (
     <DataTable columns={columns} data={rows} actionMenu={menuItems} getRowLabel={r => r.name} />
@@ -275,13 +298,16 @@ export const MenuItemHeights: Story = {
     const move = await body.findByRole('menuitem', { name: 'Move' });
     // Measure the menu before opening the submenu, which hides it from the
     // accessibility tree.
-    const heights = ['Profile', 'Edit', 'Move'].map(name =>
-      height(body.getByRole('menuitem', { name }))
-    );
+    const items = ['Profile', 'Edit', 'Move'].map(name => body.getByRole('menuitem', { name }));
+    const heights = items.map(height);
+    const gaps = items.map((item, i) => labelGap(item, ['Profile', 'Edit', 'Move'][i] ?? ''));
     move.focus();
     await userEvent.keyboard('{ArrowRight}');
-    heights.push(height(await body.findByRole('menuitem', { name: 'To the top' })));
+    const sub = await body.findByRole('menuitem', { name: 'To the top' });
+    heights.push(height(sub));
+    gaps.push(labelGap(sub, 'To the top'));
     await expect(new Set(heights).size).toBe(1);
+    await expect(gaps).toEqual([8, 8, 8, 8]);
     await userEvent.keyboard('{Escape}');
     await userEvent.keyboard('{Escape}');
   },
