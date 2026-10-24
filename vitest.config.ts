@@ -14,16 +14,8 @@ export default defineConfig({
   },
   test: {
     projects: [
-      {
-        extends: true,
-        test: {
-          name: 'unit',
-          globals: true,
-          environment: 'happy-dom',
-          setupFiles: ['./src/__tests__/setup.ts'],
-          include: ['src/__tests__/**/*.test.{ts,tsx}'],
-        },
-      },
+      // The unit project lives in its own file, which `pnpm test` runs alone.
+      './vitest.unit.config.ts',
       {
         // Renders every story in headless Chromium, runs its play function,
         // then runs the a11y addon's axe checks against the result.

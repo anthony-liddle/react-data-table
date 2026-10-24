@@ -172,6 +172,8 @@ interface EmptyArgs {
 
 export const Empty: StoryObj<EmptyArgs> = {
   args: { noResults: 'No members match these filters.' },
+  // Its play function only reads the screen, so it can stay on the visible story.
+  tags: ['read-only-play'],
   render: ({ noResults }) => (
     <Demo>
       <Intro>

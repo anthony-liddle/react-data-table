@@ -53,9 +53,9 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/build-css.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --project unit",
+    "test": "vitest run --config vitest.unit.config.ts",
     "test:storybook": "vitest run --project storybook",
-    "test:watch": "vitest --project unit",
+    "test:watch": "vitest --config vitest.unit.config.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "lint:ci": "biome ci .",
@@ -68,7 +68,7 @@
     "prepublishOnly": "pnpm run lint:ci && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run lint:package && pnpm run smoke"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,css}": [
+    "*.{ts,tsx,js,jsx,mjs,cjs,css}": [
       "biome check --write --no-errors-on-unmatched"
     ],
     "*.{json,jsonc}": [

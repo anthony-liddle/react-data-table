@@ -87,6 +87,9 @@ jobs:
       - name: Build Storybook
         run: pnpm build-storybook
 
+      - name: Visible stories stay still
+        run: node scripts/check-story-plays.mjs
+
   # Renders every story in headless Chromium, runs its play function, and
   # fails on any axe violation. Catches stories that build but break at
   # render time, which `storybook build` alone does not.
