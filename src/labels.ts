@@ -45,7 +45,9 @@ export const defaultLabels: DataTableLabels = {
   pageOf: ({ page, pageCount }) => `Page ${page} of ${pageCount}`,
 };
 
+// A key set to undefined (a locale map with gaps, say) keeps its default
+// rather than replacing a function the table calls.
 export const resolveLabels = (labels?: Partial<DataTableLabels>): DataTableLabels => ({
   ...defaultLabels,
-  ...labels,
+  ...Object.fromEntries(Object.entries(labels ?? {}).filter(([, value]) => value !== undefined)),
 });

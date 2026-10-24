@@ -98,6 +98,13 @@ describe('labels', () => {
     expect(within(panel).getByRole('button', { name: 'Reorder Name' })).toBeInTheDocument();
   });
 
+  it('falls back to the default for a label set to undefined', () => {
+    renderTable({ labels: { selectRow: undefined, pageOf: undefined } });
+
+    expect(screen.getByRole('checkbox', { name: 'Select row 1' })).toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
+  });
+
   it('names a standalone TableActionMenu Actions, or its triggerLabel', () => {
     const items = [{ label: 'Edit', onSelect: vi.fn() }];
     const { rerender } = render(<TableActionMenu items={items} row={rows[0] as Row} />);

@@ -106,7 +106,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 
 ```ts
 interface TableColumn<T> {
-  id: string;                // required: stable across header text and translations
+  id: string;                // required, unique in the table, and stable across header text and translations
   header: string;            // header text
   sortKey?: string;          // makes the column sortable
   cell?: ({ row }) => ReactNode;
