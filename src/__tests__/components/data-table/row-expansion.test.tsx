@@ -111,6 +111,46 @@ describe('row expansion', () => {
     expect(cells[1]).toBeEmptyDOMElement();
   });
 
+  it('keeps a row that is not expandable closed, even when its id is expanded', () => {
+    const spy = vi.fn(details);
+    const Table = () => {
+      const expansion = useTableExpansion<Row>({
+        isRowExpandable: row => row.id === '1',
+        initialExpandedIds: ['1', '2'],
+      });
+      return (
+        <DataTable columns={columns} data={rows} renderExpandedRow={spy} expansion={expansion} />
+      );
+    };
+    render(<Table />);
+    expect(screen.getByText('Details of Ada')).toBeInTheDocument();
+    expect(screen.queryByText('Details of Bram')).toBeNull();
+    expect(spy.mock.calls.every(([row]) => row.id === '1')).toBe(true);
+  });
+
+  it('ignores a row click on a row that is not expandable', async () => {
+    const onToggleRow = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={rows}
+        renderExpandedRow={details}
+        expansion={{
+          isRowExpanded: () => false,
+          isRowExpandable: row => row.id === '1',
+          onToggleRow,
+        }}
+        expandOnRowClick
+      />
+    );
+    await userEvent.click(screen.getByText('Bram'));
+    expect(onToggleRow).not.toHaveBeenCalled();
+    expect(screen.getByText('Bram').closest('tr')).not.toHaveClass('rdt-table__row--clickable');
+
+    await userEvent.click(screen.getByText('Ada'));
+    expect(onToggleRow).toHaveBeenCalledWith(rows[0]);
+  });
+
   it('toggles on a row click with expandOnRowClick, but not from its controls', async () => {
     render(
       <DataTable

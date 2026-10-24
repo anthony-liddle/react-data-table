@@ -132,6 +132,9 @@ const SETTINGS_HEADER_CLASS =
 const ACTIONS_HEADER_CLASS =
   'rdt-table__header-cell rdt-table__header-cell--actions rdt-table__header-cell--sticky';
 
+const isExpandable = <TData extends BaseTableRow>(expansion: TableExpansion<TData>, row: TData) =>
+  expansion.isRowExpandable?.(row) ?? true;
+
 // Drag state as data attributes, present only when true, for the stylesheet.
 const dragAttributes = ({ inRange, isStart, isEnd }: RowDragState) => ({
   'data-drag-range': inRange || undefined,
@@ -305,8 +308,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
       if (onRowClick) {
         onRowClick(row);
       }
-      if (expandOnRowClick) {
-        activeExpansion?.onToggleRow(row);
+      if (expandOnRowClick && activeExpansion && isExpandable(activeExpansion, row)) {
+        activeExpansion.onToggleRow(row);
       }
       if (selection) {
         handleRowClick(e, row);
@@ -528,7 +531,10 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
             {!loading
               && data.length > 0
               && data.map((row: TData, rowIndex: number) => {
-                const isExpanded = activeExpansion?.isRowExpanded(row) ?? false;
+                // A row that can't be expanded stays closed, whatever ids the
+                // expansion holds, so it never shows a panel it can't close.
+                const canExpand = !!activeExpansion && isExpandable(activeExpansion, row);
+                const isExpanded = canExpand && activeExpansion.isRowExpanded(row);
                 const expandedRowId = `${tableId}-expanded-${rowIndex}`;
                 return (
                   <React.Fragment key={row.id}>
@@ -542,14 +548,14 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       {...dragAttributes(getRowDragState(rowIndex))}
                       className={cx(
                         'rdt-table__row',
-                        (selection || onRowClick || (expandOnRowClick && activeExpansion))
+                        (selection || onRowClick || (expandOnRowClick && canExpand))
                           && 'rdt-table__row--clickable',
                         rowClassName?.(row)
                       )}
                     >
                       {activeExpansion && (
                         <td className="rdt-table__cell rdt-table__cell--expand rdt-table__cell--sticky">
-                          {(activeExpansion.isRowExpandable?.(row) ?? true) && (
+                          {canExpand && (
                             <button
                               type="button"
                               className="rdt-expand-button"

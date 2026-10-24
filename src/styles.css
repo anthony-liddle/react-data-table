@@ -322,8 +322,13 @@
 }
 
 .rdt-table__cell:where([data-drag-range] > *) {
-  position: relative;
   background-color: var(--_rdt-accent);
+}
+
+/* Sticky cells keep their own positioning: a checkbox column beside an expand
+   column would otherwise turn relative mid-drag and jump by its offset. */
+.rdt-table__cell:where([data-drag-range] > :not(.rdt-table__cell--sticky)) {
+  position: relative;
 }
 
 .rdt-table__cell--sticky:first-child:where([data-drag-range] > *)::before,

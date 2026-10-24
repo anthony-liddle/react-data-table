@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../../components/data-table/data-table.tsx';
 import { useTableExpansion } from '../../hooks/use-table-expansion.ts';
@@ -137,12 +137,29 @@ export const StickyLeadingColumns: Story = {
     scroller.scrollLeft = 300;
     await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
 
-    const left = (selector: string) =>
+    const box = (selector: string) =>
       (canvasElement.querySelector(selector) as HTMLElement).getBoundingClientRect();
-    const expandCell = left('tbody .rdt-table__cell--expand');
-    const selectCell = left('tbody .rdt-table__cell--select');
-    const scrollerBox = scroller.getBoundingClientRect();
-    await expect(Math.abs(expandCell.left - scrollerBox.left)).toBeLessThanOrEqual(1);
-    await expect(Math.abs(selectCell.left - expandCell.right)).toBeLessThanOrEqual(1);
+    const expectStuck = async (row: number) => {
+      const expandCell = box(`tbody tr:nth-child(${row}) .rdt-table__cell--expand`);
+      const selectCell = box(`tbody tr:nth-child(${row}) .rdt-table__cell--select`);
+      const scrollerBox = scroller.getBoundingClientRect();
+      await expect(Math.abs(expandCell.left - scrollerBox.left)).toBeLessThanOrEqual(1);
+      await expect(Math.abs(selectCell.left - expandCell.right)).toBeLessThanOrEqual(1);
+    };
+    await expectStuck(1);
+
+    // Rows in a drag range stay stuck too. The drag hook listens for mouse
+    // events (React derives onMouseEnter from mouseover).
+    const nameCell = (row: number) =>
+      canvasElement.querySelector(`tbody tr:nth-child(${row}) td:nth-child(3)`) as HTMLElement;
+    fireEvent.mouseDown(nameCell(1));
+    fireEvent.mouseOver(nameCell(2));
+    await waitFor(() =>
+      expect(canvasElement.querySelector('tbody tr:nth-child(1)')).toHaveAttribute(
+        'data-drag-range'
+      )
+    );
+    await expectStuck(1);
+    fireEvent.mouseUp(nameCell(2));
   },
 };

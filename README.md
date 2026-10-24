@@ -275,6 +275,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 Known gaps:
 
 - Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
+- `onRowClick` has no keyboard path of its own. Put a button in a cell if you need one. (Row expansion has its own button.)
 
 ## Known issues
 

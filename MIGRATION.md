@@ -122,6 +122,13 @@ Without an action menu, a row's last data cell used to span two columns, reachin
 
 The table keeps which rows are open itself. To hold that state, pass `expansion={useTableExpansion()}`, which also gives you `expandedIds`, `setExpandedIds` and `collapseAll`. `expandOnRowClick` keeps the old click-anywhere behaviour, minus clicks on the controls inside the row.
 
+If you returned `null` for rows that have no details, say which rows can expand instead. Those rows get no button and never open:
+
+```tsx
+const expansion = useTableExpansion<Member>({ isRowExpandable: row => row.notes.length > 0 });
+<DataTable renderExpandedRow={row => <Notes row={row} />} expansion={expansion} />
+```
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.
