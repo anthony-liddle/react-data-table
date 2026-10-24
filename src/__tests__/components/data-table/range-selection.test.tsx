@@ -83,6 +83,23 @@ describe('range selection', () => {
     expect(selected()).toBe('Bram,Cleo,Dev');
   });
 
+  it('forgets a Shift+Space that never became a click', () => {
+    render(<Table />);
+    fireEvent.click(checkbox('Ada'));
+    fireEvent.keyDown(checkbox('Cleo'), { key: ' ', shiftKey: true });
+    fireEvent.click(checkbox('Eli'), { detail: 0 });
+    expect(selected()).toBe('Ada,Eli');
+  });
+
+  it('forgets a Shift+Space once focus leaves its checkbox', () => {
+    render(<Table />);
+    fireEvent.click(checkbox('Ada'));
+    fireEvent.keyDown(checkbox('Cleo'), { key: ' ', shiftKey: true });
+    fireEvent.blur(checkbox('Cleo'));
+    fireEvent.click(checkbox('Cleo'), { detail: 0 });
+    expect(selected()).toBe('Ada,Cleo');
+  });
+
   it('toggles one row on Shift+click with no checkbox clicked before', async () => {
     const user = userEvent.setup();
     render(<Table />);

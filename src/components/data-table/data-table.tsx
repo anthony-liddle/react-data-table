@@ -351,15 +351,21 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   // checkbox's new state. The anchor is kept by row id, so it survives a
   // re-sort but not a row leaving the page.
   const rangeAnchor = useRef<TData['id'] | null>(null);
-  const shiftAtKeyDown = useRef(false);
-  const handleCheckboxKeyDown = (event: React.KeyboardEvent) => {
+  // The row whose checkbox took a Shift+Space, until its click arrives. It
+  // counts for that checkbox only, and not once focus has left it, so a
+  // keypress that never became a click can't turn a later click into a range.
+  const shiftSpaceRow = useRef<TData['id'] | null>(null);
+  const handleCheckboxKeyDown = (event: React.KeyboardEvent, row: TData) => {
     if (event.key === ' ') {
-      shiftAtKeyDown.current = event.shiftKey;
+      shiftSpaceRow.current = event.shiftKey ? row.id : null;
     }
   };
+  const handleCheckboxBlur = () => {
+    shiftSpaceRow.current = null;
+  };
   const handleCheckboxClick = (event: React.MouseEvent, row: TData) => {
-    const shift = event.shiftKey || (event.detail === 0 && shiftAtKeyDown.current);
-    shiftAtKeyDown.current = false;
+    const shift = event.shiftKey || (event.detail === 0 && shiftSpaceRow.current === row.id);
+    shiftSpaceRow.current = null;
     const from = data.findIndex(r => r.id === rangeAnchor.current);
     const to = data.indexOf(row);
     rangeAnchor.current = row.id;
@@ -661,7 +667,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                             disabled={selection.isRowDisabled?.(row)}
                             onCheckedChange={() => selection.onToggleRow(row)}
                             onClick={event => handleCheckboxClick(event, row)}
-                            onKeyDown={handleCheckboxKeyDown}
+                            onKeyDown={event => handleCheckboxKeyDown(event, row)}
+                            onBlur={handleCheckboxBlur}
                             aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
                           />
                         </td>
