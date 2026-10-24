@@ -13,6 +13,11 @@ const INTERACTIVE = [
   '[contenteditable]:not([contenteditable="false"])',
 ].join(', ');
 
+// Duck-typed rather than `instanceof Node`: a table rendered into an iframe
+// gets its nodes from the iframe's realm, which fail this page's `instanceof`.
+const isNode = (target: EventTarget | null): target is Node =>
+  target !== null && typeof (target as Node).nodeType === 'number';
+
 /**
  * Whether a click on a row started on a control rather than on the row itself.
  * A click from outside the row's DOM counts as a control: React bubbles clicks
@@ -26,10 +31,11 @@ export const isInteractiveTarget = ({
   target: EventTarget | null;
   currentTarget: Element;
 }): boolean => {
-  if (!(target instanceof Node) || !currentTarget.contains(target)) {
+  if (!isNode(target) || !currentTarget.contains(target)) {
     return true;
   }
-  const element = target instanceof Element ? target : target.parentElement;
+  const element =
+    target.nodeType === Node.ELEMENT_NODE ? (target as Element) : target.parentElement;
   const control = element?.closest(INTERACTIVE);
   return control != null && currentTarget.contains(control);
 };

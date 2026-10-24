@@ -78,6 +78,8 @@
   --_rdt-row-selected: var(--rdt-row-selected, var(--_rdt-card));
   --_rdt-skeleton: var(--rdt-skeleton, oklch(92.3% 0.003 48.717));
   --_rdt-surface-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* The expand column's width, which is also the checkbox column's sticky offset. */
+  --_rdt-expand-width: 2.5rem;
 }
 
 :where(.dark)
@@ -181,8 +183,8 @@
 .rdt-table__header-cell--expand,
 .rdt-table__cell--expand {
   box-sizing: border-box;
-  width: 2.5rem;
-  min-width: 2.5rem;
+  width: var(--_rdt-expand-width);
+  min-width: var(--_rdt-expand-width);
   padding-inline: 0.5rem 0;
   vertical-align: middle;
 }
@@ -244,7 +246,7 @@
 :where(.rdt-table__cell--expand) + .rdt-table__cell--sticky,
 :where(.rdt-table__header-cell--expand) + .rdt-table__header-cell--sticky {
   position: sticky;
-  left: 2.5rem;
+  left: var(--_rdt-expand-width);
   z-index: 10;
 }
 
@@ -540,6 +542,15 @@
   background-color: transparent;
   border: 0;
   cursor: pointer;
+}
+
+/* The button's hit area covers its whole cell (the sticky cell is its
+   containing block), so a near-miss beside the chevron still toggles the row
+   rather than counting as a row click. */
+.rdt-expand-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 /* The chevron points right, and down while the row is open. */

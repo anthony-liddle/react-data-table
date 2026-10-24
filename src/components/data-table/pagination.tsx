@@ -56,7 +56,7 @@ export const Pagination = ({
   // A page with no rows (no results, or a page past the end) reads 0 to 0.
   const [start, end] = last < first ? [0, 0] : [first, last];
   // The total page count, with 1 for the zero-results case.
-  const pageCount = totalCount ? Math.ceil(totalCount / pageSize) : 1;
+  const pageCount = totalCount && totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
 
   return (
     <div className={cx('rdt-pagination', showPageCount && 'rdt-pagination--bordered', className)}>

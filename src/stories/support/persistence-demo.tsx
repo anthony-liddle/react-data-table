@@ -281,7 +281,7 @@ const IsolatedDemo = ({
 
 export interface PersistenceDemoProps {
   mechanism: PersistenceMechanism;
-  /** Namespace for the localStorage keys (URL params are shared regardless). */
+  /** Namespaces this table's URL params and localStorage keys. */
   persistKey: string;
   rowCount: number;
   /** Supplied by the story's render function; used to build the share link. */

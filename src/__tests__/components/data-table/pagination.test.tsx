@@ -313,7 +313,7 @@ describe('Pagination', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle default values when props are missing', () => {
+    it('should read an empty first page as 0 to 0', () => {
       const props = {
         totalCount: 0,
         pageIndex: 0,
@@ -326,7 +326,6 @@ describe('Pagination', () => {
 
       render(<Pagination {...props} />);
 
-      // Should use default values: totalCount = 0, pageIndex = 0
       expect(screen.getByText('Showing 0-0 of 0 results')).toBeInTheDocument();
     });
 
@@ -478,6 +477,23 @@ describe('Pagination', () => {
       expect(screen.getByText('Showing 0-0 of 25 results')).toBeInTheDocument();
       rerender(<Pagination {...base} pageRowCount={0} />);
       expect(screen.getByText('Showing 0-0')).toBeInTheDocument();
+    });
+
+    it('reads a negative total as one page', () => {
+      render(<Pagination {...base} pageIndex={0} totalCount={-5} showPageCount />);
+      expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+    });
+
+    it('keeps the page range while a table without a total loads', () => {
+      render(
+        <DataTable
+          columns={[{ id: 'name', header: 'Name', cell: ({ row }) => row.id }]}
+          data={[] as { id: string }[]}
+          loading
+          pagination={base}
+        />
+      );
+      expect(screen.getByText('Showing 11-20')).toBeInTheDocument();
     });
 
     it('treats a null total as unknown', () => {

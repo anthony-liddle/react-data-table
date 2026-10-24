@@ -45,7 +45,7 @@ export const TableHeader = <TData extends BaseTableRow = BaseTableRow>({
       rowSpan={rowSpan}
     />
   ) : (
-    <th key={column.header} {...headerProps}>
+    <th {...headerProps}>
       <span className="rdt-table__header-label">
         {column.headerIcon}
         {column.header}

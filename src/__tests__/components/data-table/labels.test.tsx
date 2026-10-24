@@ -76,6 +76,25 @@ describe('labels', () => {
     expect(within(panel).getByRole('button', { name: 'Déplacer Name' })).toBeInTheDocument();
   });
 
+  it("names the grouped header row's controls from labels too", () => {
+    render(
+      <DataTable
+        columns={[
+          {
+            id: 'person',
+            header: 'Person',
+            subColumns: [{ id: 'name', header: 'Name', cell: ({ row }) => row.name }],
+          },
+        ]}
+        data={rows}
+        selection={selection}
+        labels={fr}
+      />
+    );
+    expect(screen.getByRole('checkbox', { name: 'Tout sélectionner' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Colonnes' })).toBeInTheDocument();
+  });
+
   it('prefers getRowLabel over labels.rowLabel', () => {
     renderTable({ labels: fr, getRowLabel: row => row.name });
 
