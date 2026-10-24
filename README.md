@@ -83,7 +83,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
-| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
+| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection; Shift+click a checkbox, or Shift+Space on one, to set a range. |
 | `selectOnRowClick` | `boolean` | `false` | A click on a row toggles it, except on the controls inside it (see `onRowClick`) |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
@@ -274,7 +274,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 
 Known gaps:
 
-- Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
+- Drag selection and click-to-select rows are mouse-only. The checkboxes are the keyboard path, and Shift+Space on a focused checkbox sets every row from the last one toggled.
 - `onRowClick` has no keyboard path of its own. Put a button in a cell if you need one. (Row expansion has its own button.)
 
 ## Known issues
