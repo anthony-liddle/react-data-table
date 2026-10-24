@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { BaseTableRow, TableSelection } from '../components/data-table/types.ts';
+import { isInteractiveTarget } from '../lib/interactive-target.ts';
 
 interface UseTableDragSelectionProps<TData extends BaseTableRow> {
   data: TData[];
@@ -69,14 +70,8 @@ export function useTableDragSelection<TData extends BaseTableRow>({
   // Handle mouse down on row - start drag selection
   const handleRowMouseDown = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>, rowIndex: number) => {
-      // Don't start drag if clicking on checkbox or action menu
-      const target = e.target as HTMLElement;
-      if (
-        target.closest('input[type="checkbox"]')
-        || target.closest('button')
-        || target.closest('[role="menu"]')
-        || !selection
-      ) {
+      // Don't start a drag from a control in the row, or from a portal.
+      if (!selection || isInteractiveTarget(e)) {
         return;
       }
 
@@ -259,13 +254,8 @@ export function useTableDragSelection<TData extends BaseTableRow>({
         return;
       }
 
-      // Don't select if clicking on checkbox, button, or action menu
-      const target = e.target as HTMLElement;
-      if (
-        target.closest('input[type="checkbox"]')
-        || target.closest('button')
-        || target.closest('[role="menu"]')
-      ) {
+      // Don't select from a control in the row, or from a portal.
+      if (isInteractiveTarget(e)) {
         return;
       }
 

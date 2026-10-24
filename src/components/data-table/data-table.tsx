@@ -6,6 +6,7 @@ import { usePersistedState } from '../../hooks/use-persisted-state.ts';
 import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
+import { isInteractiveTarget } from '../../lib/interactive-target.ts';
 import { readStorage, storageKey, writeStorage } from '../../lib/persistence.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { getTableLayout } from './layout.ts';
@@ -280,7 +281,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
 
   const rowClickHandler = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>, row: TData) => {
-      if (selection?.isRowDisabled?.(row)) {
+      if (isInteractiveTarget(e) || selection?.isRowDisabled?.(row)) {
         return;
       }
 

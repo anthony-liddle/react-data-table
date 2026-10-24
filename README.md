@@ -84,7 +84,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
 | `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
-| `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
+| `selectOnRowClick` | `boolean` | `false` | A click on a row toggles it, except on the controls inside it (see `onRowClick`) |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
 | `actionMenu` | `TableActionMenuItem<T>[]` | – | Per-row menu: links, callbacks, one level of submenus, per-row `hidden` / `disabled` |
@@ -94,7 +94,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
 | `loading` | `boolean` | `false` | Shows skeleton rows and sets `aria-busy` |
 | `maxLoadingRows` | `number` | `10` | Skeleton row count |
-| `onRowClick` | `(row: T) => void` | – | Row click callback |
+| `onRowClick` | `(row: T) => void` | – | Row click callback. Clicks on a control inside the row (a link, button, form control, label, `[role=button]`, `[role=checkbox]`, `[role=menuitem]` or editable content), or from a portal opened in a cell, don't count |
 | `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
 | `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |

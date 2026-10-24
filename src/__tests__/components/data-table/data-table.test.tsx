@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createPortal } from 'react-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DataTable } from '@/components/data-table/data-table';
@@ -731,6 +732,88 @@ describe('DataTable', () => {
       await user.click(firstDataRow);
 
       expect(onRowClick).toHaveBeenCalledWith(baseData[0]);
+    });
+
+    it('ignores clicks on the controls inside a row', async () => {
+      const user = userEvent.setup();
+      const onRowClick = vi.fn();
+      const columns: TableColumn<TestRow>[] = [
+        {
+          id: 'controls',
+          header: 'Controls',
+          cell: ({ row }) => (
+            <>
+              <span>{row.name}</span>
+              <a href={`#${row.id}`}>Profile</a>
+              <button type="button">Edit</button>
+              <input aria-label="Note" />
+              <label htmlFor="nowhere">Label</label>
+              {/* biome-ignore lint/a11y/useSemanticElements: a custom control the guard must recognise */}
+              <span role="button" tabIndex={0}>
+                Go
+              </span>
+              <div contentEditable suppressContentEditableWarning>
+                Notes
+              </div>
+            </>
+          ),
+        },
+      ];
+      render(
+        <DataTable
+          columns={columns}
+          data={baseData.slice(0, 1)}
+          onRowClick={onRowClick}
+          selection={{ isRowSelected: () => false, onToggleRow: vi.fn(), onToggleAll: vi.fn() }}
+        />
+      );
+
+      await user.click(screen.getByRole('checkbox', { name: 'Select row 1' }));
+      await user.click(screen.getByRole('link', { name: 'Profile' }));
+      await user.click(screen.getByRole('button', { name: 'Edit' }));
+      await user.click(screen.getByRole('textbox', { name: 'Note' }));
+      await user.click(screen.getByText('Label'));
+      await user.click(screen.getByRole('button', { name: 'Go' }));
+      await user.click(screen.getByText('Notes'));
+      expect(onRowClick).not.toHaveBeenCalled();
+
+      await user.click(screen.getByText('John Doe'));
+      expect(onRowClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores clicks inside a portal rendered from a cell', async () => {
+      const user = userEvent.setup();
+      const onRowClick = vi.fn();
+      const columns: TableColumn<TestRow>[] = [
+        {
+          id: 'name',
+          header: 'Name',
+          cell: ({ row }) => (
+            <>
+              {row.name}
+              {createPortal(<div>Popover for {row.name}</div>, document.body)}
+            </>
+          ),
+        },
+      ];
+      render(<DataTable columns={columns} data={baseData.slice(0, 1)} onRowClick={onRowClick} />);
+
+      await user.click(screen.getByText('Popover for John Doe'));
+      expect(onRowClick).not.toHaveBeenCalled();
+    });
+
+    it('still reports a row click in a table inside a label', async () => {
+      const user = userEvent.setup();
+      const onRowClick = vi.fn();
+      render(
+        // biome-ignore lint/a11y/noLabelWithoutControl: the table sits in a label on purpose
+        <label>
+          <DataTable columns={baseColumns} data={baseData.slice(0, 1)} onRowClick={onRowClick} />
+        </label>
+      );
+
+      await user.click(screen.getByText('John Doe'));
+      expect(onRowClick).toHaveBeenCalledTimes(1);
     });
   });
 
