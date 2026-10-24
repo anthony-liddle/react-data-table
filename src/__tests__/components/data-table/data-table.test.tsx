@@ -999,17 +999,29 @@ describe('DataTable', () => {
       expect(at(bodyRows(), 0)).toHaveClass('rdt-table__row--clickable');
     });
 
-    it('names expanded rows and the empty state', () => {
+    it('names the expand column, expanded rows and the empty state', () => {
       const { rerender } = render(
         <DataTable
           columns={baseColumns}
           data={baseData}
-          renderExpandedRow={row => (row.id === '1' ? <p>Details</p> : null)}
+          renderExpandedRow={() => <p>Panel</p>}
+          expansion={{ isRowExpanded: row => row.id === '1', onToggleRow: vi.fn() }}
         />
       );
-      const expandedCell = screen.getByText('Details').closest('td');
+      const expandedCell = screen.getByText('Panel').closest('td');
       expect(expandedCell).toHaveClass('rdt-table__expanded-cell');
       expect(expandedCell?.parentElement).toHaveClass('rdt-table__expanded-row');
+      expect(screen.getByRole('columnheader', { name: 'Details' })).toHaveClass(
+        'rdt-table__header-cell--expand',
+        'rdt-table__header-cell--sticky'
+      );
+      const button = screen.getByRole('button', { name: 'Details for row 1' });
+      expect(button).toHaveClass('rdt-expand-button');
+      expect(button.closest('td')).toHaveClass(
+        'rdt-table__cell--expand',
+        'rdt-table__cell--sticky'
+      );
+      expect(button.querySelector('svg')).toHaveClass('rdt-expand-button__icon');
 
       rerender(<DataTable columns={baseColumns} data={[]} />);
       const emptyCell = screen.getByText('No results found').closest('td');

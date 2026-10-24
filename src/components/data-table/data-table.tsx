@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useId, useMemo } from 'react';
 
 import { usePersistedState } from '../../hooks/use-persisted-state.ts';
 import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
+import { useTableExpansion } from '../../hooks/use-table-expansion.ts';
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
 import { isInteractiveTarget } from '../../lib/interactive-target.ts';
 import { readStorage, storageKey, writeStorage } from '../../lib/persistence.ts';
+import { KeyboardArrowRight } from '../icon.tsx';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { getTableLayout } from './layout.ts';
 import { Pagination } from './pagination.tsx';
@@ -20,6 +22,7 @@ import {
   reconcileColumnOrder,
   type TableActionMenuItem,
   type TableColumn,
+  type TableExpansion,
   type TablePagination,
   type TableSelection,
   type TableSort,
@@ -96,13 +99,18 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
   showPageCount?: boolean;
   /**
-   * Opt-in accordion rows: when set, each data row that returns non-null gets a
-   * full-width companion row rendered directly beneath it with the returned
-   * content. Expansion STATE belongs to the consumer (track the expanded row
-   * ids and return null for collapsed rows). Pair it with `onRowClick` to
-   * toggle. Returning null for every row is equivalent to omitting the prop.
+   * Content for a row's expanded panel, a full-width row beneath it. Setting it
+   * adds a leading column with an expand button per row. Called only for
+   * expanded rows.
    */
-  renderExpandedRow?: (row: TData) => React.ReactNode | null;
+  renderExpandedRow?: (row: TData) => React.ReactNode;
+  /**
+   * Which rows are expanded, from `useTableExpansion`. Optional: without it the
+   * table keeps that state itself. Ignored without `renderExpandedRow`.
+   */
+  expansion?: TableExpansion<TData>;
+  /** Toggle a row's panel from a click anywhere on the row, except its controls. */
+  expandOnRowClick?: boolean;
   /** Override any of the user-facing strings (English defaults). */
   labels?: Partial<DataTableLabels>;
   /**
@@ -113,6 +121,8 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
   linkComponent?: ActionMenuLinkComponent;
 }
 
+const EXPAND_HEADER_CLASS =
+  'rdt-table__header-cell rdt-table__header-cell--expand rdt-table__header-cell--sticky';
 const SELECT_HEADER_CLASS =
   'rdt-table__header-cell rdt-table__header-cell--select rdt-table__header-cell--sticky';
 const SETTINGS_HEADER_CLASS =
@@ -149,11 +159,18 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   getRowLabel,
   showPageCount = false,
   renderExpandedRow,
+  expansion,
+  expandOnRowClick = false,
   labels,
   linkComponent,
 }: DataTableProps<TData>) => {
   const t = resolveLabels(labels);
   const rowLabelOf = (row: TData) => getRowLabel?.(row) ?? t.rowLabel({ id: row.id });
+
+  // Without an `expansion` prop, the table keeps its own expansion state.
+  const ownExpansion = useTableExpansion<TData>();
+  const activeExpansion = renderExpandedRow ? (expansion ?? ownExpansion) : undefined;
+  const tableId = useId();
 
   // The column layout: user visibility overrides (column id to visible;
   // columns without one follow hideByDefault) and the column order. Saved in
@@ -288,11 +305,14 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
       if (onRowClick) {
         onRowClick(row);
       }
+      if (expandOnRowClick) {
+        activeExpansion?.onToggleRow(row);
+      }
       if (selection) {
         handleRowClick(e, row);
       }
     },
-    [selection, onRowClick, handleRowClick]
+    [selection, onRowClick, expandOnRowClick, activeExpansion, handleRowClick]
   );
 
   const visibleColumnsData = useMemo(() => {
@@ -323,7 +343,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   const menuColumns = useMemo(() => columns.filter(col => !col.alwaysVisible), [columns]);
 
   const layout = getTableLayout({
-    expand: false,
+    expand: !!activeExpansion,
     select: !!selection,
     actionMenu: !!actionMenu,
     hideTableSettings: !!hideTableSettings,
@@ -349,6 +369,11 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
               <>
                 {/* Parent header row */}
                 <tr className="rdt-table__header-row">
+                  {layout.expand && (
+                    <th scope="col" rowSpan={2} className={EXPAND_HEADER_CLASS}>
+                      <span className="rdt-visually-hidden">{t.expandColumn}</span>
+                    </th>
+                  )}
                   {selection && (
                     <th scope="col" rowSpan={2} className={SELECT_HEADER_CLASS}>
                       <div className="rdt-table__select-all">
@@ -436,6 +461,11 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
             ) : (
               // Single header row when no grouped columns
               <tr className="rdt-table__header-row">
+                {layout.expand && (
+                  <th scope="col" className={EXPAND_HEADER_CLASS}>
+                    <span className="rdt-visually-hidden">{t.expandColumn}</span>
+                  </th>
+                )}
                 {selection && (
                   <th scope="col" className={SELECT_HEADER_CLASS}>
                     <div className="rdt-table__select-all">
@@ -497,69 +527,87 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
             )}
             {!loading
               && data.length > 0
-              && data.map((row: TData, rowIndex: number) => (
-                <React.Fragment key={row.id}>
-                  <tr
-                    data-testid={getRowTestId?.(row)}
-                    onClick={e => rowClickHandler(e, row)}
-                    onMouseDown={selection ? e => handleRowMouseDown(e, rowIndex) : undefined}
-                    onMouseUp={selection ? e => handleRowMouseUp(e, rowIndex) : undefined}
-                    onMouseEnter={selection ? () => handleRowMouseEnter(rowIndex) : undefined}
-                    data-selected={selection?.isRowSelected(row) || undefined}
-                    {...dragAttributes(getRowDragState(rowIndex))}
-                    className={cx(
-                      'rdt-table__row',
-                      (selection || onRowClick) && 'rdt-table__row--clickable',
-                      rowClassName?.(row)
-                    )}
-                  >
-                    {selection && (
-                      <td className="rdt-table__cell rdt-table__cell--select rdt-table__cell--sticky">
-                        <Checkbox
-                          checked={selection.isRowSelected(row)}
-                          disabled={selection.isRowDisabled?.(row)}
-                          onCheckedChange={() => selection.onToggleRow(row)}
-                          aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
-                        />
-                      </td>
-                    )}
-                    {flattenedColumnsData.map((column, index: number) => (
-                      <td
-                        key={`${row.id}-${index}-${column.id}`}
-                        className={cx('rdt-table__cell', column.cellClassName)}
-                      >
-                        {column.cell ? column.cell({ row }) : null}
-                      </td>
-                    ))}
-                    {actionMenu && (
-                      <td
-                        className="rdt-table__cell rdt-table__cell--actions rdt-table__cell--sticky"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <TableActionMenu
-                          items={actionMenu}
-                          row={row}
-                          linkComponent={linkComponent}
-                          triggerLabel={t.rowActions({ rowLabel: rowLabelOf(row) })}
-                        />
-                      </td>
-                    )}
-                    {layout.trailing === 'settings' && (
-                      <td className="rdt-table__cell rdt-table__cell--settings rdt-table__cell--sticky" />
-                    )}
-                  </tr>
-                  {(() => {
-                    const expanded = renderExpandedRow?.(row);
-                    return expanded != null ? (
-                      <tr className="rdt-table__expanded-row">
+              && data.map((row: TData, rowIndex: number) => {
+                const isExpanded = activeExpansion?.isRowExpanded(row) ?? false;
+                const expandedRowId = `${tableId}-expanded-${rowIndex}`;
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr
+                      data-testid={getRowTestId?.(row)}
+                      onClick={e => rowClickHandler(e, row)}
+                      onMouseDown={selection ? e => handleRowMouseDown(e, rowIndex) : undefined}
+                      onMouseUp={selection ? e => handleRowMouseUp(e, rowIndex) : undefined}
+                      onMouseEnter={selection ? () => handleRowMouseEnter(rowIndex) : undefined}
+                      data-selected={selection?.isRowSelected(row) || undefined}
+                      {...dragAttributes(getRowDragState(rowIndex))}
+                      className={cx(
+                        'rdt-table__row',
+                        (selection || onRowClick || (expandOnRowClick && activeExpansion))
+                          && 'rdt-table__row--clickable',
+                        rowClassName?.(row)
+                      )}
+                    >
+                      {activeExpansion && (
+                        <td className="rdt-table__cell rdt-table__cell--expand rdt-table__cell--sticky">
+                          {(activeExpansion.isRowExpandable?.(row) ?? true) && (
+                            <button
+                              type="button"
+                              className="rdt-expand-button"
+                              aria-expanded={isExpanded}
+                              aria-controls={isExpanded ? expandedRowId : undefined}
+                              aria-label={t.expandRow({ rowLabel: rowLabelOf(row) })}
+                              onClick={() => activeExpansion.onToggleRow(row)}
+                            >
+                              <KeyboardArrowRight className="rdt-expand-button__icon" />
+                            </button>
+                          )}
+                        </td>
+                      )}
+                      {selection && (
+                        <td className="rdt-table__cell rdt-table__cell--select rdt-table__cell--sticky">
+                          <Checkbox
+                            checked={selection.isRowSelected(row)}
+                            disabled={selection.isRowDisabled?.(row)}
+                            onCheckedChange={() => selection.onToggleRow(row)}
+                            aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
+                          />
+                        </td>
+                      )}
+                      {flattenedColumnsData.map((column, index: number) => (
+                        <td
+                          key={`${row.id}-${index}-${column.id}`}
+                          className={cx('rdt-table__cell', column.cellClassName)}
+                        >
+                          {column.cell ? column.cell({ row }) : null}
+                        </td>
+                      ))}
+                      {actionMenu && (
+                        <td
+                          className="rdt-table__cell rdt-table__cell--actions rdt-table__cell--sticky"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <TableActionMenu
+                            items={actionMenu}
+                            row={row}
+                            linkComponent={linkComponent}
+                            triggerLabel={t.rowActions({ rowLabel: rowLabelOf(row) })}
+                          />
+                        </td>
+                      )}
+                      {layout.trailing === 'settings' && (
+                        <td className="rdt-table__cell rdt-table__cell--settings rdt-table__cell--sticky" />
+                      )}
+                    </tr>
+                    {isExpanded && renderExpandedRow && (
+                      <tr id={expandedRowId} className="rdt-table__expanded-row">
                         <td colSpan={columnCount} className="rdt-table__expanded-cell">
-                          {expanded}
+                          {renderExpandedRow(row)}
                         </td>
                       </tr>
-                    ) : null;
-                  })()}
-                </React.Fragment>
-              ))}
+                    )}
+                  </React.Fragment>
+                );
+              })}
           </tbody>
         </table>
       </div>

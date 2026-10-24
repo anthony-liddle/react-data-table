@@ -1,8 +1,10 @@
 import { render } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DataTable } from '@/components/data-table/data-table';
 import type { TableColumn, TableSelection } from '@/components/data-table/types';
+import { useTableExpansion } from '@/hooks/use-table-expansion';
 
 interface Row {
   id: string;
@@ -41,18 +43,29 @@ const selection: TableSelection<Row> = {
 const colSpan = (cell: Element) => Number(cell.getAttribute('colspan') ?? 1);
 const span = (row: Element) => [...row.children].reduce((n, cell) => n + colSpan(cell), 0);
 
-const combinations = [false, true].flatMap(withSelection =>
-  [false, true].flatMap(withActionMenu =>
-    [false, true].flatMap(hideTableSettings =>
-      [false, true].map(isGrouped => ({
-        withSelection,
-        withActionMenu,
-        hideTableSettings,
-        isGrouped,
-      }))
+const combinations = [false, true].flatMap(withExpansion =>
+  [false, true].flatMap(withSelection =>
+    [false, true].flatMap(withActionMenu =>
+      [false, true].flatMap(hideTableSettings =>
+        [false, true].map(isGrouped => ({
+          withExpansion,
+          withSelection,
+          withActionMenu,
+          hideTableSettings,
+          isGrouped,
+        }))
+      )
     )
   )
 );
+
+const details = () => <p>Details</p>;
+
+// A table with the first row open.
+const ExpandedTable = (props: ComponentProps<typeof DataTable<Row>>) => {
+  const expansion = useTableExpansion<Row>({ initialExpandedIds: ['1'] });
+  return <DataTable {...props} renderExpandedRow={details} expansion={expansion} />;
+};
 
 describe('column layout', () => {
   it.each(combinations)('every body row spans the header (%o)', options => {
@@ -68,21 +81,24 @@ describe('column layout', () => {
     };
 
     const withData = render(
-      <DataTable
-        {...props}
-        data={rows}
-        renderExpandedRow={row => (row.id === '1' ? <p>Details</p> : null)}
-      />
+      options.withExpansion ? (
+        <ExpandedTable {...props} data={rows} />
+      ) : (
+        <DataTable {...props} data={rows} />
+      )
     );
     const data = widths(withData.container);
-    expect(data.body).toHaveLength(3);
+    expect(data.body).toHaveLength(options.withExpansion ? 3 : 2);
     expect(data.body.every(width => width === data.header)).toBe(true);
     withData.unmount();
 
-    const loading = widths(render(<DataTable {...props} data={rows} loading />).container);
+    const expandProps = options.withExpansion ? { renderExpandedRow: details } : {};
+    const loading = widths(
+      render(<DataTable {...props} {...expandProps} data={rows} loading />).container
+    );
     expect(loading.body.every(width => width === loading.header)).toBe(true);
 
-    const empty = widths(render(<DataTable {...props} data={[]} />).container);
+    const empty = widths(render(<DataTable {...props} {...expandProps} data={[]} />).container);
     expect(empty.body).toEqual([empty.header]);
   });
 

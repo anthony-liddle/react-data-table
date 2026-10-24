@@ -110,6 +110,18 @@ Without an action menu, a row's last data cell used to span two columns, reachin
 
 `onRowClick` and `selectOnRowClick` used to fire for any click in a row, including the row's own checkbox, a link or a button in a cell. They now skip clicks that start on a link, button, form control, label, `[role=button]`, `[role=checkbox]`, `[role=menuitem]` or editable content inside the row, and clicks that bubble up from a portal opened in a cell, such as a popover. If you called `stopPropagation` in your cells to get this, you can drop it.
 
+### `renderExpandedRow` returns content only, and rows get an expand button
+
+`renderExpandedRow` used to be called for every row, and returning `null` meant "collapsed", so you kept the expanded ids yourself and toggled them from `onRowClick`. It now returns only a panel's content and is called only for expanded rows. Setting it adds a leading column with an expand button per row, which works by keyboard and screen reader.
+
+```diff
+- const [open, setOpen] = useState(new Set<string>());
+- <DataTable onRowClick={row => toggle(row.id)} renderExpandedRow={row => (open.has(row.id) ? <Details row={row} /> : null)} />
++ <DataTable renderExpandedRow={row => <Details row={row} />} />
+```
+
+The table keeps which rows are open itself. To hold that state, pass `expansion={useTableExpansion()}`, which also gives you `expandedIds`, `setExpandedIds` and `collapseAll`. `expandOnRowClick` keeps the old click-anywhere behaviour, minus clicks on the controls inside the row.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

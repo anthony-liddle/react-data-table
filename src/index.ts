@@ -17,6 +17,7 @@ export type {
   TableActionMenuItem,
   TableActionMenuSubItem,
   TableColumn,
+  TableExpansion,
   TablePagination,
   TableSelection,
   TableSort,
@@ -34,6 +35,10 @@ export {
   type PersistedFiltersOptions,
   usePersistedFilters,
 } from './hooks/use-persisted-filters.ts';
+export {
+  type UseTableExpansionOptions,
+  useTableExpansion,
+} from './hooks/use-table-expansion.ts';
 export {
   type UseTableSelectionOptions,
   useTableSelection,

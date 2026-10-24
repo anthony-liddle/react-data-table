@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useMemo, useState } from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { useMemo } from 'react';
+import { expect, fn, userEvent, within } from 'storybook/test';
 
 import { DataTable } from '../components/data-table/data-table.tsx';
 import type { TableActionMenuItem } from '../components/data-table/types.ts';
@@ -11,7 +11,6 @@ import { at } from '../test-support/at.ts';
 import { Demo, Intro } from './support/demo-ui.tsx';
 import {
   defaultColumns,
-  formatDate,
   isSuspended,
   type Member,
   members,
@@ -184,73 +183,6 @@ export const Empty: StoryObj<EmptyArgs> = {
   ),
   play: async ({ canvasElement, args }) => {
     await expect(within(canvasElement).getByText(args.noResults)).toBeInTheDocument();
-  },
-};
-
-const ExpandedRowsDemo = ({ rowCount }: { rowCount: number }) => {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  return (
-    <Demo>
-      <Intro>
-        Click a row to expand it. <code>renderExpandedRow</code> draws the panel; which rows are
-        open is the consumer's state, toggled here from <code>onRowClick</code>.
-      </Intro>
-      <DataTable
-        columns={defaultColumns}
-        data={members.slice(0, rowCount)}
-        hideTableSettings
-        onRowClick={row => {
-          setExpandedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(row.id)) {
-              next.delete(row.id);
-            } else {
-              next.add(row.id);
-            }
-            return next;
-          });
-        }}
-        renderExpandedRow={row =>
-          expandedIds.has(row.id) ? (
-            <div className="demo-expanded">
-              <p>
-                <span className="demo-muted">Location</span> {row.location}
-              </p>
-              <p>
-                <span className="demo-muted">Last active</span> {formatDate(row.lastActive)}
-              </p>
-              <p>
-                <span className="demo-muted">Storage</span> {row.storageGb.toFixed(1)} GB
-              </p>
-            </div>
-          ) : null
-        }
-      />
-    </Demo>
-  );
-};
-
-export const ExpandedRows: StoryObj<{ rowCount: number }> = {
-  args: { rowCount: 10 },
-  argTypes: { rowCount: { control: { type: 'range', min: 3, max: 40, step: 1 } } },
-  render: ({ rowCount }) => <ExpandedRowsDemo rowCount={rowCount} />,
-};
-
-/**
- * Test-only twin (hidden from the sidebar by `!dev`), so the story above stays
- * still for visitors: opens and closes the first row.
- */
-export const ExpandedRowsInteraction: StoryObj<{ rowCount: number }> = {
-  ...ExpandedRows,
-  tags: ['!dev', '!autodocs'],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const first = at(members, 0);
-    await userEvent.click(canvas.getByText(first.name));
-    await expect(canvas.getByText(first.location)).toBeInTheDocument();
-    await userEvent.click(canvas.getByText(first.name));
-    await waitFor(() => expect(canvas.queryByText('Last active')).not.toBeInTheDocument());
   },
 };
 
