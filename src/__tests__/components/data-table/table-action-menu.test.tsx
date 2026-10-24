@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { forwardRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TableActionMenu } from '@/components/data-table/table-action-menu';
+import {
+  type ActionMenuLinkProps,
+  TableActionMenu,
+} from '@/components/data-table/table-action-menu';
 import type { BaseTableRow, TableActionMenuItem } from '@/components/data-table/types';
 
 interface TestRow extends BaseTableRow {
@@ -241,6 +245,31 @@ describe('TableActionMenu', () => {
       await user.keyboard('{ArrowDown}{Enter}');
 
       expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
+    });
+
+    it('runs a link item through a custom linkComponent from the keyboard', async () => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
+      // A router link that follows the documented contract: spread the rest,
+      // forward the ref.
+      const RouterLink = forwardRef<HTMLAnchorElement, ActionMenuLinkProps>((props, ref) => (
+        <a ref={ref} data-router="yes" {...props} />
+      ));
+      render(
+        <TableActionMenu
+          items={[{ label: 'View', href: '/users/1', onSelect }]}
+          row={mockRow}
+          linkComponent={RouterLink}
+        />
+      );
+
+      screen.getByRole('button', { name: 'Actions' }).focus();
+      await user.keyboard('{Enter}');
+      const link = await screen.findByRole('menuitem', { name: 'View' });
+      expect(link).toHaveAttribute('data-router', 'yes');
+      await user.keyboard('{Enter}');
+
       expect(onSelect).toHaveBeenCalledWith({ row: mockRow });
     });
 

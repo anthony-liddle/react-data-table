@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentPropsWithRef, ComponentType, ReactNode } from 'react';
 
 import { stringToKey } from '../../helpers/strings.ts';
 import { MoreVert } from '../icon.tsx';
@@ -16,16 +16,16 @@ import {
 import type { BaseTableRow, TableActionMenuItem, TableActionMenuSubItem } from './types.ts';
 
 /**
- * Props the injectable link component must accept. The default is a plain
- * `<a>`; framework routers slot in directly (e.g. `linkComponent={Link}` with
- * Next.js).
+ * Props the injectable link component receives. The default is a plain `<a>`;
+ * framework routers slot in directly (e.g. `linkComponent={Link}` with
+ * Next.js). The menu passes its item role, focus handling and a ref through
+ * the link, so a custom component must spread the rest of its props onto the
+ * anchor and forward its ref, or keyboard users can't reach the item.
  */
-export interface ActionMenuLinkProps {
+export type ActionMenuLinkProps = Omit<ComponentPropsWithRef<'a'>, 'href'> & {
   href: string;
-  className?: string;
-  onClick?: (e: React.MouseEvent) => void;
   children?: ReactNode;
-}
+};
 
 export type ActionMenuLinkComponent = ComponentType<ActionMenuLinkProps> | 'a';
 
@@ -110,7 +110,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
           menu portals to <body>, so this is also safe for non-modal tables. */}
       <DropdownMenuContent align="end" sideOffset={5}>
         {visibleItems.map(item => {
-          if (!item.subItems || item.subItems.length === 0) {
+          if (!item.subItems) {
             return renderItem(item, true);
           }
           const label = resolve(item.label, row);

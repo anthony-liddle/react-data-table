@@ -47,6 +47,16 @@ describe('useTableSelection', () => {
     expect(result.current.selectedRows).toEqual([]);
   });
 
+  it('keeps a change made earlier in the same handler when selecting all', () => {
+    const offPage: Row = { id: 'z', name: 'Zed' };
+    const { result } = renderHook(() => useTableSelection(rows));
+    act(() => {
+      result.current.setSelectedRows([offPage]);
+      result.current.onToggleAll(true);
+    });
+    expect(result.current.selectedRows.map(row => row.id)).toEqual(['z', 'a', 'b', 'c']);
+  });
+
   it('starts from initialSelection and can be replaced with setSelectedRows', () => {
     const { result } = renderHook(() =>
       useTableSelection(rows, { initialSelection: [rows[2] as Row] })

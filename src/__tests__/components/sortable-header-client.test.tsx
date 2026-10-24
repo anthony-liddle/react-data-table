@@ -410,19 +410,22 @@ describe('SortableHeaderClient', () => {
       expect(header).toBeInTheDocument();
     });
 
-    it('should handle invalid direction value gracefully', () => {
+    it.each(['invalid', 'DESC'])('shows a %s direction as unsorted', direction => {
       renderInTable(
         <SortableHeaderClient
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
           currentSortKey="name"
-          currentDirection={'invalid' as 'asc'}
+          currentDirection={direction as 'asc'}
         />
       );
 
-      const header = screen.getByText('Name').closest('th');
-      expect(header).toBeInTheDocument();
+      const header = screen.getByRole('columnheader', { name: 'Name' });
+      expect(header).not.toHaveAttribute('aria-sort');
+      const icon = header.querySelector('.rdt-sort-header__icon');
+      expect(icon).not.toHaveAttribute('data-direction');
+      expect(icon?.querySelector('.rdt-sort-header__arrow')).not.toBeNull();
     });
   });
 

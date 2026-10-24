@@ -38,7 +38,9 @@ export const SortableHeaderClient = ({
   rowSpan,
 }: SortableHeaderClientProps) => {
   const isActive = currentSortKey === sortKey;
-  const sortDirection = currentDirection;
+  // A value outside the type (an uppercase enum cast through, say) shows as unsorted.
+  const sortDirection =
+    currentDirection === 'asc' || currentDirection === 'desc' ? currentDirection : null;
 
   const handleClick = () => {
     if (!disabled) {

@@ -48,16 +48,18 @@ export const useTableSelection = <T extends BaseTableRow>(
         clearSelection();
         return;
       }
-      // Keyed by id so a row already selected is kept once, as its latest version.
-      const byId = new Map<T['id'], T>(selectedRows.map(row => [row.id, row]));
-      for (const row of data) {
-        if (!isRowDisabled?.(row)) {
-          byId.set(row.id, row);
+      setSelectedRows(prev => {
+        // Keyed by id so a row already selected is kept once, as its latest version.
+        const byId = new Map<T['id'], T>(prev.map(row => [row.id, row]));
+        for (const row of data) {
+          if (!isRowDisabled?.(row)) {
+            byId.set(row.id, row);
+          }
         }
-      }
-      setSelectedRows(Array.from(byId.values()));
+        return Array.from(byId.values());
+      });
     },
-    [data, selectedRows, isRowDisabled, clearSelection]
+    [data, isRowDisabled, clearSelection]
   );
 
   return {

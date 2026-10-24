@@ -27,6 +27,8 @@ A data-dense React table for admin and reporting screens. It was extracted from 
 
 ESM only, strict TypeScript, React 18 or 19. No Tailwind required: the package ships its own CSS.
 
+Upgrading from an earlier version? [MIGRATION.md](https://github.com/anthony-liddle/react-data-table/blob/main/MIGRATION.md) lists every breaking change and what to do.
+
 ## Setup
 
 Import the stylesheet once, for example in your root layout:
@@ -98,7 +100,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |
 | `getRowLabel` | `(row: T) => string` | – | Names each row's selection checkbox "Select ⟨label⟩" for assistive technology. Without it, the name falls back to "Select row ⟨id⟩". |
 | `labels` | `Partial<DataTableLabels>` | English | Overrides the visible strings (empty state, page count, range text) |
-| `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link` |
+| `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link`. It must spread the props it doesn't use onto the anchor and forward its ref, which the menu needs for keyboard focus |
 
 ### Columns
 

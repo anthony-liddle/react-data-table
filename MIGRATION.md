@@ -14,7 +14,7 @@ The hook's sort handler only updates state, which can't throw, so the error call
 
 ### Action menu items: `callbackAction` is now `onSelect`
 
-Rename `callbackAction` to `onSelect` on action menu items and sub-items. It runs when an item is chosen by pointer or keyboard. Before 0.5, choosing an item with Enter or Space closed the menu without running it.
+Rename `callbackAction` to `onSelect` on action menu items and sub-items. It runs when an item is chosen by pointer or keyboard. Before 0.5, choosing a plain top-level item (one without `href`) with Enter or Space closed the menu without running it.
 
 Sub-items now take `href`, `icon` and `disabled`, with the same meaning as on items.
 
@@ -32,6 +32,14 @@ A column's `className` styled its header and its `rowClassName` styled its body 
 ### Test ids use `data-testid`
 
 `getRowTestId` and the bordered pagination buttons now write `data-testid`, the attribute Testing Library's `getByTestId` and Playwright's `getByTestId` look up by default. Update any selector that reads `data-test-id`.
+
+### Checkboxes lost their fixed ids
+
+The select-all checkbox had `id="select-all"` and each row checkbox `id="select-<row id>"`. Neither was referenced, and both repeated when a page had two tables, so they are gone. Column panel checkboxes used the bare column id, which a page element with the same id could take over. They now get generated ids. Find them by role and name instead:
+
+- select-all: `getByRole('checkbox', { name: 'Select all' })`
+- a row: `getByRole('checkbox', { name: 'Select Ada Lovelace' })` with `getRowLabel`, or `'Select row 42'` without
+- a column in the panel: `getByRole('checkbox', { name: 'Email' })`
 
 ### `PaginationClient` is now `Pagination`, with `onNextPage` and `onPreviousPage`
 
