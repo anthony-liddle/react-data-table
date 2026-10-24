@@ -54,6 +54,15 @@ A `TableActionMenu` used on its own is still named "Actions", or takes `triggerL
 - `reset()` returns to `defaultSortBy` instead of unsorted, and `setSortBy([])` clears.
 - To go back to page 1 when the sort changes, pass `onChange`: `useTableSort({ onChange: () => page.reset() })`. It isn't called when a persisted sort is restored, so a restored page survives.
 
+### `usePagination` takes options, and can keep the page in the URL
+
+```diff
+- const page = usePagination(25);
++ const page = usePagination({ pageSize: 25 });
+```
+
+With `persistKey`, the page is kept in the URL as `{key}.page=3` (1-based, absent on page 1), so a copied link opens on the same page. It is never saved to localStorage. A page past the end, from an old link say, is kept as it is: the table shows its empty state and Previous still works. The hook also returns `isRestored`.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

@@ -95,7 +95,7 @@ const PlaygroundTable = ({
   loading,
 }: PlaygroundArgs) => {
   const pageSize = 10;
-  const { offset, limit, reset, getPagination } = usePagination(pageSize);
+  const { offset, limit, reset, getPagination } = usePagination({ pageSize });
   // Back to page 1 when the sort changes.
   const sort = useTableSort({ sortableColumns: SORT_KEYS, onChange: () => reset() });
   const sorted = useMemo(() => sortMembers(members, sort.sortBy), [sort.sortBy]);

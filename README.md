@@ -126,7 +126,7 @@ interface TableColumn<T> {
 |---|---|---|
 | `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
-| `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
+| `usePagination({ pageSize, persistKey })` | `{ offset, limit, pageIndex, getPagination, reset, isRestored, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
 
@@ -137,7 +137,7 @@ With `multiSort: true`, Shift+click on a header (or Shift+Enter or Shift+Space o
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
 ```tsx
-const { offset, limit, getPagination, reset } = usePagination(25);
+const { offset, limit, getPagination, reset } = usePagination({ pageSize: 25 });
 const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.slice(offset, offset + limit)
 
 <DataTable columns={columns} data={items} pagination={getPagination(total)} />;
