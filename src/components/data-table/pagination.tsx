@@ -10,7 +10,7 @@ interface PaginationProps {
    * Rows across every page. Without it the footer shows the page's range only
    * ("Showing 11-20"), drops "Page N of M", and Next follows `hasNextPage`.
    */
-  totalCount?: number;
+  totalCount?: number | null;
   /**
    * Rows on this page, which ends the range when there is no total. Defaults to
    * a full page. `DataTable` passes its row count.
@@ -50,7 +50,7 @@ export const Pagination = ({
 
   const first = pageIndex * pageSize + 1;
   const last =
-    totalCount === undefined
+    totalCount == null
       ? first + (pageRowCount ?? pageSize) - 1
       : Math.min((pageIndex + 1) * pageSize, totalCount);
   // A page with no rows (no results, or a page past the end) reads 0 to 0.
@@ -61,12 +61,12 @@ export const Pagination = ({
   return (
     <div className={cx('rdt-pagination', showPageCount && 'rdt-pagination--bordered', className)}>
       <div className="rdt-pagination__range">
-        {totalCount === undefined
+        {totalCount == null
           ? t.showingRange({ start, end })
           : t.showingRangeOf({ start, end, total: totalCount })}
       </div>
       <div className="rdt-pagination__controls">
-        {showPageCount && totalCount !== undefined && (
+        {showPageCount && totalCount != null && (
           <span className="rdt-pagination__page-count">
             {t.pageOf({ page: pageIndex + 1, pageCount })}
           </span>

@@ -30,10 +30,16 @@ export interface UseCursorPaginationOptions {
  * `pagination` prop: Next follows the page info, and Previous returns to
  * exactly the page the user came from. A stack of cursors means nothing in a
  * link, so this hook doesn't persist.
+ *
+ * Pass the page info of the page `variables` asked for. While a previous page's
+ * data stays on screen as the next one loads (keepPreviousData, say), a repeat
+ * Next with the same page info is ignored, but pass `undefined` if you can tell
+ * the data is a placeholder.
  */
 export const useCursorPagination = ({ pageSize }: UseCursorPaginationOptions) => {
-  const [history, setHistory] = useState<(string | null)[]>([null]); // stack of cursors
-  const [pageIndex, setPageIndex] = useState(0);
+  // The cursors that led to each page; the page is the last one.
+  const [history, setHistory] = useState<(string | null)[]>([null]);
+  const pageIndex = history.length - 1;
 
   const variables: CursorPaginationInput = {
     first: pageSize,
@@ -41,30 +47,28 @@ export const useCursorPagination = ({ pageSize }: UseCursorPaginationOptions) =>
   };
 
   const goToNext = useCallback((pageInfo: NextPageInfo | null | undefined) => {
-    if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-      setHistory(prev => [...prev, pageInfo.endCursor as string]);
-      setPageIndex(i => i + 1);
+    const endCursor = pageInfo?.hasNextPage ? pageInfo.endCursor : null;
+    if (endCursor) {
+      // The same cursor again means a second click before the page arrived.
+      setHistory(prev => (prev[prev.length - 1] === endCursor ? prev : [...prev, endCursor]));
     }
   }, []);
 
   const goToPrevious = useCallback(() => {
     setHistory(prev => (prev.length > 1 ? prev.slice(0, -1) : prev));
-    setPageIndex(i => Math.max(0, i - 1));
   }, []);
 
-  const reset = useCallback(() => {
-    setHistory([null]);
-    setPageIndex(0);
-  }, []);
+  const reset = useCallback(() => setHistory([null]), []);
 
   const getPagination = (
     pageInfo: NextPageInfo | null | undefined,
-    totalCount?: number
+    totalCount?: number | null
   ): TablePagination => ({
     totalCount,
     pageIndex,
     pageSize,
-    hasNextPage: Boolean(pageInfo?.hasNextPage),
+    // Next needs a cursor to go to, as well as the promise of a page.
+    hasNextPage: Boolean(pageInfo?.hasNextPage && pageInfo.endCursor),
     hasPreviousPage: pageIndex > 0,
     onNextPage: () => goToNext(pageInfo),
     onPreviousPage: goToPrevious,

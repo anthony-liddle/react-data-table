@@ -127,7 +127,7 @@ interface TableColumn<T> {
 | `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
 | `usePagination({ pageSize, persistKey })` | `{ offset, limit, pageIndex, getPagination, reset, isRestored, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
-| `useCursorPagination({ pageSize })` | `{ variables, pageIndex, getPagination, reset }` | GraphQL connections: send `variables` (`{ first, after }`) with the query, pass `getPagination(pageInfo, totalCount?)` to the `pagination` prop |
+| `useCursorPagination({ pageSize })` | `{ variables, pageIndex, getPagination, reset }` | GraphQL connections: send `variables` (`{ first, after }`) with the query, pass `getPagination(pageInfo, totalCount?)` to the `pagination` prop, with the page info of the page `variables` asked for |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `{ filters, setFilter, reset, isRestored }` | Any filter state, persisted like the table |
 
 `sortBy` lists the sorted columns in priority order, each `{ key, direction }` with a lowercase `'asc'` or `'desc'`; unsorted is an empty list. If your API wants an uppercase enum, convert at the call. `reset()` returns to `defaultSortBy`, and `setSortBy([])` clears the sort.

@@ -96,11 +96,11 @@ Use the same `persistKey` on the table and its hooks.
 + <DataTable pagination={cursor.getPagination(data?.pageInfo, data?.totalCount)} />
 ```
 
-The hook takes an options object like the others. `pagination` is now `variables`, and `getPagination(pageInfo, totalCount?)` builds the table's prop with Next wired to the page info. `goToNext`, `goToPrevious` and `hasPreviousPage` are no longer returned: the prop's handlers cover them.
+The hook takes an options object like the others. `pagination` is now `variables`, and `getPagination(pageInfo, totalCount?)` builds the table's prop with Next wired to the page info. Pass the page info of the page `variables` asked for; a repeat Next with the same page info, as while the next page loads, is ignored. `goToNext`, `goToPrevious` and `hasPreviousPage` are no longer returned: the prop's handlers cover them.
 
 ### `totalCount` is optional, and an empty page reads 0 to 0
 
-`TablePagination.totalCount` may be left out when an API has no total. The footer then shows "Showing 11-20" (the new `showingRange` label), drops "Page N of M" and lets `hasNextPage` drive Next. A standalone `Pagination` takes `pageRowCount` to end the range; `DataTable` passes its row count. A page with no rows, which used to read "Showing 1-0 of 0 results", now reads "Showing 0-0 of 0 results".
+`TablePagination.totalCount` may be left out when an API has no total. The footer then shows "Showing 11-20" (the new `showingRange` label), drops "Page N of M" and lets `hasNextPage` drive Next. A standalone `Pagination` takes `pageRowCount` to end the range; `DataTable` passes its row count. A page with no rows reads 0 to 0: an empty table's "Showing 1-0 of 0 results" is now "Showing 0-0 of 0 results", and a page past the end, which read "Showing 91-25 of 25 results", is now "Showing 0-0 of 25 results". A `null` total counts as unknown, like a missing one.
 
 ### Sort directions are lowercase only
 

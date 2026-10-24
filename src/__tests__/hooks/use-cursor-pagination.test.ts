@@ -55,6 +55,30 @@ describe('useCursorPagination', () => {
     expect(result.current.pageIndex).toBe(0);
   });
 
+  it('ignores a second Next with the same page info, as while the next page loads', () => {
+    const { result } = renderHook(() => useCursorPagination({ pageSize: 10 }));
+    const shown = page('c10');
+    act(() => result.current.getPagination(shown).onNextPage());
+    act(() => result.current.getPagination(shown).onNextPage());
+    expect(result.current.pageIndex).toBe(1);
+    expect(result.current.variables.after).toBe('c10');
+  });
+
+  it('stays on the first page after Previous there, so Next goes to page 2', () => {
+    const { result } = renderHook(() => useCursorPagination({ pageSize: 10 }));
+    act(() => result.current.getPagination(page('c10')).onPreviousPage());
+    act(() => result.current.getPagination(page('c10')).onNextPage());
+    expect(result.current.pageIndex).toBe(1);
+    expect(result.current.variables.after).toBe('c10');
+  });
+
+  it('has no next page without an end cursor', () => {
+    const { result } = renderHook(() => useCursorPagination({ pageSize: 10 }));
+    expect(result.current.getPagination({ hasNextPage: true, endCursor: null }).hasNextPage).toBe(
+      false
+    );
+  });
+
   it('has no next page without page info', () => {
     const { result } = renderHook(() => useCursorPagination({ pageSize: 10 }));
     expect(result.current.getPagination(undefined).hasNextPage).toBe(false);

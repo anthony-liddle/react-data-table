@@ -480,6 +480,12 @@ describe('Pagination', () => {
       expect(screen.getByText('Showing 0-0')).toBeInTheDocument();
     });
 
+    it('treats a null total as unknown', () => {
+      render(<Pagination {...base} totalCount={null} showPageCount />);
+      expect(screen.getByText('Showing 11-20')).toBeInTheDocument();
+      expect(screen.queryByText(/null/)).toBeNull();
+    });
+
     it('takes the range text from labels', () => {
       render(
         <Pagination
