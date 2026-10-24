@@ -1,8 +1,15 @@
 'use client';
 
-import type { ComponentPropsWithRef, ComponentType, ReactNode } from 'react';
+import {
+  type ComponentPropsWithRef,
+  type ComponentType,
+  type ReactNode,
+  useRef,
+  useState,
+} from 'react';
 
 import { stringToKey } from '../../helpers/strings.ts';
+import { isInDarkSection } from '../../lib/dark-section.ts';
 import { MoreVert } from '../icon.tsx';
 import {
   DropdownMenu,
@@ -53,6 +60,9 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   linkComponent: Link = 'a',
   triggerLabel = 'Actions',
 }: TableActionMenuProps<TData>) => {
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [dark, setDark] = useState(false);
+
   // An item with sub-items shows only while at least one of them does.
   const visibleItems = items.filter(
     item =>
@@ -102,16 +112,21 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={open => open && setDark(isInDarkSection(trigger.current))}>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="rdt-action-menu__trigger" aria-label={triggerLabel}>
+        <button
+          ref={trigger}
+          type="button"
+          className="rdt-action-menu__trigger"
+          aria-label={triggerLabel}
+        >
           <MoreVert className="rdt-action-menu__trigger-icon" />
         </button>
       </DropdownMenuTrigger>
       {/* A high z-index keeps row actions above modal overlays, so the menu
           stays clickable when a DataTable is rendered inside a dialog. The
           menu portals to <body>, so this is also safe for non-modal tables. */}
-      <DropdownMenuContent align="end" sideOffset={5}>
+      <DropdownMenuContent align="end" sideOffset={5} className={dark ? 'dark' : undefined}>
         {visibleItems.map(item => {
           if (!item.subItems) {
             return renderItem(item, true);
@@ -124,7 +139,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
                 {icon && <span className="rdt-action-menu__icon">{icon}</span>}
                 {label}
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent className={dark ? 'dark' : undefined}>
                 {item.subItems
                   .filter(sub => !isHidden(sub, row))
                   .map(sub => renderItem(sub, false))}

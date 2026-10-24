@@ -198,7 +198,7 @@ Every element the table renders has a documented class, and runtime state lives 
 
 ### Theme
 
-Colours come from shadcn-style tokens, read as full colour values: `--background`, `--foreground`, `--card`, `--popover`, `--popover-foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--border` and `--ring`. The package never declares them. It reads each one with a built-in default, so a theme you declare anywhere wins, even inside a cascade layer, and `.dark` on any ancestor switches the defaults. A current shadcn/ui theme applies as it is.
+Colours come from shadcn-style tokens, read as full colour values: `--background`, `--foreground`, `--card`, `--popover`, `--popover-foreground`, `--primary`, `--primary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--border` and `--ring`. The package never declares them. It reads each one with a built-in default, so a theme you declare anywhere wins, even inside a cascade layer, and `.dark` on any ancestor, or on a component's own element, switches the defaults. Menus and the column panel render at the end of `<body>`, so when their table sits in a `.dark` section they copy `.dark` onto themselves. A current shadcn/ui theme applies as it is.
 
 Older shadcn themes wrote bare HSL triplets (`--card: 0 0% 100%`) and read them as `hsl(var(--card))`. To use one here, change both together: write each value as a full colour (`--card: hsl(0 0% 100%)`), and read it as `var(--card)` everywhere in your own CSS, including a Tailwind `@theme` mapping. Changing only the values gives `hsl(hsl(...))`, which is invalid.
 
