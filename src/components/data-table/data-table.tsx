@@ -8,6 +8,7 @@ import { type DataTableLabels, resolveLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
 import { readStorage, storageKey, writeStorage } from '../../lib/persistence.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
+import { getTableLayout } from './layout.ts';
 import { Pagination } from './pagination.tsx';
 import { type ActionMenuLinkComponent, TableActionMenu } from './table-action-menu.tsx';
 import { TableHeader } from './table-header.tsx';
@@ -115,6 +116,10 @@ const SELECT_HEADER_CLASS =
   'rdt-table__header-cell rdt-table__header-cell--select rdt-table__header-cell--sticky';
 const SETTINGS_HEADER_CLASS =
   'rdt-table__header-cell rdt-table__header-cell--settings rdt-table__header-cell--sticky';
+// Over the row menus when the settings button is hidden, so the header row
+// has as many cells as the body rows.
+const ACTIONS_HEADER_CLASS =
+  'rdt-table__header-cell rdt-table__header-cell--actions rdt-table__header-cell--sticky';
 
 // Drag state as data attributes, present only when true, for the stylesheet.
 const dragAttributes = ({ inRange, isStart, isEnd }: RowDragState) => ({
@@ -160,7 +165,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     () => ({ toggles: {}, order: naturalOrder }),
     [naturalOrder]
   );
-  const { value: layout, setValue: setLayout } = usePersistedState<ColumnLayout>({
+  const { value: columnLayout, setValue: setColumnLayout } = usePersistedState<ColumnLayout>({
     persistKey,
     defaultValue: defaultLayout,
     serialize: value => JSON.stringify({ ...value, orderSig: columnLayoutSig }),
@@ -171,8 +176,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         JSON.stringify({ toggles: value.toggles, order: value.order, orderSig: columnLayoutSig })
       ),
   });
-  const userToggles = layout.toggles;
-  const columnOrder = layout.order;
+  const userToggles = columnLayout.toggles;
+  const columnOrder = columnLayout.order;
 
   // Reconcile the ORDER used for layout against the current column set, e.g. a
   // dynamic metric/category toggle that adds or removes columns. Derived at
@@ -222,7 +227,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
 
   const toggleHeaders = useCallback(
     (id: string) => {
-      setLayout(prevLayout => {
+      setColumnLayout(prevLayout => {
         const prev = prevLayout.toggles;
         const current = prev[id];
         const col = columns.find(c => c.id === id);
@@ -247,17 +252,17 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         return { ...prevLayout, toggles: updated };
       });
     },
-    [columns, onVisibleColumnsChange, setLayout]
+    [columns, onVisibleColumnsChange, setColumnLayout]
   );
 
   const handleColumnReorder = useCallback(
     (newOrder: string[]) => {
-      setLayout(prev => ({ ...prev, order: newOrder }));
+      setColumnLayout(prev => ({ ...prev, order: newOrder }));
       if (onColumnReorder) {
         onColumnReorder(newOrder);
       }
     },
-    [onColumnReorder, setLayout]
+    [onColumnReorder, setColumnLayout]
   );
 
   // Flatten columns to include sub-columns for cell rendering
@@ -315,6 +320,14 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   }, [visibleColumnsData, flattenColumns]);
 
   const menuColumns = useMemo(() => columns.filter(col => !col.alwaysVisible), [columns]);
+
+  const layout = getTableLayout({
+    expand: false,
+    select: !!selection,
+    actionMenu: !!actionMenu,
+    hideTableSettings: !!hideTableSettings,
+  });
+  const columnCount = layout.leadingCount + flattenedColumnsData.length + layout.trailingCount;
 
   // Check if any column has sub-columns
   const hasGroupedColumns = useMemo(() => {
@@ -395,6 +408,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       />
                     </th>
                   )}
+                  {hideTableSettings && layout.trailing === 'actions' && (
+                    <td rowSpan={2} className={ACTIONS_HEADER_CLASS} />
+                  )}
                 </tr>
                 {/* Sub-column header row */}
                 <tr className="rdt-table__header-row">
@@ -457,6 +473,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     />
                   </th>
                 )}
+                {hideTableSettings && layout.trailing === 'actions' && (
+                  <td className={ACTIONS_HEADER_CLASS} />
+                )}
               </tr>
             )}
           </thead>
@@ -464,22 +483,13 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
             {loading && (
               <TableLoading
                 visibleColumnsData={flattenedColumnsData}
-                hasSelection={!!selection}
-                hasActionMenu={!!actionMenu}
+                layout={layout}
                 rowCount={maxLoadingRows}
               />
             )}
             {!loading && data.length === 0 && (
               <tr className="rdt-table__empty-row">
-                <td
-                  className="rdt-table__empty"
-                  colSpan={
-                    flattenedColumnsData.length
-                    + (selection ? 1 : 0)
-                    + (actionMenu ? 1 : 0)
-                    + (hideTableSettings ? 0 : 1)
-                  }
-                >
+                <td className="rdt-table__empty" colSpan={columnCount}>
                   {t.noResults}
                 </td>
               </tr>
@@ -516,8 +526,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       <td
                         key={`${row.id}-${index}-${column.id}`}
                         className={cx('rdt-table__cell', column.cellClassName)}
-                        // If the column is the last column and the action menu is hidden, colSpan should be 2
-                        colSpan={index === flattenedColumnsData.length - 1 && !actionMenu ? 2 : 1}
                       >
                         {column.cell ? column.cell({ row }) : null}
                       </td>
@@ -535,20 +543,15 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         />
                       </td>
                     )}
+                    {layout.trailing === 'settings' && (
+                      <td className="rdt-table__cell rdt-table__cell--settings rdt-table__cell--sticky" />
+                    )}
                   </tr>
                   {(() => {
                     const expanded = renderExpandedRow?.(row);
                     return expanded != null ? (
                       <tr className="rdt-table__expanded-row">
-                        <td
-                          colSpan={
-                            flattenedColumnsData.length
-                            + (selection ? 1 : 0)
-                            + (actionMenu ? 1 : 0)
-                            + 1
-                          }
-                          className="rdt-table__expanded-cell"
-                        >
+                        <td colSpan={columnCount} className="rdt-table__expanded-cell">
                           {expanded}
                         </td>
                       </tr>

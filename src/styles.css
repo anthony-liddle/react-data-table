@@ -169,7 +169,9 @@
 }
 
 .rdt-table__header-cell--settings,
-.rdt-table__cell--actions {
+.rdt-table__header-cell--actions,
+.rdt-table__cell--actions,
+.rdt-table__cell--settings {
   width: 32px;
   padding-inline: 0.25rem;
 }

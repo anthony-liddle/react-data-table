@@ -102,6 +102,10 @@ The hook takes an options object like the others. `pagination` is now `variables
 
 `TablePagination.totalCount` may be left out when an API has no total. The footer then shows "Showing 11-20" (the new `showingRange` label), drops "Page N of M" and lets `hasNextPage` drive Next. A standalone `Pagination` takes `pageRowCount` to end the range; `DataTable` passes its row count. A page with no rows reads 0 to 0: an empty table's "Showing 1-0 of 0 results" is now "Showing 0-0 of 0 results", and a page past the end, which read "Showing 91-25 of 25 results", is now "Showing 0-0 of 25 results". A `null` total counts as unknown, like a missing one.
 
+### A settings cell in every row
+
+Without an action menu, a row's last data cell used to span two columns, reaching under the column settings button. Every row now has its own empty cell there instead (`rdt-table__cell--settings`, sticky like the header above it), and the empty, loading and expanded rows count it. If your CSS targeted that spanning last cell, target the settings cell or the last data column instead. With an action menu and `hideTableSettings`, the header row gains an empty cell over the row menus (`rdt-table__header-cell--actions`), so it has as many cells as the rows below.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.
