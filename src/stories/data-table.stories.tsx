@@ -95,9 +95,10 @@ const PlaygroundTable = ({
   loading,
 }: PlaygroundArgs) => {
   const pageSize = 10;
-  const { sort, direction, handleSort } = useTableSort({ sortableColumns: SORT_KEYS });
-  const { offset, limit, reset, getPagination } = usePagination(pageSize);
-  const sorted = useMemo(() => sortMembers(members, sort, direction), [sort, direction]);
+  const { offset, limit, reset, getPagination } = usePagination({ pageSize });
+  // Back to page 1 when the sort changes.
+  const sort = useTableSort({ sortableColumns: SORT_KEYS, onChange: () => reset() });
+  const sorted = useMemo(() => sortMembers(members, sort.sortBy), [sort.sortBy]);
   const rows = withPagination ? sorted.slice(offset, offset + limit) : sorted.slice(0, 25);
   const selection = useTableSelection(rows, {
     isRowDisabled: isSuspended,
@@ -119,18 +120,7 @@ const PlaygroundTable = ({
         hideTableSettings={hideTableSettings}
         selectOnRowClick={selectOnRowClick}
         showPageCount={showPageCount}
-        sort={
-          withSorting
-            ? {
-                sortKey: sort,
-                direction,
-                handleSort: key => {
-                  reset(); // back to page 1 when the sort changes
-                  handleSort(key);
-                },
-              }
-            : undefined
-        }
+        sort={withSorting ? sort : undefined}
         getRowLabel={row => row.name}
         selection={withSelection ? selection : undefined}
         actionMenu={withActionMenu ? actionMenu : undefined}

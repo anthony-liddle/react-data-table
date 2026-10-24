@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { SortItem } from '@/components/data-table/types';
 import { SortableHeaderClient } from '@/components/library/sortable-header-client';
+import { defaultLabels } from '@/labels';
 
 // Helper function to render component within table structure
 const renderInTable = (component: React.ReactElement) => {
@@ -124,7 +126,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="email"
+          sortBy={[{ key: 'email', direction: 'asc' }]}
         />
       );
 
@@ -135,15 +137,9 @@ describe('SortableHeaderClient', () => {
       expect(iconContainer?.children.length).toBeGreaterThan(0);
     });
 
-    it('should render icon when active but direction is null', () => {
+    it('should render the unsorted icon for an empty sort', () => {
       renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={null}
-        />
+        <SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} sortBy={[]} />
       );
 
       const header = screen.getByText('Name').closest('th');
@@ -158,8 +154,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection="asc"
+          sortBy={[{ key: 'name', direction: 'asc' }]}
         />
       );
 
@@ -175,8 +170,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection="desc"
+          sortBy={[{ key: 'name', direction: 'desc' }]}
         />
       );
 
@@ -198,7 +192,7 @@ describe('SortableHeaderClient', () => {
       await user.keyboard('{Enter}');
       await user.keyboard(' ');
       expect(mockOnSort).toHaveBeenCalledTimes(2);
-      expect(mockOnSort).toHaveBeenCalledWith('name');
+      expect(mockOnSort).toHaveBeenCalledWith('name', { additive: false });
     });
 
     it('should expose the sort direction with aria-sort only on the active column', () => {
@@ -207,8 +201,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection="asc"
+          sortBy={[{ key: 'name', direction: 'asc' }]}
         />
       );
       const header = screen.getByRole('columnheader', { name: 'Name' });
@@ -222,8 +215,7 @@ describe('SortableHeaderClient', () => {
                 sortKey="name"
                 title="Name"
                 onSort={mockOnSort}
-                currentSortKey="name"
-                currentDirection="desc"
+                sortBy={[{ key: 'name', direction: 'desc' }]}
               />
             </tr>
           </thead>
@@ -239,8 +231,7 @@ describe('SortableHeaderClient', () => {
                 sortKey="name"
                 title="Name"
                 onSort={mockOnSort}
-                currentSortKey="email"
-                currentDirection="asc"
+                sortBy={[{ key: 'email', direction: 'asc' }]}
               />
             </tr>
           </thead>
@@ -280,8 +271,7 @@ describe('SortableHeaderClient', () => {
           title="Name"
           onSort={mockOnSort}
           disabled={true}
-          currentSortKey="name"
-          currentDirection="asc"
+          sortBy={[{ key: 'name', direction: 'asc' }]}
         />
       );
 
@@ -320,7 +310,7 @@ describe('SortableHeaderClient', () => {
       }
 
       expect(mockOnSort).toHaveBeenCalledTimes(1);
-      expect(mockOnSort).toHaveBeenCalledWith('name');
+      expect(mockOnSort).toHaveBeenCalledWith('name', { additive: false });
     });
 
     it('should not call onSort when disabled and clicked', async () => {
@@ -365,14 +355,9 @@ describe('SortableHeaderClient', () => {
       expect(screen.getByText(longTitle)).toBeInTheDocument();
     });
 
-    it('should handle when currentSortKey is null', () => {
+    it('should handle an empty sort', () => {
       renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey={null}
-        />
+        <SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} sortBy={[]} />
       );
 
       const header = screen.getByText('Name').closest('th');
@@ -381,30 +366,8 @@ describe('SortableHeaderClient', () => {
       expect(iconContainer).toBeInTheDocument(); // Should show icon
     });
 
-    it('should handle when currentSortKey is undefined', () => {
-      renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey={undefined}
-        />
-      );
-
-      const header = screen.getByText('Name').closest('th');
-      expect(header).toBeInTheDocument();
-    });
-
-    it('should handle when currentDirection is undefined', () => {
-      renderInTable(
-        <SortableHeaderClient
-          sortKey="name"
-          title="Name"
-          onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={undefined}
-        />
-      );
+    it('should handle no sort', () => {
+      renderInTable(<SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} />);
 
       const header = screen.getByText('Name').closest('th');
       expect(header).toBeInTheDocument();
@@ -416,8 +379,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={direction as 'asc'}
+          sortBy={[{ key: 'name', direction: direction as 'asc' }]}
         />
       );
 
@@ -470,8 +432,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="name"
-          currentDirection={direction}
+          sortBy={[{ key: 'name', direction }]}
         />
       );
       expect(
@@ -485,8 +446,7 @@ describe('SortableHeaderClient', () => {
           sortKey="name"
           title="Name"
           onSort={mockOnSort}
-          currentSortKey="email"
-          currentDirection="asc"
+          sortBy={[{ key: 'email', direction: 'asc' }]}
         />
       );
       expect(
@@ -507,6 +467,119 @@ describe('SortableHeaderClient', () => {
         <SortableHeaderClient sortKey="name" title="Name" onSort={mockOnSort} disabled />
       );
       expect(screen.getByText('Name').parentElement).toHaveClass('rdt-sort-header__content');
+    });
+  });
+
+  describe('multi-column sort', () => {
+    const renderPair = (sortBy: SortItem[], onSort = mockOnSort, labels = defaultLabels) =>
+      render(
+        <table>
+          <thead>
+            <tr>
+              <SortableHeaderClient
+                sortKey="name"
+                title="Name"
+                sortBy={sortBy}
+                onSort={onSort}
+                labels={labels}
+              />
+              <SortableHeaderClient
+                sortKey="team"
+                title="Team"
+                sortBy={sortBy}
+                onSort={onSort}
+                labels={labels}
+              />
+            </tr>
+          </thead>
+        </table>
+      );
+    const nameAndTeam: SortItem[] = [
+      { key: 'name', direction: 'asc' },
+      { key: 'team', direction: 'desc' },
+    ];
+
+    it('numbers each sorted column while two or more are sorted', () => {
+      const { container } = renderPair(nameAndTeam);
+      const numbers = [...container.querySelectorAll('.rdt-sort-header__priority')];
+      expect(numbers.map(n => n.textContent)).toEqual(['1', '2']);
+      expect(numbers[0]).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('shows no number for a single sort', () => {
+      const { container } = renderPair([{ key: 'name', direction: 'asc' }]);
+      expect(container.querySelector('.rdt-sort-header__priority')).toBeNull();
+      expect(container.querySelector('.rdt-visually-hidden')).toBeNull();
+    });
+
+    it('names priority and direction for screen readers', () => {
+      renderPair(nameAndTeam);
+      expect(
+        screen.getByRole('button', { name: /Team.*sort priority 2, descending/ })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Name.*sort priority 1, ascending/ })
+      ).toBeInTheDocument();
+    });
+
+    it('takes the priority text from labels', () => {
+      renderPair(nameAndTeam, mockOnSort, {
+        ...defaultLabels,
+        sortPriority: ({ priority, direction }) =>
+          `tri ${priority}, ${direction === 'asc' ? 'croissant' : 'décroissant'}`,
+      });
+      expect(screen.getByRole('button', { name: /Team.*tri 2, décroissant/ })).toBeInTheDocument();
+    });
+
+    it('reports a plain click as not additive', async () => {
+      renderPair([]);
+      await userEvent.click(screen.getByRole('button', { name: /Name/ }));
+      expect(mockOnSort).toHaveBeenCalledWith('name', { additive: false });
+    });
+
+    it('reports a Shift+click as additive', async () => {
+      renderPair([]);
+      const user = userEvent.setup();
+      await user.keyboard('{Shift>}');
+      await user.click(screen.getByRole('button', { name: /Name/ }));
+      await user.keyboard('{/Shift}');
+      expect(mockOnSort).toHaveBeenCalledWith('name', { additive: true });
+    });
+
+    it('reports Shift+Enter or Shift+Space as additive, even when the click has no shiftKey', () => {
+      renderPair([]);
+      const button = screen.getByRole('button', { name: /Name/ });
+      fireEvent.keyDown(button, { key: 'Enter', shiftKey: true });
+      fireEvent.click(button, { detail: 0 });
+      expect(mockOnSort).toHaveBeenLastCalledWith('name', { additive: true });
+
+      fireEvent.keyDown(button, { key: ' ', shiftKey: true });
+      fireEvent.click(button, { detail: 0 });
+      expect(mockOnSort).toHaveBeenLastCalledWith('name', { additive: true });
+    });
+
+    it('reports a plain Enter as not additive', () => {
+      renderPair([]);
+      const button = screen.getByRole('button', { name: /Name/ });
+      fireEvent.keyDown(button, { key: 'Enter', shiftKey: true });
+      fireEvent.click(button, { detail: 0 });
+      fireEvent.keyDown(button, { key: 'Enter' });
+      fireEvent.click(button, { detail: 0 });
+      expect(mockOnSort).toHaveBeenLastCalledWith('name', { additive: false });
+    });
+
+    it('shows an arrow on every sorted column and aria-sort on the primary only', () => {
+      renderPair([
+        { key: 'name', direction: 'asc' },
+        { key: 'team', direction: 'desc' },
+      ]);
+      const [nameHeader, teamHeader] = screen.getAllByRole('columnheader');
+      expect(nameHeader).toHaveAttribute('aria-sort', 'ascending');
+      expect(teamHeader).not.toHaveAttribute('aria-sort');
+      expect(teamHeader?.querySelector('.rdt-sort-header__icon')).toHaveAttribute(
+        'data-direction',
+        'desc'
+      );
     });
   });
 });

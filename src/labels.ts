@@ -1,3 +1,5 @@
+import type { SortDirection } from './components/data-table/types.ts';
+
 /**
  * Every string the table renders or announces. The package ships English
  * defaults and lets consumers override any of them (or wire them into their
@@ -28,6 +30,8 @@ export interface DataTableLabels {
   nextPage: string;
   /** The "Page N of M" indicator (shown with `showPageCount`). */
   pageOf: (params: { page: number; pageCount: number }) => string;
+  /** Read after a sorted column's name while two or more columns are sorted. */
+  sortPriority: (params: { priority: number; direction: SortDirection }) => string;
 }
 
 export const defaultLabels: DataTableLabels = {
@@ -43,6 +47,8 @@ export const defaultLabels: DataTableLabels = {
   previousPage: 'Previous page',
   nextPage: 'Next page',
   pageOf: ({ page, pageCount }) => `Page ${page} of ${pageCount}`,
+  sortPriority: ({ priority, direction }) =>
+    `sort priority ${priority}, ${direction === 'asc' ? 'ascending' : 'descending'}`,
 };
 
 // A key set to undefined (a locale map with gaps, say) keeps its default

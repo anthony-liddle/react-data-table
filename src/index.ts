@@ -13,6 +13,7 @@ export {
 export type {
   BaseTableRow,
   SortDirection,
+  SortItem,
   TableActionMenuItem,
   TableActionMenuSubItem,
   TableColumn,
@@ -23,7 +24,7 @@ export type {
 } from './components/data-table/types.ts';
 // Hooks
 export { type CursorPaginationInput, useCursorPagination } from './hooks/use-cursor-pagination.ts';
-export { usePagination } from './hooks/use-pagination.ts';
+export { type UsePaginationOptions, usePagination } from './hooks/use-pagination.ts';
 export {
   type FilterDef,
   type PersistedFiltersOptions,
@@ -33,6 +34,6 @@ export {
   type UseTableSelectionOptions,
   useTableSelection,
 } from './hooks/use-table-selection.ts';
-export { useTableSort } from './hooks/use-table-sort.ts';
+export { type UseTableSortOptions, useTableSort } from './hooks/use-table-sort.ts';
 // Labels (i18n overrides)
 export { type DataTableLabels, defaultLabels } from './labels.ts';

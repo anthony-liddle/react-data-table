@@ -367,6 +367,27 @@
   height: 100%;
 }
 
+/* The place of a sorted column while several are sorted. */
+.rdt-sort-header__priority {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--_rdt-muted-foreground);
+}
+
+/* Text for screen readers only. */
+.rdt-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip-path: inset(50%);
+}
+
 /*
  *  rdt-checkbox
  */

@@ -37,6 +37,53 @@ Each row's menu trigger was named "Actions", so a screen reader announced 50 ide
 
 A `TableActionMenu` used on its own is still named "Actions", or takes `triggerLabel`.
 
+### Sorting takes a list: `sort` is `{ sortBy, onSort }`
+
+`TableSort` was `{ sortKey, direction, handleSort }`, one column at a time. It is now the sorted columns in priority order, and a handler that also says whether the click added a column (Shift+click). `useTableSort` returns exactly that prop, so pass it as it is:
+
+```diff
+- const { sort, direction, handleSort } = useTableSort({ defaultSortKey: 'name', defaultSortDirection: 'asc' });
+- <DataTable sort={{ sortKey: sort, direction, handleSort }} />
++ const sort = useTableSort({ defaultSortBy: [{ key: 'name', direction: 'asc' }] });
++ <DataTable sort={sort} />
+```
+
+- Send `sort.sortBy` with your query: each item is `{ key, direction }`.
+- `SortDirection` is `'asc' | 'desc'`. Unsorted is an empty `sortBy`, not a `null` direction.
+- `setSortKey` and `setSortDirection` are gone. Use `setSortBy`.
+- `reset()` returns to `defaultSortBy` instead of unsorted, and `setSortBy([])` clears.
+- To go back to page 1 when the sort changes, pass `onChange`: `useTableSort({ onChange: () => page.reset() })`. It isn't called when a persisted sort is restored, so a restored page survives.
+
+### `usePagination` takes options, and can keep the page in the URL
+
+```diff
+- const page = usePagination(25);
++ const page = usePagination({ pageSize: 25 });
+```
+
+With `persistKey`, the page is kept in the URL as `{key}.page=3` (1-based, absent on page 1), so a copied link opens on the same page. It is never saved to localStorage. A page past the end, from an old link say, is kept as it is: the table shows its empty state and Previous still works. The hook also returns `isRestored`.
+
+### `usePersistedFilters` returns an object, and its params are namespaced
+
+```diff
+- const [filters, setFilter, resetAll, isRestored] = usePersistedFilters('members', defs);
++ const { filters, setFilter, reset, isRestored } = usePersistedFilters('members', defs);
+```
+
+Each filter's URL param is now prefixed with the key, `?members.team=Design` rather than `?team=Design`, so two tables' filters can't collide. A filter `param` can't contain `.`. The 0.4 un-prefixed params and `filters:` storage are no longer read. A `deserialize` that throws now gives that filter its default, and the other filters still apply. `isRestored` turns true in the render straight after hydration, or on the first render of a client-only one, rather than after an effect.
+
+### Persistence is namespaced and versioned
+
+- **URL params carry the table's key:** `?members.sort=name,-team&members.page=3&members.team=Design` rather than `?sort=name&dir=asc&team=Design`. Two persisted tables can now share a page, as long as their keys differ.
+- **Storage keys are versioned:** `rdt:1:{key}:sort`, `rdt:1:{key}:filters` and `rdt:1:{key}:columns` replace `tablesort:`, `filters:` and `datatable:`.
+- **0.4 state is ignored**, not converted or cleaned up: anyone with a saved 0.4 view sees the defaults once.
+- **Column layout left the URL.** The `cols` param is gone; visibility and order are saved in localStorage only.
+- **A link is the whole view.** If the URL has any of a table's params, they alone set its view, and saved state isn't read.
+- **Restored state is written straight back to the URL**, so the address bar gains the table's params on first load.
+- **No more hydration warnings.** Server-rendered apps get the defaults on the server and in the hydrating render, then the persisted state. Each hook returns `isRestored`.
+
+Use the same `persistKey` on the table and its hooks.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

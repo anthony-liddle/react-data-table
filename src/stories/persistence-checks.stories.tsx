@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { PersistenceDemo } from './support/persistence-demo.tsx';
+import { PersistenceDemo, TwoPersistedTables } from './support/persistence-demo.tsx';
 
 /**
  * Test-only round trips for the two persistence demos (hidden from the
@@ -25,7 +25,7 @@ const headers = (root: HTMLElement) =>
 /** Sort by Name, filter to Design, and show the hidden Location column. */
 const changeView = async (canvasElement: HTMLElement) => {
   const canvas = within(canvasElement);
-  await userEvent.click(canvas.getByText('Name'));
+  await userEvent.click(canvas.getByRole('button', { name: /^Name/ }));
   await userEvent.selectOptions(canvas.getByLabelText('Team'), 'Design');
   await userEvent.click(canvas.getByRole('button', { name: 'Column settings' }));
   const panel = within(await within(document.body).findByRole('dialog', { name: 'Columns' }));
@@ -34,32 +34,32 @@ const changeView = async (canvasElement: HTMLElement) => {
   await waitFor(() => expect(headers(canvasElement)).toContain('Location'));
 };
 
-/** Asserts the view `changeView` set up survived a remount. */
-const expectViewRestored = async (canvasElement: HTMLElement) => {
-  const canvas = within(canvasElement);
-  await waitFor(() => expect(canvas.getByLabelText('Team')).toHaveValue('Design'));
-  await expect(headers(canvasElement)).toContain('Location');
-  const names = [...canvasElement.querySelectorAll('tbody tr td:first-child')].map(
+/** Asserts the sort and team `changeView` set survived a remount. */
+const expectSortAndTeamRestored = async (root: HTMLElement) => {
+  const scope = within(root);
+  await waitFor(() => expect(scope.getByLabelText('Team')).toHaveValue('Design'));
+  const names = [...root.querySelectorAll('tbody tr td:first-child')].map(
     td => td.textContent ?? ''
   );
   await expect(names.length).toBeGreaterThan(1);
   await expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
 };
 
+const param = (name: string) => new URL(window.location.href).searchParams.get(name);
+
 export const UrlRoundTrip: Story = {
   args: { mechanism: 'url', persistKey: 'url-round-trip', rowCount: 120 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await changeView(canvasElement);
-    await waitFor(() =>
-      expect(new URL(window.location.href).searchParams.get('team')).toBe('Design')
-    );
+    await waitFor(() => expect(param('url-round-trip.team')).toBe('Design'));
+    await expect(param('url-round-trip.sort')).toBe('name');
 
+    // The button wipes localStorage before the remount, so the URL alone
+    // carries the sort and team back. Columns are never in the URL.
     await userEvent.click(canvas.getByRole('button', { name: 'Reload table from URL' }));
-    await expectViewRestored(canvasElement);
-    // Restored with localStorage wiped, so the URL alone carried the view.
-    await expect(localStorage.getItem('datatable:url-round-trip')).toBeNull();
-    await expect(localStorage.getItem('tablesort:url-round-trip:key')).toBeNull();
+    await expectSortAndTeamRestored(canvasElement);
+    await expect(headers(canvasElement)).not.toContain('Location');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reset view' }));
     await waitFor(() => expect(canvas.getByLabelText('Team')).toHaveValue('all'));
@@ -71,17 +71,47 @@ export const LocalStorageRoundTrip: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await changeView(canvasElement);
-    await waitFor(() =>
-      expect(localStorage.getItem('tablesort:local-round-trip:key')).toBe('"name"')
-    );
+    await waitFor(() => expect(localStorage.getItem('rdt:1:local-round-trip:sort')).toBe('name'));
 
+    // The button strips the table's params before the remount, so the view
+    // comes back from localStorage, columns included; restoring it writes the
+    // sort straight back to the URL.
     await userEvent.click(canvas.getByRole('button', { name: 'Reload table from localStorage' }));
-    await expectViewRestored(canvasElement);
-    // The sort hook does not write on mount, so a missing ?sort= after the
-    // remount shows the sort came back from localStorage, not the URL.
-    await expect(new URL(window.location.href).searchParams.get('sort')).toBeNull();
+    await expectSortAndTeamRestored(canvasElement);
+    await expect(headers(canvasElement)).toContain('Location');
+    await waitFor(() => expect(param('local-round-trip.sort')).toBe('name'));
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reset view' }));
     await waitFor(() => expect(canvas.getByLabelText('Team')).toHaveValue('all'));
+  },
+};
+
+/** Two tables with their own persistKey on one page keep their views apart. */
+export const TwoTablesOnOnePage: Story = {
+  args: { mechanism: 'localStorage', persistKey: 'two', rowCount: 40 },
+  render: ({ rowCount }) => <TwoPersistedTables rowCount={rowCount} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const left = () => canvas.getByRole('region', { name: 'two-left' });
+    const right = () => canvas.getByRole('region', { name: 'two-right' });
+    const sortOf = (region: HTMLElement, column: string) =>
+      within(region)
+        .getByRole('button', { name: new RegExp(`^${column}`) })
+        .closest('th');
+
+    await userEvent.click(within(left()).getByRole('button', { name: /^Name/ }));
+    await userEvent.selectOptions(within(left()).getByLabelText('Team'), 'Design');
+    await userEvent.click(within(right()).getByRole('button', { name: /^Team/ }));
+    await userEvent.click(within(right()).getByRole('button', { name: /^Team/ }));
+    await waitFor(() => expect(param('two-right.sort')).toBe('-team'));
+    await expect(param('two-left.sort')).toBe('name');
+    await expect(param('two-left.team')).toBe('Design');
+    await expect(param('two-right.team')).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Remount tables' }));
+    await expectSortAndTeamRestored(left());
+    await expect(within(right()).getByLabelText('Team')).toHaveValue('all');
+    await expect(sortOf(right(), 'Team')).toHaveAttribute('aria-sort', 'descending');
+    await expect(sortOf(left(), 'Name')).toHaveAttribute('aria-sort', 'ascending');
   },
 };

@@ -1,30 +1,29 @@
 'use client';
 
+import type { DataTableLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
 import { SortableHeaderClient } from '../library/sortable-header-client/index.ts';
-import type { BaseTableRow, TableColumn, SortDirection as TableSortDirection } from './types.ts';
+import type { BaseTableRow, SortItem, TableColumn } from './types.ts';
 
 interface TableHeaderProps<TData extends BaseTableRow = BaseTableRow> {
   column: TableColumn<TData>;
-  currentSortKey?: string | null;
-  currentDirection?: TableSortDirection;
-  onSort?: (sortKey: string) => void;
+  sortBy?: SortItem[];
+  onSort?: (key: string, options: { additive: boolean }) => void;
+  labels?: DataTableLabels;
   className: string;
   rowSpan?: number;
 }
 
 export const TableHeader = <TData extends BaseTableRow = BaseTableRow>({
   column,
-  currentSortKey,
-  currentDirection,
+  sortBy,
   onSort,
+  labels,
   className,
   rowSpan,
 }: TableHeaderProps<TData>) => {
-  const handleSort = (sortKey: string) => {
-    if (onSort) {
-      onSort(sortKey);
-    }
+  const handleSort = (key: string, options: { additive: boolean }) => {
+    onSort?.(key, options);
   };
 
   const headerClassName = cx('rdt-table__header-cell', className);
@@ -37,9 +36,9 @@ export const TableHeader = <TData extends BaseTableRow = BaseTableRow>({
   return column.sortKey ? (
     <SortableHeaderClient
       sortKey={column.sortKey}
-      currentSortKey={currentSortKey}
-      currentDirection={currentDirection}
+      sortBy={sortBy}
       onSort={handleSort}
+      labels={labels}
       title={column.header}
       headerIcon={column.headerIcon}
       className={headerClassName}

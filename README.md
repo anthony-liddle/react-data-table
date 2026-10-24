@@ -16,7 +16,7 @@ A data-dense React table for admin and reporting screens. It was extracted from 
 
 ## Features
 
-- **Sorting**: one column at a time, cycling ascending → descending → off. Sort headers are keyboard-operable buttons and report `aria-sort`.
+- **Sorting**: click a header to cycle ascending → descending → off, and opt in to multi-column sort with Shift+click or Shift+Enter. Sort headers are keyboard-operable buttons and report `aria-sort`.
 - **Grouped columns**: parent headers spanning sub-columns, with a two-row header.
 - **Row selection**: checkboxes, select-all, optional click-anywhere-on-the-row, and rows that can't be selected.
 - **Drag selection**: press on a row and drag to select a range.
@@ -82,13 +82,13 @@ The table is controlled. You own the data, the sort, the selection, and the page
 |---|---|---|---|
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
-| `sort` | `{ sortKey, direction, handleSort }` | – | Sort state and handler. `useTableSort` returns these. |
+| `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
 | `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
 | `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
 | `actionMenu` | `TableActionMenuItem<T>[]` | – | Per-row menu: links, callbacks, one level of submenus, per-row `hidden` / `disabled` |
-| `persistKey` | `string` | – | Persists column visibility and order (see [Persistence](#persistence)) |
+| `persistKey` | `string` | – | Saves column visibility and order in localStorage; give the hooks the same key (see [Persistence](#persistence)) |
 | `hideTableSettings` | `boolean` | `false` | Hides the column settings panel |
 | `onColumnReorder` | `(order: string[]) => void` | – | Called with the new column id order |
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
@@ -124,24 +124,26 @@ interface TableColumn<T> {
 
 | Hook | Returns | Use |
 |---|---|---|
-| `useTableSort({ sortableColumns, defaultSortKey, defaultSortDirection, persistKey })` | `{ sort, direction, handleSort, reset, … }` | Pass to the `sort` prop; feed `sort` / `direction` into your query |
+| `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
-| `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
+| `usePagination({ pageSize, persistKey })` | `{ offset, limit, pageIndex, getPagination, reset, isRestored, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
-| `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
+| `usePersistedFilters(key, filterDefs, { persistToStorage })` | `{ filters, setFilter, reset, isRestored }` | Any filter state, persisted like the table |
 
-`useTableSort` reports directions as lowercase `'asc'` / `'desc'`, and every option that takes a direction expects lowercase too. If your API wants an uppercase enum, convert at the call.
+`sortBy` lists the sorted columns in priority order, each `{ key, direction }` with a lowercase `'asc'` or `'desc'`; unsorted is an empty list. If your API wants an uppercase enum, convert at the call. `reset()` returns to `defaultSortBy`, and `setSortBy([])` clears the sort.
+
+With `multiSort: true`, Shift+click on a header (or Shift+Enter or Shift+Space on a focused one) adds that column as the next sort key, then flips it, then removes it, leaving the others in place. A plain click still makes the column the only sort. Each sorted column shows a small number with its place while two or more are sorted. Turn it on only when your API can sort by several fields.
 
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
 ```tsx
-const { offset, limit, getPagination, reset } = usePagination(25);
+const { offset, limit, getPagination, reset } = usePagination({ pageSize: 25 });
 const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.slice(offset, offset + limit)
 
 <DataTable columns={columns} data={items} pagination={getPagination(total)} />;
 ```
 
-Call `reset()` when the sort or filters change, so the table goes back to the first page.
+Call `reset()` when the sort or filters change, so the table goes back to the first page. `useTableSort`'s `onChange` runs on every sort change except restoring a persisted one, so it's the place for that: `useTableSort({ onChange: () => reset() })`.
 
 ## Labels
 
@@ -160,20 +162,27 @@ Every string the table renders or announces comes from `labels`, so a translatio
 | `reorderColumn({ column })` | Reorder {column} |
 | `previousPage` / `nextPage` | Previous page / Next page |
 | `pageOf({ page, pageCount })` | Page {page} of {pageCount} |
+| `sortPriority({ priority, direction })` | sort priority {priority}, ascending / descending |
 
 A standalone `TableActionMenu` names its trigger "Actions", or `triggerLabel`.
 
 ## Persistence
 
-With `persistKey` set, state is read from the URL first, then localStorage, and every change is written to both:
+Give the table and its hooks the same `persistKey`. What is worth sharing goes in the URL, and the column layout stays in the browser:
 
-| State | URL param | localStorage key |
-|---|---|---|
-| Column visibility and order | `cols` | `datatable:{persistKey}` |
-| Sort (`useTableSort`) | `sort`, `dir` | `tablesort:{persistKey}:key`, `…:dir` |
-| Filters (`usePersistedFilters`) | one param per filter | `filters:{persistKey}` |
+| State | Owner | URL | localStorage |
+|---|---|---|---|
+| Sort | `useTableSort` | `{key}.sort=name,-team` | `rdt:1:{key}:sort` |
+| Page | `usePagination` | `{key}.page=3` | none |
+| Filters | `usePersistedFilters` | `{key}.{param}=…` | `rdt:1:{key}:filters` |
+| Column visibility and order | `DataTable` | none | `rdt:1:{key}:columns` |
 
-The URL params are not namespaced, so use one persisted table per page. A persisted sort key is honoured only if it is in `sortableColumns`, so another table's `?sort=` can't leak in. A saved column order is dropped when the column set changes in code.
+- **A link is the whole view.** When a page opens with params in a table's namespace that it didn't write itself, those params alone set the view: a state the link leaves out takes its default, and saved state isn't read. Otherwise each state reads its own param, then localStorage, then its default. The column layout is never part of a link, so it always comes from localStorage.
+- **The URL shows the current view.** Once restored, and on every change, state is written back with `history.replaceState`, keeping your other params, the hash and `history.state`. The sort is always written, as `{key}.sort=` when unsorted, so the address bar gains the table's params on first load.
+- **Readable, checked one param at a time.** A sort is a comma list in priority order, `-` marking descending, and the page is 1-based and absent on page 1. A param that doesn't parse, or a sort naming a column outside `sortableColumns`, takes its default while the others still apply. A page past the end is kept: the table shows its empty state and Previous still works. Storage keys carry a format version (`rdt:1:`), so a later format ignores old entries.
+- **Names.** Sort keys can't contain commas or start with `-`, and filter `param` names can't contain `.`. Give each table on a page its own key, and use one `usePersistedFilters` per key.
+- **Pass `sortableColumns` with a `persistKey`.** A link can name any sort key, and without the list it goes straight into your query; with it, an unknown key falls back to the default.
+- **Server rendering.** The server render, and the client render that hydrates it, use the defaults, so persisted state never causes a hydration mismatch; it arrives in the render straight after. A client-only render starts from it. Each hook returns `isRestored`, false only during those first renders, so you can hold a fetch until the persisted state is in.
 
 ## Styling
 
@@ -205,7 +214,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | Block | Elements and modifiers | State |
 |---|---|---|
 | `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty-row`, `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
-| `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon`, `__arrow` | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
+| `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon`, `__arrow`, `__priority` (a sorted column's place, while two or more are sorted) | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
 | `rdt-column-panel` | `__trigger`, `__trigger-icon`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
 | `rdt-menu` (`--sub`) | `__item`, `__sub-trigger`, `__chevron` | `data-highlighted`, `data-disabled`, `data-state` |
@@ -213,6 +222,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
 | `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
 | `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |
+| `rdt-visually-hidden` | | Text for screen readers only |
 
 Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-sort-header`. The column panel and the row menus render in a portal at the end of `<body>`, so style them by their own classes, not through `.rdt-table`.
 
@@ -245,7 +255,7 @@ Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-
 
 On every PR, each story is rendered in headless Chromium and checked with axe (`@storybook/addon-a11y`).
 
-- Sort headers are buttons, and the sorted column's header carries `aria-sort`.
+- Sort headers are buttons. The primary sorted column carries `aria-sort`; while two or more columns are sorted, each sorted header also announces its place and direction ("sort priority 2, descending").
 - Header cells use `scope="col"`, and grouped parent headers use `scope="colgroup"`.
 - Checkboxes, pagination buttons ("Previous page" / "Next page"), the column settings trigger, and column drag handles ("Reorder ⟨column⟩") all have accessible names.
 - Row checkboxes and row menus are named after their row ("Select ⟨label⟩", "Actions for ⟨label⟩") when you pass `getRowLabel`, for example the row's name. Without it they fall back to "row ⟨id⟩", so pass it whenever rows have a human-readable name.
@@ -260,7 +270,6 @@ Known gaps:
 ## Known issues
 
 - **`alwaysVisible`.** With a single header row, the pinned column still appears in the column panel with a checkbox that does nothing. With grouped columns it is left out, but then reordering has no visible effect.
-- **Multi-column sort.** Not supported; `sort` holds one key.
 
 ## Development
 

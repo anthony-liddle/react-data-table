@@ -72,6 +72,7 @@ const BLOCKS = [
   'rdt-pagination',
   'rdt-button',
   'rdt-skeleton',
+  'rdt-visually-hidden',
 ];
 
 let failed = false;
@@ -126,7 +127,9 @@ const html = renderToString(
       { id: 'a', name: 'Ada', email: 'ada@example.com' },
       { id: 'b', name: 'Bram', email: 'bram@example.com' },
     ],
-    sort: { sortKey: 'name', direction: 'asc', handleSort: () => {} },
+    sort: { sortBy: [{ key: 'name', direction: 'asc' }], onSort: () => {} },
+    // Persisted state is read only on the client, so a server render touches no window.
+    persistKey: 'smoke',
     pagination: {
       totalCount: 2, pageIndex: 0, pageSize: 10,
       hasNextPage: false, hasPreviousPage: false,

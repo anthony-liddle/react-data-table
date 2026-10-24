@@ -15,7 +15,7 @@ interface PaginationDemoProps {
 }
 
 const PaginationTable = ({ pageSize, rowCount, showPageCount }: PaginationDemoProps) => {
-  const { offset, limit, getPagination } = usePagination(pageSize);
+  const { offset, limit, getPagination } = usePagination({ pageSize });
   // Stand-in for an API call: the same offset and limit pick the page.
   const rows = members.slice(0, rowCount);
 

@@ -46,10 +46,10 @@ const GroupedColumnsDemo = ({
   hideTableSettings,
   rowCount,
 }: GroupedColumnsDemoProps) => {
-  const { sort, direction, handleSort } = useTableSort({ sortableColumns: SORT_KEYS });
+  const sort = useTableSort({ sortableColumns: SORT_KEYS });
   const rows = useMemo(
-    () => sortMembers(members.slice(0, rowCount), sort, direction),
-    [rowCount, sort, direction]
+    () => sortMembers(members.slice(0, rowCount), sort.sortBy),
+    [rowCount, sort.sortBy]
   );
   const selection = useTableSelection(rows);
 
@@ -64,7 +64,7 @@ const GroupedColumnsDemo = ({
       <DataTable
         columns={groupedColumns}
         data={rows}
-        sort={{ sortKey: sort, direction, handleSort }}
+        sort={sort}
         hideTableSettings={hideTableSettings}
         selection={withSelection ? selection : undefined}
         getRowLabel={row => row.name}
