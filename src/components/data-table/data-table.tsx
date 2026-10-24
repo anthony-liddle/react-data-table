@@ -346,6 +346,42 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     return flattened;
   }, []);
 
+  // Shift+click on a row checkbox, or Shift+Space on a focused one, sets every
+  // enabled row from the last checkbox toggled through this one to this
+  // checkbox's new state. The anchor is kept by row id, so it survives a
+  // re-sort but not a row leaving the page.
+  const rangeAnchor = useRef<TData['id'] | null>(null);
+  // The row whose checkbox took a Shift+Space, until its click arrives. It
+  // counts for that checkbox only, and not once focus has left it, so a
+  // keypress that never became a click can't turn a later click into a range.
+  const shiftSpaceRow = useRef<TData['id'] | null>(null);
+  const handleCheckboxKeyDown = (event: React.KeyboardEvent, row: TData) => {
+    if (event.key === ' ') {
+      shiftSpaceRow.current = event.shiftKey ? row.id : null;
+    }
+  };
+  const handleCheckboxBlur = () => {
+    shiftSpaceRow.current = null;
+  };
+  const handleCheckboxClick = (event: React.MouseEvent, row: TData) => {
+    const shift = event.shiftKey || (event.detail === 0 && shiftSpaceRow.current === row.id);
+    shiftSpaceRow.current = null;
+    const from = data.findIndex(r => r.id === rangeAnchor.current);
+    const to = data.indexOf(row);
+    rangeAnchor.current = row.id;
+    if (!selection || !shift || from === -1 || from === to) {
+      return;
+    }
+    // Take over from the checkbox's own toggle, and set the whole range.
+    event.preventDefault();
+    const select = !selection.isRowSelected(row);
+    for (const r of data.slice(Math.min(from, to), Math.max(from, to) + 1)) {
+      if (!selection.isRowDisabled?.(r) && selection.isRowSelected(r) !== select) {
+        selection.onToggleRow(r);
+      }
+    }
+  };
+
   const rowClickHandler = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>, row: TData) => {
       if (isInteractiveTarget(e) || selection?.isRowDisabled?.(row)) {
@@ -630,6 +666,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                             checked={selection.isRowSelected(row)}
                             disabled={selection.isRowDisabled?.(row)}
                             onCheckedChange={() => selection.onToggleRow(row)}
+                            onClick={event => handleCheckboxClick(event, row)}
+                            onKeyDown={event => handleCheckboxKeyDown(event, row)}
+                            onBlur={handleCheckboxBlur}
                             aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
                           />
                         </td>

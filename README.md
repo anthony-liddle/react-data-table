@@ -83,7 +83,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
-| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
+| `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection; Shift+click a checkbox, or Shift+Space on one, to set a range. |
 | `selectOnRowClick` | `boolean` | `false` | A click on a row toggles it, except on the controls inside it (see `onRowClick`) |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
@@ -94,7 +94,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
 | `loading` | `boolean` | `false` | Shows skeleton rows and sets `aria-busy` |
 | `maxLoadingRows` | `number` | `10` | Skeleton row count |
-| `onRowClick` | `(row: T) => void` | – | Row click callback. Clicks on a control inside the row (a link, button, form control, label, `[role=button]`, `[role=checkbox]`, `[role=menuitem]` or editable content), or from a portal opened in a cell, don't count |
+| `onRowClick` | `(row: T) => void` | – | Row click callback. Clicks on a control inside the row (a link, button, form control, label, `[role=button]`, `[role=checkbox]`, `[role=menuitem]` or editable content), or from a portal opened in a cell, don't count. Pair it with a link in the row's main cell for keyboard users (see [Accessibility](#accessibility)) |
 | `renderExpandedRow` | `(row: T) => ReactNode` | – | Content of a row's expanded panel, a full-width row beneath it. Adds a leading column with an expand button per row. Called only for expanded rows |
 | `expansion` | `TableExpansion<T>` | – | Which rows are expanded; `useTableExpansion` returns it. Without it the table keeps that state itself |
 | `expandOnRowClick` | `boolean` | `false` | A click on a row toggles its panel, except on the controls inside it |
@@ -264,6 +264,7 @@ Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-
 
 On every PR, each story is rendered in headless Chromium and checked with axe (`@storybook/addon-a11y`).
 
+- Clickable rows: rows don't take focus, since a focused `<tr>` can't announce that it does anything. For a row that opens something, put a real link (or button) in its main cell for keyboard and screen reader users, and use `onRowClick` as the mouse shortcut for the rest of the row. Clicks on the link don't count as row clicks, so nothing fires twice. The Clickable Rows story shows it.
 - Expandable rows have a real button, named "Details for ⟨label⟩", with `aria-expanded` and, while open, `aria-controls` pointing at the panel.
 - Sort headers are buttons. The primary sorted column carries `aria-sort`; while two or more columns are sorted, each sorted header also announces its place and direction ("sort priority 2, descending").
 - Header cells use `scope="col"`, and grouped parent headers use `scope="colgroup"`.
@@ -274,8 +275,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 
 Known gaps:
 
-- Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
-- `onRowClick` has no keyboard path of its own. Put a button in a cell if you need one. (Row expansion has its own button.)
+- Drag selection and click-to-select rows are mouse-only. The checkboxes are the keyboard path, and Shift+Space on a focused checkbox sets every row from the last one toggled.
 
 ## Known issues
 

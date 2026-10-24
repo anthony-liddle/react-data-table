@@ -31,7 +31,8 @@ const RowSelectionTable = ({
   return (
     <Demo>
       <Intro>
-        Tick a row's checkbox, or the header checkbox to select every selectable row.
+        Tick a row's checkbox, or the header checkbox to select every selectable row. Shift+click a
+        checkbox, or press Shift+Space on one, to set every row from the last checkbox you toggled.
         {selectOnRowClick ? ' Clicking anywhere on a row also toggles it.' : ''}
         {disabledCount > 0
           ? ` The ${disabledCount} suspended member${disabledCount === 1 ? ' is' : 's are'} disabled and skipped by select-all.`
@@ -131,4 +132,31 @@ export const RowSelectionIdFallbackInteraction: Story = {
   name: 'Id fallback (interaction)',
   tags: ['!dev', '!autodocs'],
   play: selectThroughCheckboxes(`Select row ${at(members, 0).id}`),
+};
+
+/**
+ * Test-only (hidden from the sidebar by `!dev`): Shift+click a checkbox, then
+ * Shift+Space on another, to select ranges.
+ */
+export const RangeSelectionInteraction: Story = {
+  name: 'Ranges (interaction)',
+  args: { selectOnRowClick: false, disableSuspended: false, rowCount: 10 },
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const user = userEvent.setup();
+    const count = () => canvas.getByTestId('selected-count').textContent ?? '';
+    const box = (index: number) =>
+      canvas.getByRole('checkbox', { name: `Select ${at(members, index).name}` });
+
+    await user.click(box(1));
+    await user.keyboard('{Shift>}');
+    await user.click(box(4));
+    await user.keyboard('{/Shift}');
+    await waitFor(() => expect(count()).toMatch(/^4 of/));
+
+    box(7).focus();
+    await user.keyboard('{Shift>}[Space]{/Shift}');
+    await waitFor(() => expect(count()).toMatch(/^7 of/));
+  },
 };
