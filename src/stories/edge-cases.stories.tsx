@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -6,6 +7,9 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DataTable } from '../components/data-table/data-table.tsx';
 import { Pagination } from '../components/data-table/pagination.tsx';
 import type { TableActionMenuItem, TableColumn } from '../components/data-table/types.ts';
+// The unlayered stylesheet as text: the Storybook loads it inside a cascade
+// layer, which any unlayered rule beats, but the default contract is unlayered.
+import packageCss from '../styles.css?inline';
 import { type Member, memberColumn, members } from './support/members.tsx';
 
 /**
@@ -310,5 +314,138 @@ export const MenuItemHeights: Story = {
     await expect(gaps).toEqual([8, 8, 8, 8]);
     await userEvent.keyboard('{Escape}');
     await userEvent.keyboard('{Escape}');
+  },
+};
+
+// Real-world CSS that targets bare elements, applied to one of two identical
+// tables. Each rule is wrapped as `:where(.hostile) :is(...)`, which keeps the
+// original element-selector specificity while scoping it to the one copy.
+const HOSTILE_CSS: Record<string, string> = {
+  allUnset: ':where(.hostile) :is(button) { all: unset; }',
+  designSystem:
+    ':where(.hostile) :is(button) { background: rgb(0 0 255); color: rgb(255 255 255); border: 2px solid red; padding: 10px; margin: 4px; font: 20px serif; line-height: 2; text-transform: uppercase; letter-spacing: 2px; box-sizing: content-box; }',
+  meyer:
+    ':where(.hostile) :is(div, span, p, a, table, tbody, thead, tr, th, td, label, button) { margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit; vertical-align: baseline; } :where(.hostile) :is(table) { border-collapse: collapse; border-spacing: 0; } :where(.hostile) :is(button) { all: unset; }',
+  normalize:
+    ':where(.hostile) :is(button) { font-family: inherit; font-size: 100%; line-height: 1.15; margin: 0; overflow: visible; text-transform: none; -webkit-appearance: button; }',
+};
+
+// What to compare on each control: everything the package sets and relies on.
+const FINGERPRINT: Record<string, string[]> = {
+  '.rdt-checkbox': ['box-sizing', 'width', 'height', 'border-top-width', 'margin-top'],
+  '.rdt-pagination--bordered .rdt-pagination__button': [
+    'width',
+    'height',
+    'border-top-width',
+    'background-color',
+    'color',
+    'margin-top',
+  ],
+  '.rdt-pagination:not(.rdt-pagination--bordered) .rdt-pagination__button': [
+    'border-top-width',
+    'background-color',
+    'color',
+  ],
+  '.rdt-sort-header__button': [
+    'font-size',
+    'line-height',
+    'padding-left',
+    'background-color',
+    'border-top-width',
+    'text-transform',
+    'letter-spacing',
+  ],
+  '.rdt-action-menu__trigger': [
+    'width',
+    'height',
+    'color',
+    'background-color',
+    'border-top-width',
+    'padding-left',
+  ],
+  '.rdt-column-panel__trigger': [
+    'width',
+    'height',
+    'color',
+    'background-color',
+    'border-top-width',
+    'padding-left',
+  ],
+  '.rdt-expand-button': [
+    'width',
+    'height',
+    'color',
+    'background-color',
+    'border-top-width',
+    'padding-left',
+  ],
+  'tbody .rdt-table__row:first-child .rdt-table__cell:nth-child(3)': [
+    'padding-left',
+    'padding-top',
+    'vertical-align',
+  ],
+  '.rdt-table__header-cell': ['vertical-align', 'font-weight'],
+};
+
+const fingerprint = (root: Element) =>
+  Object.fromEntries(
+    Object.entries(FINGERPRINT).map(([selector, props]) => {
+      const element = root.querySelector(selector);
+      const style = element ? getComputedStyle(element) : null;
+      return [
+        selector,
+        style ? props.map(prop => `${prop}: ${style.getPropertyValue(prop)}`) : 'missing',
+      ];
+    })
+  );
+
+const selectionAll = {
+  isRowSelected: (row: Row) => row.id === '2',
+  onToggleRow: fn(),
+  onToggleAll: fn(),
+};
+
+const HostileCopy = ({ className }: { className: string }) => (
+  <div className={className}>
+    <DataTable
+      columns={[{ ...columns[0], sortKey: 'name' } as TableColumn<Row>]}
+      data={rows}
+      sort={{ sortBy: [], onSort: fn() }}
+      selection={selectionAll}
+      actionMenu={[{ label: 'Edit', onSelect: fn() }]}
+      renderExpandedRow={row => <p>Details of {row.name}</p>}
+      pagination={paginationProps}
+      showPageCount
+    />
+    <Pagination {...paginationProps} />
+  </div>
+);
+
+/**
+ * Element-selector CSS from resets and design systems can't restyle the
+ * package's controls: each computes exactly as in a clean copy. The story
+ * loads the unlayered stylesheet while it's mounted, as a consumer would.
+ */
+export const HostileCss: Story = {
+  render: () => (
+    <>
+      <style>{packageCss}</style>
+      <style data-testid="hostile-css" />
+      <HostileCopy className="clean" />
+      <HostileCopy className="hostile" />
+    </>
+  ),
+  play: async ({ canvasElement }) => {
+    const style = canvasElement.querySelector('[data-testid="hostile-css"]') as HTMLStyleElement;
+    const clean = canvasElement.querySelector('.clean') as Element;
+    const hostile = canvasElement.querySelector('.hostile') as Element;
+    try {
+      for (const [name, css] of Object.entries(HOSTILE_CSS)) {
+        style.textContent = css;
+        await expect({ name, ...fingerprint(hostile) }).toEqual({ name, ...fingerprint(clean) });
+      }
+    } finally {
+      style.textContent = '';
+    }
   },
 };
