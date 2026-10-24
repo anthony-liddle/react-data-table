@@ -49,6 +49,23 @@ describe('persistence', () => {
     expect(window.history.state).toEqual({ router: 1 });
   });
 
+  it("passes history.state on without Next.js's own markers, so its router syncs", () => {
+    goTo('/', { __NA: true, _N: true, usr: { from: 'list' } });
+    writeParams('next', { sort: 'name' });
+    expect(window.history.state).toEqual({ usr: { from: 'list' } });
+  });
+
+  it('survives a replaceState that throws', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState').mockImplementation(() => {
+      throw new Error('SecurityError: too many calls');
+    });
+    try {
+      expect(() => writeParams('throws', { sort: 'name' })).not.toThrow();
+    } finally {
+      replaceState.mockRestore();
+    }
+  });
+
   it('keeps a no-link decision through its own writes', () => {
     expect(isLink('n')).toBe(false);
     writeParams('n', { sort: 'name' });

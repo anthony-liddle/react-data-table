@@ -49,16 +49,29 @@ export const usePersistedState = <T>({
   }
   const persisted = persistKey && isClient ? restored.current?.value : undefined;
 
-  // Boxed, so a value that is itself undefined still counts as set.
-  const [local, setLocal] = useState<{ value: T } | null>(null);
-  const value = local ? local.value : (persisted ?? defaultValue);
+  // The default keeps one identity while it means the same thing, so an inline
+  // literal (`defaultSortBy: [...]`) can't make every render look like a change
+  // to an effect that depends on the value.
+  const defaultToken = serialize(defaultValue);
+  const stableDefault = useRef({ token: defaultToken, value: defaultValue });
+  if (stableDefault.current.token !== defaultToken) {
+    stableDefault.current = { token: defaultToken, value: defaultValue };
+  }
+  const fallbackValue = persisted ?? stableDefault.current.value;
 
-  const fallback = useRef(value);
-  fallback.current = persisted ?? defaultValue;
+  // A value set since mount, boxed so an undefined value still counts as set,
+  // and keyed so a new persistKey starts from its own state rather than
+  // carrying the old key's into it.
+  const [local, setLocal] = useState<{ key: string | undefined; value: T } | null>(null);
+  const value = local && local.key === persistKey ? local.value : fallbackValue;
+
+  const current = useRef({ key: persistKey, fallback: fallbackValue });
+  current.current = { key: persistKey, fallback: fallbackValue };
   const setValue = useCallback((next: T | ((prev: T) => T)) => {
     setLocal(prev => {
-      const current = prev ? prev.value : fallback.current;
-      return { value: typeof next === 'function' ? (next as (prev: T) => T)(current) : next };
+      const { key, fallback } = current.current;
+      const base = prev && prev.key === key ? prev.value : fallback;
+      return { key, value: typeof next === 'function' ? (next as (prev: T) => T)(base) : next };
     });
   }, []);
 

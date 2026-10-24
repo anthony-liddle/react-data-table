@@ -70,7 +70,7 @@ With `persistKey`, the page is kept in the URL as `{key}.page=3` (1-based, absen
 + const { filters, setFilter, reset, isRestored } = usePersistedFilters('members', defs);
 ```
 
-Each filter's URL param is now prefixed with the key, `?members.team=Design` rather than `?team=Design`, so two tables' filters can't collide. A filter `param` can't contain `.`. The 0.4 un-prefixed params and `filters:` storage are no longer read. A `deserialize` that throws now gives that filter its default, and the other filters still apply. `isRestored` is true from the first client render, rather than after an effect.
+Each filter's URL param is now prefixed with the key, `?members.team=Design` rather than `?team=Design`, so two tables' filters can't collide. A filter `param` can't contain `.`. The 0.4 un-prefixed params and `filters:` storage are no longer read. A `deserialize` that throws now gives that filter its default, and the other filters still apply. `isRestored` turns true in the render straight after hydration, or on the first render of a client-only one, rather than after an effect.
 
 ### Persistence is namespaced and versioned
 

@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
+import { useEffect, useState } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -28,6 +29,29 @@ describe('useTableSort', () => {
     const { result } = renderHook(() => useTableSort());
     const prop: TableSort = result.current;
     expect(prop.sortBy).toEqual([]);
+  });
+
+  it('keeps sortBy stable across renders with an inline defaultSortBy', () => {
+    let fetches = 0;
+    const Probe = ({ persistKey }: { persistKey?: string }) => {
+      const sort = useTableSort({ defaultSortBy: [{ key: 'name', direction: 'asc' }], persistKey });
+      const [, setRows] = useState(0);
+      // A fetch effect keyed on the sort, as a consumer writes it. Capped so a
+      // regression fails the test instead of looping forever.
+      useEffect(() => {
+        fetches += 1;
+        if (fetches < 20) {
+          setRows(n => n + 1);
+        }
+      }, [sort.sortBy]);
+      return null;
+    };
+    render(<Probe />);
+    expect(fetches).toBe(1);
+
+    fetches = 0;
+    render(<Probe persistKey={freshKey()} />);
+    expect(fetches).toBe(1);
   });
 
   it('cycles a column on plain clicks', () => {

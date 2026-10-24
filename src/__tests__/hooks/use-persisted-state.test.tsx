@@ -84,6 +84,21 @@ describe('usePersistedState', () => {
     expect(write).toHaveBeenCalledTimes(3);
   });
 
+  it("starts from the new key's state when persistKey changes", () => {
+    const read = (key: string) => (key === 'b' ? 'saved-b' : undefined);
+    const write = vi.fn();
+    const api: { current?: Api } = {};
+    const { rerender, container } = render(
+      <Probe persistKey="a" read={read} write={write} api={api} />
+    );
+    act(() => api.current?.setValue('clicked-a'));
+    expect(container.textContent).toBe('clicked-a|true');
+
+    rerender(<Probe persistKey="b" read={read} write={write} api={api} />);
+    expect(container.textContent).toBe('saved-b|true');
+    expect(write).not.toHaveBeenCalledWith('b', 'clicked-a');
+  });
+
   it('is restored, and never reads or writes, without a persistKey', () => {
     const read = vi.fn(() => 'saved');
     const write = vi.fn();

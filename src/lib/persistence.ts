@@ -67,6 +67,19 @@ export const isLink = (persistKey: string): boolean => {
   return link;
 };
 
+// The current history state, for replaceState to keep, minus Next.js's own
+// markers. Next's app router passes a call carrying them straight through as
+// its own, so it would never see the new URL and would later put its old one
+// back. Without them it restores its internals and syncs.
+const routerState = (): unknown => {
+  const state: unknown = window.history.state;
+  if (state === null || typeof state !== 'object') {
+    return state;
+  }
+  const { __NA: _app, _N: _pages, ...rest } = state as Record<string, unknown>;
+  return rest;
+};
+
 /**
  * Set (or with `null`, remove) `{persistKey}.{name}` params, keeping every
  * other param, the hash and `history.state`. Commas stay unencoded so a sort
@@ -88,11 +101,12 @@ export const writeParams = (persistKey: string, updates: Record<string, string |
   }
   const query = params.toString().replace(/%2C/gi, ',');
   const { pathname, hash } = window.location;
-  window.history.replaceState(
-    window.history.state,
-    '',
-    `${pathname}${query ? `?${query}` : ''}${hash}`
-  );
+  try {
+    window.history.replaceState(routerState(), '', `${pathname}${query ? `?${query}` : ''}${hash}`);
+  } catch {
+    // Safari throws past ~100 calls in 30 seconds, and a sandboxed frame may
+    // refuse; the URL just stays as it was.
+  }
   decisions.set(persistKey, { params: namespaceParams(persistKey), link });
 };
 
