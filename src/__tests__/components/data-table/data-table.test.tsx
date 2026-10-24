@@ -236,7 +236,7 @@ describe('DataTable', () => {
       render(<DataTable columns={baseColumns} data={baseData} actionMenu={actionMenu} />);
 
       // One row action trigger per row; the column settings trigger has its own name.
-      const actionButtons = screen.getAllByRole('button', { name: 'Actions' });
+      const actionButtons = screen.getAllByRole('button', { name: /^Actions for row / });
       expect(actionButtons).toHaveLength(baseData.length);
       expect(screen.getByRole('button', { name: 'Column settings' })).toBeInTheDocument();
     });
@@ -904,7 +904,7 @@ describe('DataTable', () => {
         'rdt-table__cell--select',
         'rdt-table__cell--sticky'
       );
-      expect(at(screen.getAllByRole('button', { name: 'Actions' }), 0).closest('td')).toHaveClass(
+      expect(screen.getByRole('button', { name: 'Actions for row 1' }).closest('td')).toHaveClass(
         'rdt-table__cell--actions',
         'rdt-table__cell--sticky'
       );

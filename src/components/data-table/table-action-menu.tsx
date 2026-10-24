@@ -34,6 +34,8 @@ interface TableActionMenuProps<TData extends BaseTableRow = BaseTableRow> {
   row: TData;
   /** Component used to render `href` items. Defaults to a plain `<a>` tag. */
   linkComponent?: ActionMenuLinkComponent;
+  /** Accessible name of the trigger. Inside `DataTable` it comes from `labels.rowActions`. */
+  triggerLabel?: string;
 }
 
 type RowValue<T, TData> = T | ((params: { row: TData }) => T);
@@ -49,6 +51,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   items,
   row,
   linkComponent: Link = 'a',
+  triggerLabel = 'Actions',
 }: TableActionMenuProps<TData>) => {
   // An item with sub-items shows only while at least one of them does.
   const visibleItems = items.filter(
@@ -101,7 +104,7 @@ export const TableActionMenu = <TData extends BaseTableRow = BaseTableRow>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="rdt-action-menu__trigger" aria-label="Actions">
+        <button type="button" className="rdt-action-menu__trigger" aria-label={triggerLabel}>
           <MoreVert className="rdt-action-menu__trigger-icon" />
         </button>
       </DropdownMenuTrigger>

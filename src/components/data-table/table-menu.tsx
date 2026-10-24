@@ -19,6 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useEffect, useId, useState } from 'react';
 
+import { type DataTableLabels, defaultLabels } from '../../labels.ts';
 import { DragIndicator, TableEdit } from '../icon.tsx';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx';
@@ -29,18 +30,21 @@ interface TableMenuProps<TData extends BaseTableRow = BaseTableRow> {
   columns: TableColumn<TData>[];
   toggleHeaders: (id: string) => void;
   onColumnReorder?: (newOrder: string[]) => void;
+  labels?: DataTableLabels;
 }
 
 interface SortableColumnItemProps<TData extends BaseTableRow = BaseTableRow> {
   column: TableColumn<TData>;
   isVisible: boolean;
   onToggle: (column: TableColumn<TData>) => void;
+  reorderLabel: string;
 }
 
 const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
   column,
   isVisible,
   onToggle,
+  reorderLabel,
 }: SortableColumnItemProps<TData>) => {
   const columnId = column.id;
   // A generated id: a column id could match an element elsewhere on the page.
@@ -71,7 +75,7 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
         type="button"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${column.header}`}
+        aria-label={reorderLabel}
         className="rdt-column-panel__handle"
         onClick={e => e.stopPropagation()}
       >
@@ -86,6 +90,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   columns,
   toggleHeaders,
   onColumnReorder,
+  labels = defaultLabels,
 }: TableMenuProps<TData>) => {
   const [localColumns, setLocalColumns] = useState<TableColumn<TData>[]>(columns);
 
@@ -134,11 +139,20 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="rdt-column-panel__trigger" aria-label="Column settings">
+        <button
+          type="button"
+          className="rdt-column-panel__trigger"
+          aria-label={labels.columnSettings}
+        >
           <TableEdit className="rdt-column-panel__trigger-icon" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="rdt-column-panel" align="end" sideOffset={5} aria-label="Columns">
+      <PopoverContent
+        className="rdt-column-panel"
+        align="end"
+        sideOffset={5}
+        aria-label={labels.columnsPanel}
+      >
         <div className="rdt-column-panel__list">
           <DndContext
             sensors={sensors}
@@ -160,6 +174,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
                     column={column}
                     isVisible={isVisible}
                     onToggle={handleColumnVisibilityChange}
+                    reorderLabel={labels.reorderColumn({ column: column.header })}
                   />
                 );
               })}

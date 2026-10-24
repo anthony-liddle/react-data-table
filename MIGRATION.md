@@ -13,6 +13,28 @@
 + { id: 'email', header: 'Email address', cell: ({ row }) => row.email }
 ```
 
+### `page` and `of` are now `pageOf`
+
+The "Page N of M" indicator is one label, so a language can reorder the phrase and format the numbers.
+
+```diff
+- labels={{ page: 'Página', of: 'de' }}
++ labels={{ pageOf: ({ page, pageCount }) => `Página ${page} de ${pageCount}` }}
+```
+
+Every other string the table announces is a label too now: `selectAll`, `selectRow`, `rowLabel`, `rowActions`, `columnSettings`, `columnsPanel`, `reorderColumn`, `previousPage` and `nextPage`. Their English defaults are the 0.4 text, except the row menu below.
+
+### Row menus are named after their row
+
+Each row's menu trigger was named "Actions", so a screen reader announced 50 identical buttons. It is now "Actions for ⟨row⟩", from `getRowLabel` or "row ⟨id⟩". Tests that find a trigger by the name "Actions" need the row in it:
+
+```diff
+- screen.getAllByRole('button', { name: 'Actions' })[0]
++ screen.getByRole('button', { name: 'Actions for Ada Lovelace' })
+```
+
+A `TableActionMenu` used on its own is still named "Actions", or takes `triggerLabel`.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

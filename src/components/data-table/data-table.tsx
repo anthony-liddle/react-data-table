@@ -56,9 +56,9 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   getRowTestId?: (row: TData) => string | undefined;
   /**
-   * Names a row for assistive technology. When set, the row's selection
-   * checkbox is announced as "Select <label>"; when omitted it falls back to
-   * "Select row <id>".
+   * Names a row for assistive technology, in its checkbox ("Select <label>")
+   * and its action menu ("Actions for <label>"). Without it, rows are named by
+   * `labels.rowLabel`, "row <id>" by default.
    */
   getRowLabel?: (row: TData) => string;
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
@@ -117,6 +117,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   linkComponent,
 }: DataTableProps<TData>) => {
   const t = resolveLabels(labels);
+  const rowLabelOf = (row: TData) => getRowLabel?.(row) ?? t.rowLabel({ id: row.id });
 
   // Track user-toggled visibility overrides (column ID → visible). Columns not in
   // this map use their default visibility from hideByDefault.
@@ -345,7 +346,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           }
                           onCheckedChange={selection.onToggleAll}
                           disabled={!!loading}
-                          aria-label="Select all"
+                          aria-label={t.selectAll}
                         />
                       </div>
                     </th>
@@ -389,6 +390,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         columns={menuColumns}
                         toggleHeaders={toggleHeaders}
                         onColumnReorder={handleColumnReorder}
+                        labels={t}
                       />
                     </th>
                   )}
@@ -428,7 +430,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         }
                         onCheckedChange={selection.onToggleAll}
                         disabled={!!loading}
-                        aria-label="Select all"
+                        aria-label={t.selectAll}
                       />
                     </div>
                   </th>
@@ -450,6 +452,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       columns={columns}
                       toggleHeaders={toggleHeaders}
                       onColumnReorder={handleColumnReorder}
+                      labels={t}
                     />
                   </th>
                 )}
@@ -504,9 +507,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.onToggleRow(row)}
-                          aria-label={
-                            getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
-                          }
+                          aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
                         />
                       </td>
                     )}
@@ -529,6 +530,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           items={actionMenu}
                           row={row}
                           linkComponent={linkComponent}
+                          triggerLabel={t.rowActions({ rowLabel: rowLabelOf(row) })}
                         />
                       </td>
                     )}
