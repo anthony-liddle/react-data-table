@@ -14,7 +14,6 @@ import { TableLoading } from './table-loading.tsx';
 import { TableMenu } from './table-menu.tsx';
 import {
   type BaseTableRow,
-  getColumnId,
   reconcileColumnOrder,
   type TableActionMenuItem,
   type TableColumn,
@@ -25,7 +24,7 @@ import {
 } from './types.ts';
 
 // Unit-separator control char: safe join delimiter for column-id signatures
-// (column ids are kebab-case or explicit strings, neither of which contains it).
+// (column ids are ordinary strings, which don't contain it).
 const COLUMN_LAYOUT_SEP = '\u001f';
 
 interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
@@ -57,9 +56,9 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   getRowTestId?: (row: TData) => string | undefined;
   /**
-   * Names a row for assistive technology. When set, the row's selection
-   * checkbox is announced as "Select <label>"; when omitted it falls back to
-   * "Select row <id>".
+   * Names a row for assistive technology, in its checkbox ("Select <label>")
+   * and its action menu ("Actions for <label>"). Without it, rows are named by
+   * `labels.rowLabel`, "row <id>" by default.
    */
   getRowLabel?: (row: TData) => string;
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
@@ -118,6 +117,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   linkComponent,
 }: DataTableProps<TData>) => {
   const t = resolveLabels(labels);
+  const rowLabelOf = (row: TData) => getRowLabel?.(row) ?? t.rowLabel({ id: row.id });
 
   // Track user-toggled visibility overrides (column ID → visible). Columns not in
   // this map use their default visibility from hideByDefault.
@@ -137,12 +137,12 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   // columns themselves are unchanged; when columns change in code the saved
   // order is discarded rather than rendered stale.
   const columnLayoutSig = useMemo(
-    () => columns.map(getColumnId).join(COLUMN_LAYOUT_SEP),
+    () => columns.map(column => column.id).join(COLUMN_LAYOUT_SEP),
     [columns]
   );
 
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
-    const currentIds = columns.map(column => getColumnId(column));
+    const currentIds = columns.map(column => column.id);
     if (typeof window === 'undefined' || !persistKey) {
       return currentIds;
     }
@@ -169,7 +169,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   // matches, keep the persisted sequence so user reordering (and static-column
   // tables) are untouched.
   const effectiveColumnOrder = useMemo(() => {
-    const naturalIds = columns.map(column => getColumnId(column));
+    const naturalIds = columns.map(column => column.id);
     const naturalSet = new Set(naturalIds);
     const persistedPresent = columnOrder.filter(id => naturalSet.has(id));
     // `persistedPresent ⊆ naturalIds` and both have unique ids, so equal lengths
@@ -196,7 +196,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   const visibleColumns = useMemo(
     () =>
       columns.map(col => {
-        const id = getColumnId(col);
+        const id = col.id;
         const userToggle = userToggles[id];
         return {
           id,
@@ -224,7 +224,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     (id: string) => {
       setUserToggles(prev => {
         const current = prev[id];
-        const col = columns.find(c => getColumnId(c) === id);
+        const col = columns.find(c => c.id === id);
         const defaultVisible = col ? !col.hideByDefault : true;
         const currentlyVisible = current !== undefined ? current : defaultVisible;
         const updated = { ...prev, [id]: !currentlyVisible };
@@ -233,7 +233,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         // "setState during render" errors
         if (onVisibleColumnsChange) {
           const fullList = columns.map(c => {
-            const cId = getColumnId(c);
+            const cId = c.id;
             const toggle = cId === id ? !currentlyVisible : updated[cId];
             return {
               id: cId,
@@ -291,8 +291,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   const visibleColumnsData = useMemo(() => {
     // Sort columns based on the reconciled column order (see `effectiveColumnOrder`).
     const sortedColumns = [...columns].sort((a, b) => {
-      const aIndex = effectiveColumnOrder.indexOf(getColumnId(a));
-      const bIndex = effectiveColumnOrder.indexOf(getColumnId(b));
+      const aIndex = effectiveColumnOrder.indexOf(a.id);
+      const bIndex = effectiveColumnOrder.indexOf(b.id);
       // Columns not in the order (should not happen post-reconciliation) sort to the end
       const aPos = aIndex === -1 ? effectiveColumnOrder.length : aIndex;
       const bPos = bIndex === -1 ? effectiveColumnOrder.length : bIndex;
@@ -303,7 +303,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
       if (column.alwaysVisible) {
         return true;
       }
-      const columnId = getColumnId(column);
+      const columnId = column.id;
       return visibleColumns.find(vc => vc.id === columnId)?.visible ?? true;
     });
   }, [columns, visibleColumns, effectiveColumnOrder]);
@@ -346,7 +346,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           }
                           onCheckedChange={selection.onToggleAll}
                           disabled={!!loading}
-                          aria-label="Select all"
+                          aria-label={t.selectAll}
                         />
                       </div>
                     </th>
@@ -356,7 +356,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       // Grouped column - span across sub-columns
                       return (
                         <th
-                          key={getColumnId(column)}
+                          key={column.id}
                           scope="colgroup"
                           colSpan={column.subColumns.length}
                           className={cx(
@@ -372,7 +372,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       // Regular column - span across 2 rows
                       return (
                         <TableHeader
-                          key={getColumnId(column)}
+                          key={column.id}
                           column={column}
                           currentSortKey={sort?.sortKey}
                           currentDirection={sort?.direction}
@@ -390,6 +390,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         columns={menuColumns}
                         toggleHeaders={toggleHeaders}
                         onColumnReorder={handleColumnReorder}
+                        labels={t}
                       />
                     </th>
                   )}
@@ -401,7 +402,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       // Render sub-columns
                       return column.subColumns.map(subColumn => (
                         <TableHeader
-                          key={`${getColumnId(column)}-${getColumnId(subColumn)}`}
+                          key={`${column.id}-${subColumn.id}`}
                           column={subColumn}
                           currentSortKey={sort?.sortKey}
                           currentDirection={sort?.direction}
@@ -429,14 +430,14 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         }
                         onCheckedChange={selection.onToggleAll}
                         disabled={!!loading}
-                        aria-label="Select all"
+                        aria-label={t.selectAll}
                       />
                     </div>
                   </th>
                 )}
                 {visibleColumnsData.map(column => (
                   <TableHeader
-                    key={getColumnId(column)}
+                    key={column.id}
                     column={column}
                     currentSortKey={sort?.sortKey}
                     currentDirection={sort?.direction}
@@ -451,6 +452,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       columns={columns}
                       toggleHeaders={toggleHeaders}
                       onColumnReorder={handleColumnReorder}
+                      labels={t}
                     />
                   </th>
                 )}
@@ -505,15 +507,13 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           checked={selection.isRowSelected(row)}
                           disabled={selection.isRowDisabled?.(row)}
                           onCheckedChange={() => selection.onToggleRow(row)}
-                          aria-label={
-                            getRowLabel ? `Select ${getRowLabel(row)}` : `Select row ${row.id}`
-                          }
+                          aria-label={t.selectRow({ rowLabel: rowLabelOf(row) })}
                         />
                       </td>
                     )}
                     {flattenedColumnsData.map((column, index: number) => (
                       <td
-                        key={`${row.id}-${index}-${getColumnId(column)}`}
+                        key={`${row.id}-${index}-${column.id}`}
                         className={cx('rdt-table__cell', column.cellClassName)}
                         // If the column is the last column and the action menu is hidden, colSpan should be 2
                         colSpan={index === flattenedColumnsData.length - 1 && !actionMenu ? 2 : 1}
@@ -530,6 +530,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           items={actionMenu}
                           row={row}
                           linkComponent={linkComponent}
+                          triggerLabel={t.rowActions({ rowLabel: rowLabelOf(row) })}
                         />
                       </td>
                     )}

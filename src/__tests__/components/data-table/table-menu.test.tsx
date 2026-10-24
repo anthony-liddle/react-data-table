@@ -14,18 +14,9 @@ interface TestRow extends BaseTableRow {
 
 describe('TableMenu', () => {
   const baseColumns: TableColumn<TestRow>[] = [
-    {
-      header: 'Name',
-      cell: ({ row }) => <span>{row.name}</span>,
-    },
-    {
-      header: 'Email',
-      cell: ({ row }) => <span>{String(row.email)}</span>,
-    },
-    {
-      header: 'Role',
-      cell: ({ row }) => <span>{String(row.role)}</span>,
-    },
+    { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
+    { id: 'email', header: 'Email', cell: ({ row }) => <span>{String(row.email)}</span> },
+    { id: 'role', header: 'Role', cell: ({ row }) => <span>{String(row.role)}</span> },
   ];
 
   const baseVisibleColumns: VisibleColumn[] = [
@@ -315,22 +306,16 @@ describe('TableMenu', () => {
       expect(button).toBeInTheDocument();
     });
 
-    it('should handle columns with duplicate headers', async () => {
+    it('keeps columns with the same header apart by id', async () => {
       const user = userEvent.setup();
       const duplicateColumns: TableColumn<TestRow>[] = [
-        {
-          header: 'Name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
-          header: 'Name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
+        { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
+        { id: 'legal-name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
       ];
 
       const duplicateVisible: VisibleColumn[] = [
         { id: 'name', visible: true },
-        { id: 'name', visible: true },
+        { id: 'legal-name', visible: false },
       ];
 
       render(
@@ -344,28 +329,27 @@ describe('TableMenu', () => {
       const button = screen.getByRole('button', { name: 'Column settings' });
       await user.click(button);
 
-      await waitFor(() => {
-        const nameLabels = screen.getAllByText('Name');
-        expect(nameLabels.length).toBeGreaterThanOrEqual(2);
-      });
+      const [first, second] = await screen.findAllByRole('checkbox', { name: 'Name' });
+      expect(first).toBeChecked();
+      expect(second).not.toBeChecked();
+      await user.click(second as HTMLElement);
+      expect(mockToggleHeaders).toHaveBeenCalledWith('legal-name');
     });
 
     it('should handle columns with special characters in headers', async () => {
       const user = userEvent.setup();
       const specialColumns: TableColumn<TestRow>[] = [
+        { id: 'name_&_email', header: 'Name & Email', cell: ({ row }) => <span>{row.name}</span> },
         {
-          header: 'Name & Email',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
+          id: 'role_(admin)',
           header: 'Role (Admin)',
           cell: ({ row }) => <span>{String(row.role)}</span>,
         },
       ];
 
       const specialVisible: VisibleColumn[] = [
-        { id: 'name-&-email', visible: true },
-        { id: 'role-(admin)', visible: true },
+        { id: 'name_&_email', visible: true },
+        { id: 'role_(admin)', visible: true },
       ];
 
       render(
@@ -407,13 +391,10 @@ describe('TableMenu', () => {
       await user.keyboard('{Escape}');
 
       const newColumns: TableColumn<TestRow>[] = [
-        {
-          header: 'New Column',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
+        { id: 'new_column', header: 'New Column', cell: ({ row }) => <span>{row.name}</span> },
       ];
 
-      const newVisible: VisibleColumn[] = [{ id: 'new-column', visible: true }];
+      const newVisible: VisibleColumn[] = [{ id: 'new_column', visible: true }];
 
       rerender(
         <TableMenu

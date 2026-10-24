@@ -67,6 +67,7 @@ const GroupedColumnsDemo = ({
         sort={{ sortKey: sort, direction, handleSort }}
         hideTableSettings={hideTableSettings}
         selection={withSelection ? selection : undefined}
+        getRowLabel={row => row.name}
       />
     </Demo>
   );

@@ -45,6 +45,7 @@ const FullTable = () => {
     <DataTable
       columns={defaultColumns}
       data={rows}
+      getRowLabel={row => row.name}
       actionMenu={actionMenu}
       showPageCount
       sort={{ sortKey: 'name', direction: 'asc', handleSort: fn() }}
@@ -107,7 +108,7 @@ export const RowActionSubmenuOpen: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(at(canvas.getAllByRole('button', { name: 'Actions' }), 0));
+    await userEvent.click(canvas.getByRole('button', { name: `Actions for ${at(rows, 0).name}` }));
     const body = within(document.body);
     await userEvent.click(await body.findByText('Change role'));
     await body.findByText('Make admin');

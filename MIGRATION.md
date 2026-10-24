@@ -4,6 +4,39 @@
 
 0.5 is the last round of breaking changes before the API settles. Each entry says what changed and what to do.
 
+### Columns need an `id`
+
+`TableColumn.id` is required, on sub-columns too. Before 0.5, a column without one took an id derived from its header text, so translating or rewording a header changed the id that saved layouts, `onVisibleColumnsChange` and the column panel key off. `getColumnId` is gone with the fallback: read `column.id`. Ids must be unique within a table.
+
+If you stored 0.4 column ids, from `onVisibleColumnsChange` or `onColumnReorder` say, set each `id` to what 0.4 derived to keep them: the header lowercased, with spaces as underscores (`'Email address'` was `email_address`).
+
+```diff
+- { header: 'Email address', cell: ({ row }) => row.email }
++ { id: 'email', header: 'Email address', cell: ({ row }) => row.email }
+```
+
+### `page` and `of` are now `pageOf`
+
+The "Page N of M" indicator is one label, so a language can reorder the phrase and format the numbers.
+
+```diff
+- labels={{ page: 'Página', of: 'de' }}
++ labels={{ pageOf: ({ page, pageCount }) => `Página ${page} de ${pageCount}` }}
+```
+
+Every other string the table announces is a label too now: `selectAll`, `selectRow`, `rowLabel`, `rowActions`, `columnSettings`, `columnsPanel`, `reorderColumn`, `previousPage` and `nextPage`. Their English defaults are the 0.4 text, except the row menu below. If you build a whole `DataTableLabels` rather than a `Partial`, spread `defaultLabels` into it or add the new keys.
+
+### Row menus are named after their row
+
+Each row's menu trigger was named "Actions", so a screen reader announced 50 identical buttons. It is now "Actions for ⟨row⟩", from `getRowLabel` or "row ⟨id⟩". Tests that find a trigger by the name "Actions" need the row in it:
+
+```diff
+- screen.getAllByRole('button', { name: 'Actions' })[0]
++ screen.getByRole('button', { name: 'Actions for Ada Lovelace' })
+```
+
+A `TableActionMenu` used on its own is still named "Actions", or takes `triggerLabel`.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.
@@ -26,7 +59,7 @@ A column's `className` styled its header and its `rowClassName` styled its body 
 
 ```diff
 - { header: 'Seats', className: 'text-right', rowClassName: 'text-right tabular-nums' }
-+ { header: 'Seats', headerClassName: 'text-right', cellClassName: 'text-right tabular-nums' }
++ { id: 'seats', header: 'Seats', headerClassName: 'text-right', cellClassName: 'text-right tabular-nums' }
 ```
 
 ### Test ids use `data-testid`
@@ -66,7 +99,7 @@ Rows no longer need to extend `BaseTableRow`: any interface or type with an `id`
 
 ```diff
 - const columns: TableColumn[] = [{ header: 'Name', cell: ({ row }) => String(row.name) }];
-+ const columns: TableColumn<Member>[] = [{ header: 'Name', cell: ({ row }) => row.name }];
++ const columns: TableColumn<Member>[] = [{ id: 'name', header: 'Name', cell: ({ row }) => row.name }];
 ```
 
 Give `TableColumn`, `DataTable` and the hooks your row type and the error goes away. `BaseTableSelection`, which duplicated `BaseTableRow`, is removed.

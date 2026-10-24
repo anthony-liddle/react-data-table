@@ -52,7 +52,7 @@ export const Pagination = ({
       <div className="rdt-pagination__controls">
         {showPageCount && (
           <span className="rdt-pagination__page-count">
-            {t.page} {pageIndex + 1} {t.of} {pageCount}
+            {t.pageOf({ page: pageIndex + 1, pageCount })}
           </span>
         )}
         <Button
@@ -60,7 +60,7 @@ export const Pagination = ({
           className="rdt-pagination__button"
           disabled={!hasPreviousPage}
           onClick={onPreviousPage}
-          aria-label="Previous page"
+          aria-label={t.previousPage}
           data-testid={showPageCount ? 'btn.pagination.previous' : undefined}
         >
           <KeyboardArrowLeft className="rdt-pagination__icon" />
@@ -70,7 +70,7 @@ export const Pagination = ({
           className="rdt-pagination__button"
           disabled={!hasNextPage}
           onClick={onNextPage}
-          aria-label="Next page"
+          aria-label={t.nextPage}
           data-testid={showPageCount ? 'btn.pagination.next' : undefined}
         >
           <KeyboardArrowRight className="rdt-pagination__icon" />

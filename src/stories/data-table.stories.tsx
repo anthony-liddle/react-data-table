@@ -131,6 +131,7 @@ const PlaygroundTable = ({
               }
             : undefined
         }
+        getRowLabel={row => row.name}
         selection={withSelection ? selection : undefined}
         actionMenu={withActionMenu ? actionMenu : undefined}
         pagination={withPagination ? getPagination(sorted.length) : undefined}
@@ -277,6 +278,7 @@ export const WithActionMenu: StoryObj<{ rowCount: number }> = {
       <DataTable
         columns={defaultColumns}
         data={members.slice(0, rowCount)}
+        getRowLabel={row => row.name}
         actionMenu={actionMenu}
         hideTableSettings
       />
@@ -294,8 +296,8 @@ export const WithActionMenuInteraction: StoryObj<{ rowCount: number }> = {
   play: async ({ canvasElement }) => {
     onEdit.mockClear();
     const canvas = within(canvasElement);
-    await userEvent.click(at(canvas.getAllByRole('button', { name: 'Actions' }), 0));
     const owner = at(members, 0);
+    await userEvent.click(canvas.getByRole('button', { name: `Actions for ${owner.name}` }));
     const firstName = at(owner.name.split(' '), 0);
     await userEvent.click(await within(document.body).findByText(`Edit ${firstName}`));
     await expect(onEdit).toHaveBeenCalledWith({

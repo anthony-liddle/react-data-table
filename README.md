@@ -64,9 +64,9 @@ interface Member {
 }
 
 const columns: TableColumn<Member>[] = [
-  { header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
-  { header: 'Email', cell: ({ row }) => row.email },
-  { header: 'Team', sortKey: 'team', cell: ({ row }) => row.team, hideByDefault: true },
+  { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
+  { id: 'email', header: 'Email', cell: ({ row }) => row.email },
+  { id: 'team', header: 'Team', sortKey: 'team', cell: ({ row }) => row.team, hideByDefault: true },
 ];
 
 export function Members({ members }: { members: Member[] }) {
@@ -98,16 +98,16 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
 | `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |
-| `getRowLabel` | `(row: T) => string` | – | Names each row's selection checkbox "Select ⟨label⟩" for assistive technology. Without it, the name falls back to "Select row ⟨id⟩". |
-| `labels` | `Partial<DataTableLabels>` | English | Overrides the visible strings (empty state, page count, range text) |
+| `getRowLabel` | `(row: T) => string` | – | Names each row for assistive technology: its checkbox is "Select ⟨label⟩" and its menu "Actions for ⟨label⟩". Without it, rows are named by `labels.rowLabel`, "row ⟨id⟩". |
+| `labels` | `Partial<DataTableLabels>` | English | Overrides any string the table renders or announces (see [Labels](#labels)) |
 | `linkComponent` | `ComponentType \| 'a'` | `'a'` | Renders `href` menu items, for example a router's `Link`. It must spread the props it doesn't use onto the anchor and forward its ref, which the menu needs for keyboard focus |
 
 ### Columns
 
 ```ts
 interface TableColumn<T> {
-  header: string;            // header text; also the default column id
-  id?: string;               // stable id when headers repeat or change
+  id: string;                // required, unique in the table, and stable across header text and translations
+  header: string;            // header text
   sortKey?: string;          // makes the column sortable
   cell?: ({ row }) => ReactNode;
   loadingCell?: () => ReactNode;
@@ -142,6 +142,26 @@ const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.s
 ```
 
 Call `reset()` when the sort or filters change, so the table goes back to the first page.
+
+## Labels
+
+Every string the table renders or announces comes from `labels`, so a translation covers screen reader names too. Pass any subset to `DataTable` or `Pagination`; the rest keep their English defaults, which `defaultLabels` exports.
+
+| Key | Default |
+|---|---|
+| `noResults` | No results found |
+| `showingRangeOf({ start, end, total })` | Showing {start}-{end} of {total} results |
+| `selectAll` | Select all |
+| `selectRow({ rowLabel })` | Select {rowLabel} |
+| `rowLabel({ id })` | row {id} (used when `getRowLabel` isn't set) |
+| `rowActions({ rowLabel })` | Actions for {rowLabel} |
+| `columnSettings` | Column settings |
+| `columnsPanel` | Columns |
+| `reorderColumn({ column })` | Reorder {column} |
+| `previousPage` / `nextPage` | Previous page / Next page |
+| `pageOf({ page, pageCount })` | Page {page} of {pageCount} |
+
+A standalone `TableActionMenu` names its trigger "Actions", or `triggerLabel`.
 
 ## Persistence
 
@@ -228,7 +248,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 - Sort headers are buttons, and the sorted column's header carries `aria-sort`.
 - Header cells use `scope="col"`, and grouped parent headers use `scope="colgroup"`.
 - Checkboxes, pagination buttons ("Previous page" / "Next page"), the column settings trigger, and column drag handles ("Reorder ⟨column⟩") all have accessible names.
-- Row checkboxes are named "Select ⟨label⟩" when you pass `getRowLabel` (for example the row's name). Without it they fall back to "Select row ⟨id⟩", so pass it whenever rows have a human-readable name.
+- Row checkboxes and row menus are named after their row ("Select ⟨label⟩", "Actions for ⟨label⟩") when you pass `getRowLabel`, for example the row's name. Without it they fall back to "row ⟨id⟩", so pass it whenever rows have a human-readable name.
 - The column settings panel is a dialog: Tab reaches every checkbox and handle, Space toggles a column, and a focused handle reorders with Space, the arrow keys, and Space.
 - Row menus are Radix dropdown menus with arrow-key navigation.
 
@@ -236,7 +256,6 @@ Known gaps:
 
 - Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
 - `onRowClick` (and so row expansion) has no keyboard path of its own. Put a button in a cell if you need one.
-- Accessible names are English-only; the `labels` prop covers visible text.
 
 ## Known issues
 

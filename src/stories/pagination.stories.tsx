@@ -51,8 +51,9 @@ export const CustomLabels: Story = {
   args: {
     showPageCount: true,
     labels: {
-      page: 'Página',
-      of: 'de',
+      pageOf: ({ page, pageCount }) => `Página ${page} de ${pageCount}`,
+      previousPage: 'Página anterior',
+      nextPage: 'Página siguiente',
       showingRangeOf: ({ start, end, total }) => `Mostrando ${start}-${end} de ${total}`,
     },
   },

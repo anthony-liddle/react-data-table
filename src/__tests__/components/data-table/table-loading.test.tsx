@@ -12,14 +12,8 @@ interface TestRow extends BaseTableRow {
 
 describe('TableLoading', () => {
   const baseColumns: TableColumn<TestRow>[] = [
-    {
-      header: 'Name',
-      cell: ({ row }) => <span>{row.name}</span>,
-    },
-    {
-      header: 'Email',
-      cell: ({ row }) => <span>{String(row.email)}</span>,
-    },
+    { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
+    { id: 'email', header: 'Email', cell: ({ row }) => <span>{String(row.email)}</span> },
   ];
 
   describe('rendering', () => {
@@ -116,14 +110,12 @@ describe('TableLoading', () => {
     it('should render custom loadingCell when provided', () => {
       const columnsWithLoadingCell: TableColumn<TestRow>[] = [
         {
+          id: 'name',
           header: 'Name',
           cell: ({ row }) => <span>{row.name}</span>,
           loadingCell: () => <div data-testid="custom-loading">Custom Loading</div>,
         },
-        {
-          header: 'Email',
-          cell: ({ row }) => <span>{String(row.email)}</span>,
-        },
+        { id: 'email', header: 'Email', cell: ({ row }) => <span>{String(row.email)}</span> },
       ];
 
       render(
@@ -156,11 +148,13 @@ describe('TableLoading', () => {
     it('should render mix of custom and default loading cells', () => {
       const columnsWithMixedLoading: TableColumn<TestRow>[] = [
         {
+          id: 'name',
           header: 'Name',
           cell: ({ row }) => <span>{row.name}</span>,
           loadingCell: () => <div data-testid="custom-name">Loading Name</div>,
         },
         {
+          id: 'email',
           header: 'Email',
           cell: ({ row }) => <span>{String(row.email)}</span>,
           // No loadingCell - should use default skeleton
@@ -246,10 +240,7 @@ describe('TableLoading', () => {
 
     it('should handle single column', () => {
       const singleColumn: TableColumn<TestRow>[] = [
-        {
-          header: 'Name',
-          cell: ({ row }) => <span>{String(row.name)}</span>,
-        },
+        { id: 'name', header: 'Name', cell: ({ row }) => <span>{String(row.name)}</span> },
       ];
 
       render(
@@ -267,6 +258,7 @@ describe('TableLoading', () => {
 
     it('should handle many columns', () => {
       const manyColumns: TableColumn<TestRow>[] = Array.from({ length: 10 }, (_, i) => ({
+        id: `column-${i}`,
         header: `Column ${i}`,
         cell: ({ row }) => <span>{String(row.name)}</span>,
       }));

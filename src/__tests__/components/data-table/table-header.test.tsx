@@ -14,6 +14,7 @@ describe('TableHeader', () => {
   describe('rendering', () => {
     it('should render non-sortable column header', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -29,6 +30,7 @@ describe('TableHeader', () => {
 
     it('should render sortable column header', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         sortKey: 'name',
         cell: ({ row }) => <span>{row.name}</span>,
@@ -46,6 +48,7 @@ describe('TableHeader', () => {
 
     it('should apply className prop', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -59,6 +62,7 @@ describe('TableHeader', () => {
 
     it('should apply rowSpan when provided', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -72,6 +76,7 @@ describe('TableHeader', () => {
 
     it('should not apply rowSpan when not provided', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -89,6 +94,7 @@ describe('TableHeader', () => {
       const user = userEvent.setup();
       const onSort = vi.fn();
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         sortKey: 'name',
         cell: ({ row }) => <span>{row.name}</span>,
@@ -124,6 +130,7 @@ describe('TableHeader', () => {
       const user = userEvent.setup();
       const onSort = vi.fn();
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -139,6 +146,7 @@ describe('TableHeader', () => {
     it('should not call onSort when onSort is not provided', async () => {
       const user = userEvent.setup();
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         sortKey: 'name',
         cell: ({ row }) => <span>{row.name}</span>,
@@ -160,6 +168,7 @@ describe('TableHeader', () => {
 
     it('should pass currentSortKey and currentDirection to SortableHeaderClient', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         sortKey: 'name',
         cell: ({ row }) => <span>{row.name}</span>,
@@ -183,6 +192,7 @@ describe('TableHeader', () => {
   describe('edge cases', () => {
     it('should handle empty header string', () => {
       const column: TableColumn<TestRow> = {
+        id: '',
         header: '',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -194,9 +204,7 @@ describe('TableHeader', () => {
     });
 
     it('should handle column without cell function', () => {
-      const column: TableColumn<TestRow> = {
-        header: 'Name',
-      };
+      const column: TableColumn<TestRow> = { id: 'name', header: 'Name' };
 
       render(<TableHeader column={column} className="" />);
 
@@ -206,6 +214,7 @@ describe('TableHeader', () => {
 
     it('should handle rowSpan of 0', () => {
       const column: TableColumn<TestRow> = {
+        id: 'name',
         header: 'Name',
         cell: ({ row }) => <span>{row.name}</span>,
       };
@@ -220,6 +229,7 @@ describe('TableHeader', () => {
     it('should handle very long header text', () => {
       const longHeader = 'A'.repeat(100);
       const column: TableColumn<TestRow> = {
+        id: 'long',
         header: longHeader,
         cell: ({ row }) => <span>{row.name}</span>,
       };

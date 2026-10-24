@@ -42,6 +42,7 @@ const DragSelectionTable = ({
         data={rows}
         selectOnRowClick={selectOnRowClick}
         selection={selection}
+        getRowLabel={row => row.name}
         hideTableSettings
       />
     </Demo>
