@@ -13,7 +13,7 @@ interface PaginationProps {
   totalCount?: number | null;
   /**
    * Rows on this page, which ends the range when there is no total. Defaults to
-   * a full page. `DataTable` passes its row count.
+   * a full page. `DataTable` passes its row count, or nothing while loading.
    */
   pageRowCount?: number;
   pageIndex: number;
