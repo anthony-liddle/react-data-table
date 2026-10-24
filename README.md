@@ -127,7 +127,7 @@ interface TableColumn<T> {
 | `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
 | `usePagination({ pageSize, persistKey })` | `{ offset, limit, pageIndex, getPagination, reset, isRestored, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
-| `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
+| `useCursorPagination({ pageSize })` | `{ variables, pageIndex, getPagination, reset }` | GraphQL connections: send `variables` (`{ first, after }`) with the query, pass `getPagination(pageInfo, totalCount?)` to the `pagination` prop |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `{ filters, setFilter, reset, isRestored }` | Any filter state, persisted like the table |
 
 `sortBy` lists the sorted columns in priority order, each `{ key, direction }` with a lowercase `'asc'` or `'desc'`; unsorted is an empty list. If your API wants an uppercase enum, convert at the call. `reset()` returns to `defaultSortBy`, and `setSortBy([])` clears the sort.
@@ -145,6 +145,8 @@ const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.s
 
 Call `reset()` when the sort or filters change, so the table goes back to the first page. `useTableSort`'s `onChange` runs on every sort change except restoring a persisted one, so it's the place for that: `useTableSort({ onChange: () => reset() })`.
 
+`TablePagination.totalCount` is optional, since cursor APIs often have no total. Without it the footer reads "Showing 11-20", ending at the page's row count (`DataTable` supplies it; a standalone `Pagination` takes `pageRowCount`), it drops "Page N of M", and Next follows `hasNextPage`. A page with no rows reads "Showing 0-0".
+
 ## Labels
 
 Every string the table renders or announces comes from `labels`, so a translation covers screen reader names too. Pass any subset to `DataTable` or `Pagination`; the rest keep their English defaults, which `defaultLabels` exports.
@@ -161,6 +163,7 @@ Every string the table renders or announces comes from `labels`, so a translatio
 | `columnsPanel` | Columns |
 | `reorderColumn({ column })` | Reorder {column} |
 | `previousPage` / `nextPage` | Previous page / Next page |
+| `showingRange({ start, end })` | Showing {start}-{end} (when the total is unknown) |
 | `pageOf({ page, pageCount })` | Page {page} of {pageCount} |
 | `sortPriority({ priority, direction })` | sort priority {priority}, ascending / descending |
 

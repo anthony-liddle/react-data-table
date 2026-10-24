@@ -10,6 +10,8 @@ export interface DataTableLabels {
   noResults: string;
   /** Range summary in the pagination footer, e.g. "Showing 1-10 of 42 results". */
   showingRangeOf: (params: { start: number; end: number; total: number }) => string;
+  /** Range summary when the total is unknown, e.g. "Showing 1-10". */
+  showingRange: (params: { start: number; end: number }) => string;
   /** Name of the select-all checkbox. */
   selectAll: string;
   /** Name of a row's checkbox. */
@@ -37,6 +39,7 @@ export interface DataTableLabels {
 export const defaultLabels: DataTableLabels = {
   noResults: 'No results found',
   showingRangeOf: ({ start, end, total }) => `Showing ${start}-${end} of ${total} results`,
+  showingRange: ({ start, end }) => `Showing ${start}-${end}`,
   selectAll: 'Select all',
   selectRow: ({ rowLabel }) => `Select ${rowLabel}`,
   rowLabel: ({ id }) => `row ${id}`,

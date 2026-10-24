@@ -562,6 +562,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
       {pagination && (
         <Pagination
           totalCount={pagination.totalCount}
+          pageRowCount={data.length}
           pageIndex={pagination.pageIndex}
           pageSize={pagination.pageSize}
           hasNextPage={pagination.hasNextPage}

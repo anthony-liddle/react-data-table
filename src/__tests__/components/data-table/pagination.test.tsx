@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { DataTable } from '@/components/data-table/data-table';
 import { Pagination } from '@/components/data-table/pagination';
 
 describe('Pagination', () => {
@@ -99,7 +100,7 @@ describe('Pagination', () => {
 
       render(<Pagination {...props} />);
 
-      expect(screen.getByText('Showing 1-0 of 0 results')).toBeInTheDocument();
+      expect(screen.getByText('Showing 0-0 of 0 results')).toBeInTheDocument();
     });
 
     it('should apply custom className', () => {
@@ -326,7 +327,7 @@ describe('Pagination', () => {
       render(<Pagination {...props} />);
 
       // Should use default values: totalCount = 0, pageIndex = 0
-      expect(screen.getByText('Showing 1-0 of 0 results')).toBeInTheDocument();
+      expect(screen.getByText('Showing 0-0 of 0 results')).toBeInTheDocument();
     });
 
     it('should handle pageSize of 1', () => {
@@ -444,6 +445,60 @@ describe('Pagination', () => {
       render(<Pagination {...props} showPageCount />);
       expect(screen.getByTestId('btn.pagination.previous')).toHaveAccessibleName('Previous page');
       expect(screen.getByTestId('btn.pagination.next')).toHaveAccessibleName('Next page');
+    });
+  });
+
+  describe('without a total, and empty pages', () => {
+    const base = {
+      pageIndex: 1,
+      pageSize: 10,
+      hasNextPage: true,
+      hasPreviousPage: true,
+      onNextPage: vi.fn(),
+      onPreviousPage: vi.fn(),
+    };
+
+    it('shows the range without a total, and no page count', () => {
+      render(<Pagination {...base} showPageCount />);
+      expect(screen.getByText('Showing 11-20')).toBeInTheDocument();
+      expect(screen.queryByText(/Page/)).toBeNull();
+      expect(screen.getByRole('button', { name: 'Next page' })).toBeEnabled();
+    });
+
+    it("ends the range at the page's row count", () => {
+      render(<Pagination {...base} hasNextPage={false} pageRowCount={4} />);
+      expect(screen.getByText('Showing 11-14')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+    });
+
+    it('reads an empty page as 0 to 0', () => {
+      const { rerender } = render(<Pagination {...base} pageIndex={0} totalCount={0} />);
+      expect(screen.getByText('Showing 0-0 of 0 results')).toBeInTheDocument();
+      rerender(<Pagination {...base} pageIndex={9} totalCount={25} />);
+      expect(screen.getByText('Showing 0-0 of 25 results')).toBeInTheDocument();
+      rerender(<Pagination {...base} pageRowCount={0} />);
+      expect(screen.getByText('Showing 0-0')).toBeInTheDocument();
+    });
+
+    it('takes the range text from labels', () => {
+      render(
+        <Pagination
+          {...base}
+          labels={{ showingRange: ({ start, end }) => `Lignes ${start} à ${end}` }}
+        />
+      );
+      expect(screen.getByText('Lignes 11 à 20')).toBeInTheDocument();
+    });
+
+    it('DataTable passes its row count', () => {
+      render(
+        <DataTable
+          columns={[{ id: 'name', header: 'Name', cell: ({ row }) => row.id }]}
+          data={[{ id: 'a' }, { id: 'b' }, { id: 'c' }]}
+          pagination={{ ...base, pageIndex: 0, hasNextPage: false, hasPreviousPage: false }}
+        />
+      );
+      expect(screen.getByText('Showing 1-3')).toBeInTheDocument();
     });
   });
 });

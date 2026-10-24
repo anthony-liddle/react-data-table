@@ -84,6 +84,24 @@ Each filter's URL param is now prefixed with the key, `?members.team=Design` rat
 
 Use the same `persistKey` on the table and its hooks.
 
+### `useCursorPagination` returns `variables` and `getPagination`
+
+```diff
+- const { pagination, goToNext, goToPrevious, hasPreviousPage, pageIndex } = useCursorPagination(25);
+- const { data } = useQuery(QUERY, { variables: { ...pagination } });
+- <DataTable pagination={{ totalCount, pageIndex, pageSize: 25, hasNextPage: data.pageInfo.hasNextPage,
+-   hasPreviousPage, onNextPage: () => goToNext(data.pageInfo), onPreviousPage: goToPrevious }} />
++ const cursor = useCursorPagination({ pageSize: 25 });
++ const { data } = useQuery(QUERY, { variables: { ...cursor.variables } });
++ <DataTable pagination={cursor.getPagination(data?.pageInfo, data?.totalCount)} />
+```
+
+The hook takes an options object like the others. `pagination` is now `variables`, and `getPagination(pageInfo, totalCount?)` builds the table's prop with Next wired to the page info. `goToNext`, `goToPrevious` and `hasPreviousPage` are no longer returned: the prop's handlers cover them.
+
+### `totalCount` is optional, and an empty page reads 0 to 0
+
+`TablePagination.totalCount` may be left out when an API has no total. The footer then shows "Showing 11-20" (the new `showingRange` label), drops "Page N of M" and lets `hasNextPage` drive Next. A standalone `Pagination` takes `pageRowCount` to end the range; `DataTable` passes its row count. A page with no rows, which used to read "Showing 1-0 of 0 results", now reads "Showing 0-0 of 0 results".
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

@@ -6,7 +6,16 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '../icon.tsx';
 import { Button } from '../ui/button.tsx';
 
 interface PaginationProps {
-  totalCount: number;
+  /**
+   * Rows across every page. Without it the footer shows the page's range only
+   * ("Showing 11-20"), drops "Page N of M", and Next follows `hasNextPage`.
+   */
+  totalCount?: number;
+  /**
+   * Rows on this page, which ends the range when there is no total. Defaults to
+   * a full page. `DataTable` passes its row count.
+   */
+  pageRowCount?: number;
   pageIndex: number;
   pageSize: number;
   hasNextPage: boolean;
@@ -25,7 +34,8 @@ interface PaginationProps {
 }
 
 export const Pagination = ({
-  totalCount = 0,
+  totalCount,
+  pageRowCount,
   pageIndex = 0,
   pageSize,
   hasNextPage,
@@ -38,19 +48,25 @@ export const Pagination = ({
 }: PaginationProps) => {
   const t = resolveLabels(labels);
 
-  const start = pageIndex * pageSize + 1;
-  const end = Math.min((pageIndex + 1) * pageSize, totalCount);
-  // Derive the total page count from totalCount when available; fall back to 1
-  // for the zero-results case.
-  const pageCount = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
+  const first = pageIndex * pageSize + 1;
+  const last =
+    totalCount === undefined
+      ? first + (pageRowCount ?? pageSize) - 1
+      : Math.min((pageIndex + 1) * pageSize, totalCount);
+  // A page with no rows (no results, or a page past the end) reads 0 to 0.
+  const [start, end] = last < first ? [0, 0] : [first, last];
+  // The total page count, with 1 for the zero-results case.
+  const pageCount = totalCount ? Math.ceil(totalCount / pageSize) : 1;
 
   return (
     <div className={cx('rdt-pagination', showPageCount && 'rdt-pagination--bordered', className)}>
       <div className="rdt-pagination__range">
-        {t.showingRangeOf({ start, end, total: totalCount })}
+        {totalCount === undefined
+          ? t.showingRange({ start, end })
+          : t.showingRangeOf({ start, end, total: totalCount })}
       </div>
       <div className="rdt-pagination__controls">
-        {showPageCount && (
+        {showPageCount && totalCount !== undefined && (
           <span className="rdt-pagination__page-count">
             {t.pageOf({ page: pageIndex + 1, pageCount })}
           </span>
