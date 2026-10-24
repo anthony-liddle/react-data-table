@@ -376,6 +376,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           column={column}
                           sortBy={sort?.sortBy}
                           onSort={sort?.onSort}
+                          labels={t}
                           className={column.headerClassName || ''}
                           rowSpan={2}
                         />
@@ -405,6 +406,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                           column={subColumn}
                           sortBy={sort?.sortBy}
                           onSort={sort?.onSort}
+                          labels={t}
                           className={subColumn.headerClassName || ''}
                         />
                       ));
@@ -439,6 +441,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     column={column}
                     sortBy={sort?.sortBy}
                     onSort={sort?.onSort}
+                    labels={t}
                     className={column.headerClassName || ''}
                   />
                 ))}

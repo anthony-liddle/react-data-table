@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, type MouseEvent, type ReactNode, useRef } from 'react';
 
+import { type DataTableLabels, defaultLabels } from '../../../labels.ts';
 import { cx } from '../../../lib/cx.ts';
 import type { SortItem } from '../../data-table/types.ts';
 import { ArrowDownward, ArrowUpward, SwapVert } from '../../icon.tsx';
@@ -14,6 +15,7 @@ interface SortableHeaderClientProps {
   /** The table's sort, in priority order. */
   sortBy?: SortItem[];
   onSort: (key: string, options: { additive: boolean }) => void;
+  labels?: DataTableLabels;
   className?: string;
   sticky?: boolean;
   disabled?: boolean;
@@ -30,6 +32,7 @@ export const SortableHeaderClient = ({
   sortKey,
   sortBy = [],
   onSort,
+  labels = defaultLabels,
   className,
   sticky = false,
   disabled = false,
@@ -40,6 +43,8 @@ export const SortableHeaderClient = ({
   // A value outside the type (an uppercase enum cast through, say) shows as unsorted.
   const direction = sortBy[index]?.direction;
   const sortDirection = direction === 'asc' || direction === 'desc' ? direction : null;
+
+  const priority = isActive && sortBy.length > 1 ? index + 1 : null;
 
   // Shift+Enter or Shift+Space adds the column, like Shift+click. Browsers
   // differ on whether a click made from the keyboard carries shiftKey, so the
@@ -106,6 +111,20 @@ export const SortableHeaderClient = ({
                 <ArrowUpward className="rdt-sort-header__arrow" />
               )}
             </span>
+            {/* While several columns are sorted, each shows its place, and
+                screen readers hear it with the direction, which only the
+                primary column's aria-sort carries. */}
+            {priority !== null && sortDirection && (
+              <>
+                <span className="rdt-sort-header__priority" aria-hidden="true">
+                  {priority}
+                </span>
+                <span className="rdt-visually-hidden">
+                  {' '}
+                  {labels.sortPriority({ priority, direction: sortDirection })}
+                </span>
+              </>
+            )}
           </span>
         </button>
       )}

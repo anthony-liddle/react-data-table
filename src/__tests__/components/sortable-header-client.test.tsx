@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SortItem } from '@/components/data-table/types';
 import { SortableHeaderClient } from '@/components/library/sortable-header-client';
+import { defaultLabels } from '@/labels';
 
 // Helper function to render component within table structure
 const renderInTable = (component: React.ReactElement) => {
@@ -470,17 +471,65 @@ describe('SortableHeaderClient', () => {
   });
 
   describe('multi-column sort', () => {
-    const renderPair = (sortBy: SortItem[], onSort = mockOnSort) =>
+    const renderPair = (sortBy: SortItem[], onSort = mockOnSort, labels = defaultLabels) =>
       render(
         <table>
           <thead>
             <tr>
-              <SortableHeaderClient sortKey="name" title="Name" sortBy={sortBy} onSort={onSort} />
-              <SortableHeaderClient sortKey="team" title="Team" sortBy={sortBy} onSort={onSort} />
+              <SortableHeaderClient
+                sortKey="name"
+                title="Name"
+                sortBy={sortBy}
+                onSort={onSort}
+                labels={labels}
+              />
+              <SortableHeaderClient
+                sortKey="team"
+                title="Team"
+                sortBy={sortBy}
+                onSort={onSort}
+                labels={labels}
+              />
             </tr>
           </thead>
         </table>
       );
+    const nameAndTeam: SortItem[] = [
+      { key: 'name', direction: 'asc' },
+      { key: 'team', direction: 'desc' },
+    ];
+
+    it('numbers each sorted column while two or more are sorted', () => {
+      const { container } = renderPair(nameAndTeam);
+      const numbers = [...container.querySelectorAll('.rdt-sort-header__priority')];
+      expect(numbers.map(n => n.textContent)).toEqual(['1', '2']);
+      expect(numbers[0]).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('shows no number for a single sort', () => {
+      const { container } = renderPair([{ key: 'name', direction: 'asc' }]);
+      expect(container.querySelector('.rdt-sort-header__priority')).toBeNull();
+      expect(container.querySelector('.rdt-visually-hidden')).toBeNull();
+    });
+
+    it('names priority and direction for screen readers', () => {
+      renderPair(nameAndTeam);
+      expect(
+        screen.getByRole('button', { name: /Team.*sort priority 2, descending/ })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Name.*sort priority 1, ascending/ })
+      ).toBeInTheDocument();
+    });
+
+    it('takes the priority text from labels', () => {
+      renderPair(nameAndTeam, mockOnSort, {
+        ...defaultLabels,
+        sortPriority: ({ priority, direction }) =>
+          `tri ${priority}, ${direction === 'asc' ? 'croissant' : 'décroissant'}`,
+      });
+      expect(screen.getByRole('button', { name: /Team.*tri 2, décroissant/ })).toBeInTheDocument();
+    });
 
     it('reports a plain click as not additive', async () => {
       renderPair([]);

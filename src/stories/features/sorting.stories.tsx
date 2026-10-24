@@ -13,16 +13,23 @@ interface SortingDemoProps {
   /** Column sorted on first render. */
   defaultSortKey: string;
   defaultSortDirection: 'asc' | 'desc';
+  /** Shift+click (or Shift+Enter) adds a column as the next sort key. */
+  multiSort: boolean;
   rowCount: number;
 }
 
-const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: SortingDemoProps) => {
+const SortingTable = ({
+  defaultSortKey,
+  defaultSortDirection,
+  multiSort,
+  rowCount,
+}: SortingDemoProps) => {
   const defaultSortBy = useMemo(
     () =>
       defaultSortKey === 'none' ? [] : [{ key: defaultSortKey, direction: defaultSortDirection }],
     [defaultSortKey, defaultSortDirection]
   );
-  const sort = useTableSort({ sortableColumns: SORT_KEYS, defaultSortBy });
+  const sort = useTableSort({ sortableColumns: SORT_KEYS, defaultSortBy, multiSort });
 
   const rows = useMemo(
     () => sortMembers(members.slice(0, rowCount), sort.sortBy),
@@ -38,8 +45,11 @@ const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: Sortin
   return (
     <Demo>
       <Intro>
-        Click any header with the ⇅ icon. Each click cycles that column ascending → descending →
-        unsorted, and one column sorts at a time.
+        Click any header with the ⇅ icon. Each click makes that column the only sort and cycles it
+        ascending → descending → unsorted.{' '}
+        {multiSort
+          ? 'With multi-sort on, Shift+click (or Shift+Enter on a focused header) adds the column as the next sort key, flips it, then removes it; the small numbers show each column’s place.'
+          : 'Turn on multi-sort in the controls to sort by several columns.'}
       </Intro>
       <StatePanel label="Sort state">
         <Toolbar>
@@ -55,7 +65,7 @@ const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: Sortin
 /** Remounts when the defaults change so the new defaults actually apply. */
 const SortingDemo = (props: SortingDemoProps) => (
   <SortingTable
-    key={`${props.defaultSortKey}:${props.defaultSortDirection}:${props.rowCount}`}
+    key={`${props.defaultSortKey}:${props.defaultSortDirection}:${props.multiSort}:${props.rowCount}`}
     {...props}
   />
 );
@@ -63,7 +73,7 @@ const SortingDemo = (props: SortingDemoProps) => (
 const meta = {
   title: 'Features/Sorting',
   component: SortingDemo,
-  args: { defaultSortKey: 'none', defaultSortDirection: 'asc', rowCount: 15 },
+  args: { defaultSortKey: 'none', defaultSortDirection: 'asc', multiSort: false, rowCount: 15 },
   argTypes: {
     defaultSortKey: { control: 'select', options: ['none', ...SORT_KEYS] },
     defaultSortDirection: { control: 'inline-radio', options: ['asc', 'desc'] },
@@ -97,5 +107,38 @@ export const SortingInteraction: Story = {
     await waitFor(() => expect(firstName()).not.toBe(ascending));
     await userEvent.click(canvas.getByText('Name'));
     await waitFor(() => expect(firstName()).toBe(original));
+  },
+};
+
+/**
+ * Test-only twin (hidden from the sidebar by `!dev`) with multi-sort on:
+ * Shift+click adds Team, Shift+Enter adds Role, Shift+Space flips it.
+ */
+export const MultiSortInteraction: Story = {
+  args: { multiSort: true },
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const user = userEvent.setup();
+    const state = () => canvas.getByTestId('sort-state');
+
+    await user.click(canvas.getByRole('button', { name: /^Name/ }));
+    await user.keyboard('{Shift>}');
+    await user.click(canvas.getByRole('button', { name: /^Team/ }));
+    await user.keyboard('{/Shift}');
+    await waitFor(() => expect(state()).toHaveTextContent('Name ascending, Team ascending'));
+
+    canvas.getByRole('button', { name: /^Role/ }).focus();
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    await waitFor(() =>
+      expect(state()).toHaveTextContent('Name ascending, Team ascending, Role ascending')
+    );
+    await user.keyboard('{Shift>}[Space]{/Shift}');
+    await waitFor(() =>
+      expect(state()).toHaveTextContent('Name ascending, Team ascending, Role descending')
+    );
+    await expect(
+      canvas.getByRole('button', { name: /^Role.*sort priority 3, descending/ })
+    ).toBeInTheDocument();
   },
 };

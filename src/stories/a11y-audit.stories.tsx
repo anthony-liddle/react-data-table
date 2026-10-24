@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../components/data-table/data-table.tsx';
-import type { TableActionMenuItem } from '../components/data-table/types.ts';
+import type { SortItem, TableActionMenuItem } from '../components/data-table/types.ts';
 import { at } from '../test-support/at.ts';
 import { defaultColumns, isSuspended, type Member, members } from './support/members.tsx';
 
@@ -39,7 +39,7 @@ const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'Delete', onSelect: fn(), disabled: ({ row }) => isSuspended(row) },
 ];
 
-const FullTable = () => {
+const FullTable = ({ sortBy = [{ key: 'name', direction: 'asc' }] }: { sortBy?: SortItem[] }) => {
   const [selected, setSelected] = useState<Member[]>(rows.slice(0, 2));
   return (
     <DataTable
@@ -48,7 +48,7 @@ const FullTable = () => {
       getRowLabel={row => row.name}
       actionMenu={actionMenu}
       showPageCount
-      sort={{ sortBy: [{ key: 'name', direction: 'asc' }], onSort: fn() }}
+      sort={{ sortBy, onSort: fn() }}
       selection={{
         onToggleRow: row =>
           setSelected(prev =>
@@ -112,6 +112,25 @@ export const RowActionSubmenuOpen: Story = {
     const body = within(document.body);
     await userEvent.click(await body.findByText('Change role'));
     await body.findByText('Make admin');
+  },
+};
+
+/** Three sorted columns: the priority numbers and their screen reader text. */
+export const MultiSort: Story = {
+  render: () => (
+    <FullTable
+      sortBy={[
+        { key: 'team', direction: 'asc' },
+        { key: 'role', direction: 'desc' },
+        { key: 'name', direction: 'asc' },
+      ]}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByRole('button', { name: /Role.*sort priority 2, descending/ })
+    ).toBeInTheDocument();
   },
 };
 

@@ -72,6 +72,7 @@ const BLOCKS = [
   'rdt-pagination',
   'rdt-button',
   'rdt-skeleton',
+  'rdt-visually-hidden',
 ];
 
 let failed = false;
