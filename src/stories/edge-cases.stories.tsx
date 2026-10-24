@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../components/data-table/data-table.tsx';
-import type { TableColumn } from '../components/data-table/types.ts';
+import { Pagination } from '../components/data-table/pagination.tsx';
+import type { TableActionMenuItem, TableColumn } from '../components/data-table/types.ts';
 import { type Member, memberColumn, members } from './support/members.tsx';
 
 /**
@@ -152,5 +153,162 @@ export const PinnedColumnReorderGrouped: Story = {
     await moveDownInPanel(canvasElement, 'Contact');
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(headers(canvasElement)).toEqual(['Name', 'Team', 'Contact']));
+  },
+};
+
+// Unset every theme token, so the package's own defaults show: what a page
+// with no theme gets. `initial` makes a custom property invalid, and var()
+// then falls back.
+const THEME_TOKENS = [
+  'background',
+  'foreground',
+  'card',
+  'popover',
+  'popover-foreground',
+  'primary',
+  'primary-foreground',
+  'muted',
+  'muted-foreground',
+  'accent',
+  'accent-foreground',
+  'border',
+  'ring',
+];
+const noTheme = Object.fromEntries(
+  THEME_TOKENS.map(token => [`--${token}`, 'initial'])
+) as CSSProperties;
+
+const NoTheme = ({ dark, children }: { dark?: boolean; children: ReactNode }) => (
+  <div
+    className={dark ? 'dark' : undefined}
+    // A dark page under the section, as a real dark section has.
+    style={{ ...noTheme, color: 'rgb(255, 0, 0)', backgroundColor: 'rgb(10, 10, 10)' }}
+  >
+    {children}
+  </div>
+);
+
+const channels = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+const brightness = (color: string) => channels(color).reduce((sum, value) => sum + value, 0);
+
+/** With no theme, a table in a `.dark` section uses the dark defaults for its text too. */
+export const TextInADarkSection: Story = {
+  render: () => (
+    <NoTheme dark>
+      <DataTable columns={columns} data={rows} />
+    </NoTheme>
+  ),
+  play: async ({ canvasElement }) => {
+    const cell = canvasElement.querySelector('tbody td') as HTMLElement;
+    await expect(brightness(getComputedStyle(cell).color)).toBeGreaterThan(600);
+  },
+};
+
+const paginationProps = {
+  totalCount: 30,
+  pageIndex: 1,
+  pageSize: 10,
+  hasNextPage: true,
+  hasPreviousPage: true,
+  onNextPage: fn(),
+  onPreviousPage: fn(),
+};
+
+/** `.dark` on a component's own element works like `.dark` on an ancestor. */
+export const DarkOnTheElementItself: Story = {
+  render: () => (
+    <NoTheme>
+      <div className="dark" data-testid="inside">
+        <Pagination {...paginationProps} />
+      </div>
+      <div data-testid="itself">
+        <Pagination {...paginationProps} className="dark" />
+      </div>
+    </NoTheme>
+  ),
+  play: async ({ canvasElement }) => {
+    const range = (testId: string) =>
+      canvasElement.querySelector(`[data-testid="${testId}"] .rdt-pagination__range`) as Element;
+    await expect(getComputedStyle(range('itself')).color).toBe(
+      getComputedStyle(range('inside')).color
+    );
+  },
+};
+
+const menuItems: TableActionMenuItem<Row>[] = [
+  { label: 'Profile', href: '#profile', icon: <span aria-hidden="true">P</span> },
+  { label: 'Edit', onSelect: fn(), icon: <span aria-hidden="true">E</span> },
+  {
+    label: 'Move',
+    icon: <span aria-hidden="true">M</span>,
+    subItems: [{ label: 'To the top', onSelect: fn(), icon: <span aria-hidden="true">T</span> }],
+  },
+];
+
+// The space between a menu item's icon and its label.
+const labelGap = (item: Element, label: string): number => {
+  const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node && node.textContent?.trim() !== label) {
+    node = walker.nextNode();
+  }
+  const icon = item.querySelector('.rdt-action-menu__icon');
+  if (!node || !icon) {
+    return Number.NaN;
+  }
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  return Math.round(range.getBoundingClientRect().left - icon.getBoundingClientRect().right);
+};
+
+/** Open menus and the column panel follow the `.dark` section their table is in. */
+export const MenusFollowADarkSection: Story = {
+  render: () => (
+    <div className="dark">
+      <DataTable columns={columns} data={rows} actionMenu={menuItems} getRowLabel={r => r.name} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(document.body);
+    await userEvent.click(canvas.getByRole('button', { name: 'Actions for Ada' }));
+    const menu = await body.findByRole('menu');
+    await expect(brightness(getComputedStyle(menu).backgroundColor)).toBeLessThan(150);
+    await userEvent.keyboard('{Escape}');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Column settings' }));
+    const panel = await body.findByRole('dialog', { name: 'Columns' });
+    await expect(brightness(getComputedStyle(panel).backgroundColor)).toBeLessThan(150);
+    await userEvent.keyboard('{Escape}');
+  },
+};
+
+/**
+ * Plain items, link items and submenu items are all the same height, and their
+ * labels sit the same distance from their icons.
+ */
+export const MenuItemHeights: Story = {
+  render: () => (
+    <DataTable columns={columns} data={rows} actionMenu={menuItems} getRowLabel={r => r.name} />
+  ),
+  play: async ({ canvasElement }) => {
+    const body = within(document.body);
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Actions for Ada' }));
+    const height = (element: Element) => element.getBoundingClientRect().height;
+    const move = await body.findByRole('menuitem', { name: 'Move' });
+    // Measure the menu before opening the submenu, which hides it from the
+    // accessibility tree.
+    const items = ['Profile', 'Edit', 'Move'].map(name => body.getByRole('menuitem', { name }));
+    const heights = items.map(height);
+    const gaps = items.map((item, i) => labelGap(item, ['Profile', 'Edit', 'Move'][i] ?? ''));
+    move.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const sub = await body.findByRole('menuitem', { name: 'To the top' });
+    heights.push(height(sub));
+    gaps.push(labelGap(sub, 'To the top'));
+    await expect(new Set(heights).size).toBe(1);
+    await expect(gaps).toEqual([8, 8, 8, 8]);
+    await userEvent.keyboard('{Escape}');
+    await userEvent.keyboard('{Escape}');
   },
 };

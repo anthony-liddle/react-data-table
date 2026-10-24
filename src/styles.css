@@ -91,7 +91,18 @@
     .rdt-column-panel,
     .rdt-table__row,
     .rdt-table__header-cell
-  ) {
+  ),
+/* .dark on a block's own element, or copied onto a menu opened from a .dark
+   section, works like .dark on an ancestor. */
+:where(.dark):where(
+  .rdt-table,
+  .rdt-pagination,
+  .rdt-sort-header,
+  .rdt-menu,
+  .rdt-column-panel,
+  .rdt-table__row,
+  .rdt-table__header-cell
+) {
   --_rdt-background: var(--background, hsl(224 71% 4%));
   --_rdt-foreground: var(--foreground, hsl(213 31% 91%));
   --_rdt-card: var(--card, hsl(222 47% 11%));
@@ -120,6 +131,9 @@
   overflow: auto;
   font-size: var(--rdt-font-size, 0.875rem);
   line-height: 1.25rem;
+  /* Its own text colour, so a .dark section with no theme doesn't leave the
+     page's colour on the dark card. */
+  color: var(--_rdt-foreground);
   background-color: var(--_rdt-card);
   border: 1px solid var(--_rdt-border);
   border-radius: var(--rdt-radius, 0.5rem);
@@ -730,17 +744,18 @@
   text-decoration: none;
 }
 
-/* A top-level item's content box, which gives the item its taller padding. */
+/* A top-level item's content box: its icon and label in a row, spaced like
+   the items that hold them directly. Every item, plain, link or submenu, takes
+   its height from the item's own padding. */
 .rdt-action-menu__content {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.5rem 0;
 }
 
-/* The icon slot before an item's label. Link items center it in a taller
-   slot without the gap, matching how they have always rendered. */
+/* The icon slot before an item's label. The item's gap spaces it. */
 .rdt-action-menu__icon {
   display: flex;
   flex-shrink: 0;
@@ -748,12 +763,6 @@
   justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  margin-right: 0.5rem;
-}
-
-.rdt-action-menu__icon--link {
-  height: 2rem;
-  margin-right: 0;
 }
 
 /*
@@ -842,6 +851,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem;
+  color: var(--_rdt-foreground);
   border-top: 1px solid var(--_rdt-border);
 }
 

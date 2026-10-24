@@ -17,9 +17,11 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { type DataTableLabels, defaultLabels } from '../../labels.ts';
+import { cx } from '../../lib/cx.ts';
+import { isInDarkSection } from '../../lib/dark-section.ts';
 import { DragIndicator, TableEdit } from '../icon.tsx';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx';
@@ -93,6 +95,8 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   labels = defaultLabels,
 }: TableMenuProps<TData>) => {
   const [localColumns, setLocalColumns] = useState<TableColumn<TData>[]>(columns);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [dark, setDark] = useState(false);
 
   // Update local state when props change
   useEffect(() => {
@@ -137,9 +141,10 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   // and drag handles, which a role="menu" may not contain, and a menu's focus
   // trap swallows Tab so keyboard users could never reach them.
   return (
-    <Popover>
+    <Popover onOpenChange={open => open && setDark(isInDarkSection(trigger.current))}>
       <PopoverTrigger asChild>
         <button
+          ref={trigger}
           type="button"
           className="rdt-column-panel__trigger"
           aria-label={labels.columnSettings}
@@ -148,7 +153,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="rdt-column-panel"
+        className={cx('rdt-column-panel', dark && 'dark')}
         align="end"
         sideOffset={5}
         aria-label={labels.columnsPanel}
