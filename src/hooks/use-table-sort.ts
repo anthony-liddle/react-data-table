@@ -1,127 +1,102 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { readPersistedString, writePersisted } from '../components/data-table/persist.ts';
-import type { SortDirection } from '../components/data-table/types.ts';
+import type { SortItem, TableSort } from '../components/data-table/types.ts';
+import {
+  isLink,
+  readParam,
+  readStorage,
+  storageKey,
+  writeParams,
+  writeStorage,
+} from '../lib/persistence.ts';
+import { nextSortBy, parseSortBy, serializeSortBy } from '../lib/sort-by.ts';
+import { usePersistedState } from './use-persisted-state.ts';
 
-interface UseTableSortProps {
+export interface UseTableSortOptions {
+  /** Keys a header click may sort by. Others are ignored, and a persisted sort naming one is dropped. */
   sortableColumns?: string[];
-  defaultSortKey?: string;
-  defaultSortDirection?: SortDirection;
+  /** The sort before any click, and what `reset()` returns to. Defaults to unsorted. */
+  defaultSortBy?: SortItem[];
+  /** Lets Shift+click (or Shift+Enter) add a column as the next sort key. Default false. */
+  multiSort?: boolean;
+  /** Persists the sort in the URL (`{key}.sort=name,-team`) and localStorage under this key. */
   persistKey?: string;
+  /** Called with the next sort on every change but a restore, e.g. to reset the page. */
+  onChange?: (sortBy: SortItem[]) => void;
 }
 
-// The `sort`/`dir` params are shared across every table on the site (the URL
-// param names aren't namespaced), so a persisted value can belong to a DIFFERENT
-// table, e.g. a leaderboard sorted by `score`. Honor a persisted
-// sort key only when it names a real column of THIS table; otherwise a foreign
-// key flows into the query as an invalid sort enum (fetch fails) and server and
-// client disagree on the active column (hydration mismatch). Mirrors the
-// `sortableColumns` guard already applied on click in `handleSort`. Returns null
-// when there is no usable persisted key, which also gates the direction below so
-// a rejected key can't leak its `dir` either.
-const readValidatedSortKey = (
-  persistKey: string,
-  sortableColumns: string[] | undefined
-): string | null => {
-  const persisted = readPersistedString('sort', `tablesort:${persistKey}:key`);
-  if (persisted != null && (!sortableColumns || sortableColumns.includes(persisted))) {
-    return persisted;
-  }
-  return null;
-};
+const NO_SORT: SortItem[] = [];
 
-// A URL or storage can hold any string; anything but 'asc'/'desc' is no direction.
-const toSortDirection = (value: string | null | undefined): SortDirection =>
-  value === 'asc' || value === 'desc' ? value : null;
-
+/**
+ * Sort state for `DataTable`. Pass the result to the `sort` prop as it is, and
+ * send `sortBy` with your query.
+ */
 export const useTableSort = ({
   sortableColumns,
-  defaultSortKey,
-  defaultSortDirection,
+  defaultSortBy = NO_SORT,
+  multiSort = false,
   persistKey,
-}: UseTableSortProps) => {
-  // Lazy initializer: reads persisted state on client, defaults on server
-  const [sort, setSort] = useState<string | null>(() => {
-    if (typeof window === 'undefined' || !persistKey) {
-      return defaultSortKey ?? null;
-    }
-    return readValidatedSortKey(persistKey, sortableColumns) ?? defaultSortKey ?? null;
+  onChange,
+}: UseTableSortOptions = {}) => {
+  const {
+    value: sortBy,
+    setValue,
+    isRestored,
+  } = usePersistedState<SortItem[]>({
+    persistKey,
+    defaultValue: defaultSortBy,
+    serialize: serializeSortBy,
+    read: key => {
+      // A link is the whole view; otherwise the URL's own value, then storage.
+      const raw = isLink(key)
+        ? readParam(key, 'sort')
+        : (readParam(key, 'sort') ?? readStorage(storageKey(key, 'sort')));
+      return raw === null
+        ? undefined
+        : (parseSortBy(raw, { sortableColumns, multiSort }) ?? undefined);
+    },
+    write: (key, next) => {
+      // Always written, even when unsorted, so a copied link is a whole view.
+      const raw = serializeSortBy(next);
+      writeParams(key, { sort: raw });
+      writeStorage(storageKey(key, 'sort'), raw);
+    },
   });
 
-  const [direction, setDirection] = useState<SortDirection>(() => {
-    if (typeof window === 'undefined' || !persistKey) {
-      return toSortDirection(defaultSortDirection);
-    }
-    // Only honor the persisted direction when the persisted sort key belongs to
-    // THIS table. Otherwise a foreign `?sort=score&dir=desc` would still flip the
-    // default column's direction even though the foreign key was rejected above.
-    if (readValidatedSortKey(persistKey, sortableColumns) == null) {
-      return toSortDirection(defaultSortDirection);
-    }
-    const dir = readPersistedString('dir', `tablesort:${persistKey}:dir`);
-    return toSortDirection(dir) ?? toSortDirection(defaultSortDirection);
-  });
+  // onChange runs from the handlers, never from an effect (which would fire on
+  // a restore) or a state updater (which StrictMode runs twice).
+  const latest = useRef({ sortBy, onChange });
+  latest.current = { sortBy, onChange };
+  const setSortBy = useCallback(
+    (next: SortItem[]) => {
+      const { sortBy: current, onChange: notify } = latest.current;
+      if (serializeSortBy(next) === serializeSortBy(current)) {
+        return;
+      }
+      latest.current.sortBy = next;
+      setValue(next);
+      notify?.(next);
+    },
+    [setValue]
+  );
 
-  // Persist sort state to URL + localStorage when it changes
-  const isFirstPersist = useRef(true);
-  useEffect(() => {
-    if (!persistKey) {
-      return;
-    }
-    if (isFirstPersist.current) {
-      isFirstPersist.current = false;
-      return;
-    }
-    writePersisted({ sort: sort, dir: direction }, `tablesort:${persistKey}:key`, sort);
-    try {
-      localStorage.setItem(`tablesort:${persistKey}:dir`, JSON.stringify(direction));
-    } catch {
-      // ignore
-    }
-  }, [persistKey, sort, direction]);
-
-  const handleSort = useCallback(
-    (key: string) => {
+  const onSort = useCallback(
+    (key: string, { additive }: { additive: boolean }) => {
       if (sortableColumns && !sortableColumns.includes(key)) {
         return;
       }
-      if (sort !== key) {
-        setSort(key);
-        setDirection('asc');
-      } else if (direction === 'asc') {
-        setDirection('desc');
-      } else if (direction === 'desc') {
-        setSort(null);
-        setDirection(null);
-      } else {
-        setSort(key);
-        setDirection('asc');
-      }
+      setSortBy(nextSortBy(latest.current.sortBy, key, { additive, multiSort }));
     },
-    [sort, direction, sortableColumns]
+    [sortableColumns, multiSort, setSortBy]
   );
 
-  const setSortDirection = useCallback((direction: SortDirection) => {
-    setDirection(toSortDirection(direction));
-  }, []);
+  const reset = useCallback(() => setSortBy(defaultSortBy), [defaultSortBy, setSortBy]);
 
-  const setSortKey = useCallback((key: string) => {
-    setSort(key);
-  }, []);
-
-  const reset = useCallback(() => {
-    setSort(null);
-    setDirection(null);
-  }, []);
-
-  return {
-    sort,
-    direction,
-    handleSort,
-    setSortDirection,
-    setSortKey,
-    reset,
+  return { sortBy, onSort, setSortBy, reset, isRestored } satisfies TableSort & {
+    setSortBy: (sortBy: SortItem[]) => void;
+    reset: () => void;
+    isRestored: boolean;
   };
 };

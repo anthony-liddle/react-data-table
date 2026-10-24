@@ -17,41 +17,37 @@ interface SortingDemoProps {
 }
 
 const SortingTable = ({ defaultSortKey, defaultSortDirection, rowCount }: SortingDemoProps) => {
-  const { sort, direction, handleSort, reset } = useTableSort({
-    sortableColumns: SORT_KEYS,
-    defaultSortKey: defaultSortKey === 'none' ? undefined : defaultSortKey,
-    defaultSortDirection: defaultSortKey === 'none' ? undefined : defaultSortDirection,
-  });
+  const defaultSortBy = useMemo(
+    () =>
+      defaultSortKey === 'none' ? [] : [{ key: defaultSortKey, direction: defaultSortDirection }],
+    [defaultSortKey, defaultSortDirection]
+  );
+  const sort = useTableSort({ sortableColumns: SORT_KEYS, defaultSortBy });
 
   const rows = useMemo(
-    () => sortMembers(members.slice(0, rowCount), sort, direction),
-    [rowCount, sort, direction]
+    () => sortMembers(members.slice(0, rowCount), sort.sortBy),
+    [rowCount, sort.sortBy]
   );
-  const column = defaultColumns.find(c => c.sortKey === sort);
+  const state = sort.sortBy
+    .map(({ key, direction }) => {
+      const header = defaultColumns.find(c => c.sortKey === key)?.header ?? key;
+      return `${header} ${direction === 'asc' ? 'ascending' : 'descending'}`;
+    })
+    .join(', ');
 
   return (
     <Demo>
       <Intro>
         Click any header with the ⇅ icon. Each click cycles that column ascending → descending →
-        unsorted. One column sorts at a time: the component's <code>sort</code> prop holds a single
-        key, so multi-column sorting is not supported.
+        unsorted, and one column sorts at a time.
       </Intro>
       <StatePanel label="Sort state">
         <Toolbar>
-          <span data-testid="sort-state">
-            {column && direction
-              ? `${column.header}, ${direction === 'asc' ? 'ascending' : 'descending'}`
-              : 'Unsorted (original order)'}
-          </span>
-          <DemoButton onClick={reset}>Clear sort</DemoButton>
+          <span data-testid="sort-state">{state || 'Unsorted (original order)'}</span>
+          <DemoButton onClick={() => sort.setSortBy([])}>Clear sort</DemoButton>
         </Toolbar>
       </StatePanel>
-      <DataTable
-        columns={defaultColumns}
-        data={rows}
-        sort={{ sortKey: sort, direction, handleSort }}
-        hideTableSettings
-      />
+      <DataTable columns={defaultColumns} data={rows} sort={sort} hideTableSettings />
     </Demo>
   );
 };
@@ -93,7 +89,9 @@ export const SortingInteraction: Story = {
     const original = firstName();
 
     await userEvent.click(canvas.getByText('Name'));
-    await waitFor(() => expect(canvas.getByTestId('sort-state')).toHaveTextContent('Name, asc'));
+    await waitFor(() =>
+      expect(canvas.getByTestId('sort-state')).toHaveTextContent('Name ascending')
+    );
     const ascending = firstName();
     await userEvent.click(canvas.getByText('Name'));
     await waitFor(() => expect(firstName()).not.toBe(ascending));

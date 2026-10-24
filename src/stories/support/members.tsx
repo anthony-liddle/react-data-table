@@ -1,8 +1,4 @@
-import type {
-  BaseTableRow,
-  SortDirection,
-  TableColumn,
-} from '../../components/data-table/types.ts';
+import type { BaseTableRow, SortItem, TableColumn } from '../../components/data-table/types.ts';
 import { at } from '../../test-support/at.ts';
 
 /**
@@ -270,19 +266,15 @@ export const sortKeysOf = (columns: TableColumn<Member>[]) =>
     .map(column => column.sortKey)
     .filter((key): key is string => Boolean(key));
 
-/** Client-side stand-in for a server-side ORDER BY. Nulls sort first. */
-export const sortMembers = (
-  rows: Member[],
-  sortKey: string | null,
-  direction: SortDirection
-): Member[] => {
-  if (!sortKey || !direction) {
+/** Client-side stand-in for a server-side ORDER BY, key by key. Nulls sort first. */
+export const sortMembers = (rows: Member[], sortBy: SortItem[]): Member[] => {
+  if (sortBy.length === 0) {
     return rows;
   }
-  const dir = direction === 'asc' ? 1 : -1;
-  return [...rows].sort((a, b) => {
-    const av = a[sortKey as keyof Member] as string | number | null;
-    const bv = b[sortKey as keyof Member] as string | number | null;
+  const compare = (a: Member, b: Member, { key, direction }: SortItem) => {
+    const dir = direction === 'asc' ? 1 : -1;
+    const av = a[key as keyof Member] as string | number | null;
+    const bv = b[key as keyof Member] as string | number | null;
     if (av === bv) {
       return 0;
     }
@@ -295,5 +287,14 @@ export const sortMembers = (
     return typeof av === 'number' && typeof bv === 'number'
       ? dir * (av - bv)
       : dir * String(av).localeCompare(String(bv));
+  };
+  return [...rows].sort((a, b) => {
+    for (const item of sortBy) {
+      const result = compare(a, b, item);
+      if (result !== 0) {
+        return result;
+      }
+    }
+    return 0;
   });
 };

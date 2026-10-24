@@ -16,23 +16,26 @@ import {
 import { type Member, memberColumn, members, sortKeysOf, sortMembers, TEAMS } from './members.tsx';
 
 /**
- * The URL params every persisted piece of state writes to. They are not
- * namespaced by persistKey (that is how the component works), so a demo that
+ * The URL params the table persists to: its own namespace (`{persistKey}.sort`),
+ * plus the column and filter params that are not namespaced yet. A demo that
  * means to prove localStorage persistence has to strip them first.
  */
-const PERSISTED_PARAMS = ['sort', 'dir', 'cols', 'team'] as const;
+const UNNAMESPACED_PARAMS = ['cols', 'team'];
+const isPersistedParam = (persistKey: string, param: string) =>
+  param.startsWith(`${persistKey}.`) || UNNAMESPACED_PARAMS.includes(param);
 
 const storageKeysFor = (persistKey: string) => [
   `datatable:${persistKey}`,
-  `tablesort:${persistKey}:key`,
-  `tablesort:${persistKey}:dir`,
+  `rdt:1:${persistKey}:sort`,
   `filters:${persistKey}`,
 ];
 
-const stripPersistedParams = () => {
+const stripPersistedParams = (persistKey: string) => {
   const url = new URL(window.location.href);
-  for (const param of PERSISTED_PARAMS) {
-    url.searchParams.delete(param);
+  for (const param of [...url.searchParams.keys()]) {
+    if (isPersistedParam(persistKey, param)) {
+      url.searchParams.delete(param);
+    }
   }
   window.history.replaceState(window.history.state, '', url);
 };
@@ -47,10 +50,10 @@ const clearPersistedStorage = (persistKey: string) => {
   }
 };
 
-const readParams = (): [string, string][] => {
-  const params = new URLSearchParams(window.location.search);
-  return PERSISTED_PARAMS.filter(p => params.has(p)).map(p => [p, params.get(p) ?? '']);
-};
+const readParams = (persistKey: string): [string, string][] =>
+  [...new URLSearchParams(window.location.search)].filter(([param]) =>
+    isPersistedParam(persistKey, param)
+  );
 
 const readStorage = (persistKey: string): [string, string][] =>
   storageKeysFor(persistKey).map(key => {
@@ -69,8 +72,8 @@ const printable = (value: string) => value.replaceAll('\u001f', '␟');
  * page (`/?path=/story/…`), which forwards unknown query params into the
  * preview iframe; standalone it is just the iframe URL.
  */
-const buildShareLink = (storyId: string | undefined) => {
-  const params = readParams();
+const buildShareLink = (persistKey: string, storyId: string | undefined) => {
+  const params = readParams(persistKey);
   try {
     if (storyId && window.parent !== window) {
       const manager = new URL(window.parent.location.href);
@@ -118,7 +121,7 @@ interface PersistedTableProps {
 }
 
 const PersistedTable = ({ mechanism, persistKey, rowCount }: PersistedTableProps) => {
-  const { sort, direction, handleSort } = useTableSort({ sortableColumns: SORT_KEYS, persistKey });
+  const sort = useTableSort({ sortableColumns: SORT_KEYS, persistKey });
   const [filters, setFilter] = usePersistedFilters(persistKey, TEAM_FILTER, {
     persistToStorage: mechanism === 'localStorage',
   });
@@ -127,8 +130,8 @@ const PersistedTable = ({ mechanism, persistKey, rowCount }: PersistedTableProps
   const rows = useMemo(() => {
     const scoped = members.slice(0, rowCount);
     const filtered = team === 'all' ? scoped : scoped.filter(m => m.team === team);
-    return sortMembers(filtered, sort, direction);
-  }, [rowCount, team, sort, direction]);
+    return sortMembers(filtered, sort.sortBy);
+  }, [rowCount, team, sort.sortBy]);
 
   const selectId = `team-filter-${mechanism}`;
   return (
@@ -149,12 +152,7 @@ const PersistedTable = ({ mechanism, persistKey, rowCount }: PersistedTableProps
           ))}
         </select>
       </Toolbar>
-      <DataTable
-        columns={columns}
-        data={rows}
-        sort={{ sortKey: sort, direction, handleSort }}
-        persistKey={persistKey}
-      />
+      <DataTable columns={columns} data={rows} sort={sort} persistKey={persistKey} />
     </>
   );
 };
@@ -179,7 +177,7 @@ const IsolatedDemo = ({
     if (mechanism === 'url') {
       clearPersistedStorage(persistKey);
     } else {
-      stripPersistedParams();
+      stripPersistedParams(persistKey);
     }
     return null;
   });
@@ -189,21 +187,23 @@ const IsolatedDemo = ({
   useEffect(
     () => () => {
       if (mechanism === 'localStorage') {
-        stripPersistedParams();
+        stripPersistedParams(persistKey);
       }
     },
     [mechanism]
   );
 
-  const readUrl = useCallback(() => readParams(), []);
+  const readUrl = useCallback(() => readParams(persistKey), [persistKey]);
   const readStore = useCallback(() => readStorage(persistKey), [persistKey]);
   const params = useLiveValue(readUrl);
   const stored = useLiveValue(readStore);
-  const shareLink = useLiveValue(useCallback(() => buildShareLink(storyId), [storyId]));
+  const shareLink = useLiveValue(
+    useCallback(() => buildShareLink(persistKey, storyId), [persistKey, storyId])
+  );
 
   const resetView = () => {
     clearPersistedStorage(persistKey);
-    stripPersistedParams();
+    stripPersistedParams(persistKey);
     onRemount();
   };
 
@@ -263,7 +263,7 @@ const IsolatedDemo = ({
           <div className="demo-actions">
             <DemoButton
               onClick={() => {
-                stripPersistedParams();
+                stripPersistedParams(persistKey);
                 onRemount();
               }}
             >

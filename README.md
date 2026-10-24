@@ -82,7 +82,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 |---|---|---|---|
 | `columns` | `TableColumn<T>[]` | required | Column definitions (see below) |
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
-| `sort` | `{ sortKey, direction, handleSort }` | – | Sort state and handler. `useTableSort` returns these. |
+| `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
 | `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
 | `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
@@ -124,13 +124,13 @@ interface TableColumn<T> {
 
 | Hook | Returns | Use |
 |---|---|---|
-| `useTableSort({ sortableColumns, defaultSortKey, defaultSortDirection, persistKey })` | `{ sort, direction, handleSort, reset, … }` | Pass to the `sort` prop; feed `sort` / `direction` into your query |
+| `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
 | `usePagination(pageSize)` | `{ offset, limit, pageIndex, getPagination, reset, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination(pageSize)` | `{ pagination: { first, after }, pageIndex, goToNext, goToPrevious, … }` | GraphQL connections: pass `pagination` to the query |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `[filters, setFilter, resetAll, isRestored]` | Any filter state, persisted like the table |
 
-`useTableSort` reports directions as lowercase `'asc'` / `'desc'`, and every option that takes a direction expects lowercase too. If your API wants an uppercase enum, convert at the call.
+`sortBy` lists the sorted columns in priority order, each `{ key, direction }` with a lowercase `'asc'` or `'desc'`; unsorted is an empty list. If your API wants an uppercase enum, convert at the call. `reset()` returns to `defaultSortBy`, and `setSortBy([])` clears the sort.
 
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
@@ -141,7 +141,7 @@ const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.s
 <DataTable columns={columns} data={items} pagination={getPagination(total)} />;
 ```
 
-Call `reset()` when the sort or filters change, so the table goes back to the first page.
+Call `reset()` when the sort or filters change, so the table goes back to the first page. `useTableSort`'s `onChange` runs on every sort change except restoring a persisted one, so it's the place for that: `useTableSort({ onChange: () => reset() })`.
 
 ## Labels
 

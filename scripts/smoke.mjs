@@ -126,7 +126,7 @@ const html = renderToString(
       { id: 'a', name: 'Ada', email: 'ada@example.com' },
       { id: 'b', name: 'Bram', email: 'bram@example.com' },
     ],
-    sort: { sortKey: 'name', direction: 'asc', handleSort: () => {} },
+    sort: { sortBy: [{ key: 'name', direction: 'asc' }], onSort: () => {} },
     pagination: {
       totalCount: 2, pageIndex: 0, pageSize: 10,
       hasNextPage: false, hasPreviousPage: false,

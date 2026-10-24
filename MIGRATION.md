@@ -37,6 +37,23 @@ Each row's menu trigger was named "Actions", so a screen reader announced 50 ide
 
 A `TableActionMenu` used on its own is still named "Actions", or takes `triggerLabel`.
 
+### Sorting takes a list: `sort` is `{ sortBy, onSort }`
+
+`TableSort` was `{ sortKey, direction, handleSort }`, one column at a time. It is now the sorted columns in priority order, and a handler that also says whether the click added a column (Shift+click). `useTableSort` returns exactly that prop, so pass it as it is:
+
+```diff
+- const { sort, direction, handleSort } = useTableSort({ defaultSortKey: 'name', defaultSortDirection: 'asc' });
+- <DataTable sort={{ sortKey: sort, direction, handleSort }} />
++ const sort = useTableSort({ defaultSortBy: [{ key: 'name', direction: 'asc' }] });
++ <DataTable sort={sort} />
+```
+
+- Send `sort.sortBy` with your query: each item is `{ key, direction }`.
+- `SortDirection` is `'asc' | 'desc'`. Unsorted is an empty `sortBy`, not a `null` direction.
+- `setSortKey` and `setSortDirection` are gone. Use `setSortBy`.
+- `reset()` returns to `defaultSortBy` instead of unsorted, and `setSortBy([])` clears.
+- To go back to page 1 when the sort changes, pass `onChange`: `useTableSort({ onChange: () => page.reset() })`. It isn't called when a persisted sort is restored, so a restored page survives.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

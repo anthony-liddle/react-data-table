@@ -100,15 +100,7 @@ describe('TableHeader', () => {
         cell: ({ row }) => <span>{row.name}</span>,
       };
 
-      render(
-        <TableHeader
-          column={column}
-          className=""
-          currentSortKey={null}
-          currentDirection={null}
-          onSort={onSort}
-        />
-      );
+      render(<TableHeader column={column} className="" sortBy={[]} onSort={onSort} />);
 
       // Find the clickable sortable header element
       const header = screen.getByText('Name').closest('th');
@@ -117,12 +109,12 @@ describe('TableHeader', () => {
       if (clickableElement) {
         await user.click(clickableElement);
         expect(onSort).toHaveBeenCalledTimes(1);
-        expect(onSort).toHaveBeenCalledWith('name');
+        expect(onSort).toHaveBeenCalledWith('name', { additive: false });
       } else {
         // Fallback: click the header itself
         await user.click(header!);
         expect(onSort).toHaveBeenCalledTimes(1);
-        expect(onSort).toHaveBeenCalledWith('name');
+        expect(onSort).toHaveBeenCalledWith('name', { additive: false });
       }
     });
 
@@ -152,9 +144,7 @@ describe('TableHeader', () => {
         cell: ({ row }) => <span>{row.name}</span>,
       };
 
-      render(
-        <TableHeader column={column} className="" currentSortKey={null} currentDirection={null} />
-      );
+      render(<TableHeader column={column} className="" sortBy={[]} />);
 
       const header = screen.getByText('Name').closest('th');
       const clickableElement = header?.querySelector('.rdt-sort-header__button');
@@ -166,7 +156,7 @@ describe('TableHeader', () => {
       }
     });
 
-    it('should pass currentSortKey and currentDirection to SortableHeaderClient', () => {
+    it('should pass the sort to SortableHeaderClient', () => {
       const column: TableColumn<TestRow> = {
         id: 'name',
         header: 'Name',
@@ -178,8 +168,7 @@ describe('TableHeader', () => {
         <TableHeader
           column={column}
           className=""
-          currentSortKey="name"
-          currentDirection="asc"
+          sortBy={[{ key: 'name', direction: 'asc' }]}
           onSort={vi.fn()}
         />
       );

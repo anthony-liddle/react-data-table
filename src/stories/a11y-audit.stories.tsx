@@ -48,7 +48,7 @@ const FullTable = () => {
       getRowLabel={row => row.name}
       actionMenu={actionMenu}
       showPageCount
-      sort={{ sortKey: 'name', direction: 'asc', handleSort: fn() }}
+      sort={{ sortBy: [{ key: 'name', direction: 'asc' }], onSort: fn() }}
       selection={{
         onToggleRow: row =>
           setSelected(prev =>

@@ -93,39 +93,34 @@ describe('DataTable', () => {
   });
 
   describe('sorting integration', () => {
-    it('should call handleSort when sortable column header is clicked', async () => {
-      const user = userEvent.setup();
-      const handleSort = vi.fn();
-      const sort: TableSort = {
-        sortKey: null,
-        direction: null,
-        handleSort,
-      };
+    it('reports header clicks to sort.onSort', async () => {
+      const onSort = vi.fn();
+      const sort: TableSort = { sortBy: [], onSort };
 
       render(<DataTable columns={baseColumns} data={baseData} sort={sort} />);
+      await userEvent.click(screen.getByRole('button', { name: 'Name' }));
 
-      const nameHeader = screen.getByText('Name');
-      const clickableElement = nameHeader
-        .closest('th')
-        ?.querySelector('div[class*="cursor-pointer"]');
-
-      if (clickableElement) {
-        await user.click(clickableElement);
-        expect(handleSort).toHaveBeenCalledWith('name');
-      }
+      expect(onSort).toHaveBeenCalledWith('name', { additive: false });
     });
 
-    it('should display sort indicators', () => {
+    it('shows every sorted column, with aria-sort on the primary', () => {
       const sort: TableSort = {
-        sortKey: 'name',
-        direction: 'asc',
-        handleSort: vi.fn(),
+        sortBy: [
+          { key: 'name', direction: 'asc' },
+          { key: 'email', direction: 'desc' },
+        ],
+        onSort: vi.fn(),
       };
 
       render(<DataTable columns={baseColumns} data={baseData} sort={sort} />);
+      const [name, email] = screen.getAllByRole('columnheader');
 
-      const nameHeader = screen.getByText('Name');
-      expect(nameHeader).toBeInTheDocument();
+      expect(name).toHaveAttribute('aria-sort', 'ascending');
+      expect(email).not.toHaveAttribute('aria-sort');
+      expect(email?.querySelector('.rdt-sort-header__icon')).toHaveAttribute(
+        'data-direction',
+        'desc'
+      );
     });
   });
 

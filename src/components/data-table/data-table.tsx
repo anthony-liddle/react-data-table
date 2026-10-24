@@ -374,9 +374,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         <TableHeader
                           key={column.id}
                           column={column}
-                          currentSortKey={sort?.sortKey}
-                          currentDirection={sort?.direction}
-                          onSort={sort?.handleSort}
+                          sortBy={sort?.sortBy}
+                          onSort={sort?.onSort}
                           className={column.headerClassName || ''}
                           rowSpan={2}
                         />
@@ -404,9 +403,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                         <TableHeader
                           key={`${column.id}-${subColumn.id}`}
                           column={subColumn}
-                          currentSortKey={sort?.sortKey}
-                          currentDirection={sort?.direction}
-                          onSort={sort?.handleSort}
+                          sortBy={sort?.sortBy}
+                          onSort={sort?.onSort}
                           className={subColumn.headerClassName || ''}
                         />
                       ));
@@ -439,9 +437,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                   <TableHeader
                     key={column.id}
                     column={column}
-                    currentSortKey={sort?.sortKey}
-                    currentDirection={sort?.direction}
-                    onSort={sort?.handleSort}
+                    sortBy={sort?.sortBy}
+                    onSort={sort?.onSort}
                     className={column.headerClassName || ''}
                   />
                 ))}

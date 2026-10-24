@@ -57,9 +57,9 @@ export const UrlRoundTrip: Story = {
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reload table from URL' }));
     await expectViewRestored(canvasElement);
-    // Restored with localStorage wiped, so the URL alone carried the view.
+    // The button wiped localStorage before the remount, so the URL alone
+    // carried the view (restoring it then writes the sort back to storage).
     await expect(localStorage.getItem('datatable:url-round-trip')).toBeNull();
-    await expect(localStorage.getItem('tablesort:url-round-trip:key')).toBeNull();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reset view' }));
     await waitFor(() => expect(canvas.getByLabelText('Team')).toHaveValue('all'));
@@ -71,15 +71,15 @@ export const LocalStorageRoundTrip: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await changeView(canvasElement);
-    await waitFor(() =>
-      expect(localStorage.getItem('tablesort:local-round-trip:key')).toBe('"name"')
-    );
+    await waitFor(() => expect(localStorage.getItem('rdt:1:local-round-trip:sort')).toBe('name'));
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reload table from localStorage' }));
     await expectViewRestored(canvasElement);
-    // The sort hook does not write on mount, so a missing ?sort= after the
-    // remount shows the sort came back from localStorage, not the URL.
-    await expect(new URL(window.location.href).searchParams.get('sort')).toBeNull();
+    // The params were stripped before the remount, so the sort came back from
+    // localStorage, and restoring it wrote it back to the URL.
+    await expect(new URL(window.location.href).searchParams.get('local-round-trip.sort')).toBe(
+      'name'
+    );
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reset view' }));
     await waitFor(() => expect(canvas.getByLabelText('Team')).toHaveValue('all'));

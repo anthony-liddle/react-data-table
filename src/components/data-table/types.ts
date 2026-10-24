@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
 
-import type { SortDirection } from '../library/sortable-header-client/index.ts';
+export type SortDirection = 'asc' | 'desc';
 
-// Re-export SortDirection for consistent usage
-export type { SortDirection };
+/** One sorted column. A sort is a list of these in priority order. */
+export interface SortItem {
+  key: string;
+  direction: SortDirection;
+}
 
 /**
  * All a row needs is a stable `id`. Any interface or type with one fits, with
@@ -96,10 +99,12 @@ export interface TablePagination {
   onPreviousPage: () => void;
 }
 
+/** What the table needs to show and change a sort. `useTableSort` returns it. */
 export interface TableSort {
-  sortKey: string | null;
-  direction: SortDirection;
-  handleSort: (sortKey: string) => void;
+  /** Sorted columns in priority order; empty means unsorted. */
+  sortBy: SortItem[];
+  /** Called when a sortable header is clicked; `additive` is true for Shift+click or Shift+Enter. */
+  onSort: (key: string, options: { additive: boolean }) => void;
 }
 
 /** What the table needs to show and change a selection. `useTableSelection` returns it. */
