@@ -47,6 +47,14 @@ export const NoResults: Story = {
   },
 };
 
+/**
+ * A cursor API with no total: the range ends at the page's row count, there is
+ * no page count even with showPageCount, and Next follows hasNextPage.
+ */
+export const WithoutTotal: Story = {
+  args: { totalCount: undefined, pageRowCount: 7, hasNextPage: false, showPageCount: true },
+};
+
 export const CustomLabels: Story = {
   args: {
     showPageCount: true,

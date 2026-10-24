@@ -23,7 +23,11 @@ export type {
   VisibleColumn,
 } from './components/data-table/types.ts';
 // Hooks
-export { type CursorPaginationInput, useCursorPagination } from './hooks/use-cursor-pagination.ts';
+export {
+  type CursorPaginationInput,
+  type UseCursorPaginationOptions,
+  useCursorPagination,
+} from './hooks/use-cursor-pagination.ts';
 export { type UsePaginationOptions, usePagination } from './hooks/use-pagination.ts';
 export {
   type FilterDef,

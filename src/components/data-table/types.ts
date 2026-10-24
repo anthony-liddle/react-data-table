@@ -90,7 +90,12 @@ export const reconcileColumnOrder = (
 };
 
 export interface TablePagination {
-  totalCount: number;
+  /**
+   * Rows across every page. Cursor APIs often have none: without it the footer
+   * shows the page's range only, and Next follows `hasNextPage`. `null` (a
+   * nullable GraphQL field) counts as unknown too.
+   */
+  totalCount?: number | null;
   pageIndex: number;
   pageSize: number;
   hasNextPage: boolean;
