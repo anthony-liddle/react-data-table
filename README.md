@@ -84,7 +84,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `data` | `T[]` | required | Rows. Each needs a unique `id`. |
 | `sort` | `TableSort` | – | `{ sortBy, onSort }`: the sorted columns in priority order, and the header click handler. `useTableSort` returns it. |
 | `selection` | `TableSelection<T>` | – | Selection state and handlers; `useTableSelection` returns it. Enables checkboxes and drag selection. |
-| `selectOnRowClick` | `boolean` | `false` | A click anywhere on a row toggles it |
+| `selectOnRowClick` | `boolean` | `false` | A click on a row toggles it, except on the controls inside it (see `onRowClick`) |
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
 | `actionMenu` | `TableActionMenuItem<T>[]` | – | Per-row menu: links, callbacks, one level of submenus, per-row `hidden` / `disabled` |
@@ -94,8 +94,10 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
 | `loading` | `boolean` | `false` | Shows skeleton rows and sets `aria-busy` |
 | `maxLoadingRows` | `number` | `10` | Skeleton row count |
-| `onRowClick` | `(row: T) => void` | – | Row click callback |
-| `renderExpandedRow` | `(row: T) => ReactNode \| null` | – | A full-width row under each row that returns non-null. Expansion state is yours. |
+| `onRowClick` | `(row: T) => void` | – | Row click callback. Clicks on a control inside the row (a link, button, form control, label, `[role=button]`, `[role=checkbox]`, `[role=menuitem]` or editable content), or from a portal opened in a cell, don't count |
+| `renderExpandedRow` | `(row: T) => ReactNode` | – | Content of a row's expanded panel, a full-width row beneath it. Adds a leading column with an expand button per row. Called only for expanded rows |
+| `expansion` | `TableExpansion<T>` | – | Which rows are expanded; `useTableExpansion` returns it. Without it the table keeps that state itself |
+| `expandOnRowClick` | `boolean` | `false` | A click on a row toggles its panel, except on the controls inside it |
 | `rowClassName` | `(row: T) => string` | – | Extra classes per `<tr>` |
 | `getRowTestId` | `(row: T) => string \| undefined` | – | Per-row `data-testid` for end-to-end tests |
 | `getRowLabel` | `(row: T) => string` | – | Names each row for assistive technology: its checkbox is "Select ⟨label⟩" and its menu "Actions for ⟨label⟩". Without it, rows are named by `labels.rowLabel`, "row ⟨id⟩". |
@@ -126,6 +128,7 @@ interface TableColumn<T> {
 |---|---|---|
 | `useTableSort({ sortableColumns, defaultSortBy, multiSort, persistKey, onChange })` | `{ sortBy, onSort, setSortBy, reset, isRestored }` | Pass it to the `sort` prop as it is; send `sortBy` with your query |
 | `useTableSelection(rows, { isRowDisabled })` | `{ selectedRows, onToggleRow, onToggleAll, clearSelection, … }` | Pass it to the `selection` prop as it is |
+| `useTableExpansion({ isRowExpandable, initialExpandedIds })` | `{ isRowExpanded, onToggleRow, expandedIds, setExpandedIds, collapseAll, … }` | Pass it to the `expansion` prop as it is, to keep rows open across a refetch or open one from outside |
 | `usePagination({ pageSize, persistKey })` | `{ offset, limit, pageIndex, getPagination, reset, isRestored, … }` | Offset or page-number APIs and arrays: send `offset` / `limit`, pass `getPagination(totalCount)` to the `pagination` prop |
 | `useCursorPagination({ pageSize })` | `{ variables, pageIndex, getPagination, reset }` | GraphQL connections: send `variables` (`{ first, after }`) with the query, pass `getPagination(pageInfo, totalCount?)` to the `pagination` prop, with the page info of the page `variables` asked for |
 | `usePersistedFilters(key, filterDefs, { persistToStorage })` | `{ filters, setFilter, reset, isRestored }` | Any filter state, persisted like the table |
@@ -165,6 +168,8 @@ Every string the table renders or announces comes from `labels`, so a translatio
 | `previousPage` / `nextPage` | Previous page / Next page |
 | `showingRange({ start, end })` | Showing {start}-{end} (when the total is unknown) |
 | `pageOf({ page, pageCount })` | Page {page} of {pageCount} |
+| `expandColumn` | Details (the expand column's hidden header text) |
+| `expandRow({ rowLabel })` | Details for {rowLabel} |
 | `sortPriority({ priority, direction })` | sort priority {priority}, ascending / descending |
 
 A standalone `TableActionMenu` names its trigger "Actions", or `triggerLabel`.
@@ -216,7 +221,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 
 | Block | Elements and modifiers | State |
 |---|---|---|
-| `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--select`, `--settings`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--select`, `--actions`, `--sticky`), `__empty-row`, `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
+| `rdt-table` | `__scroll`, `__table`, `__head`, `__header-row`, `__header-cell` (`--group`, `--expand`, `--select`, `--settings`, `--actions`, `--sticky`), `__header-label`, `__select-all`, `__body`, `__row` (`--clickable`), `__cell` (`--expand`, `--select`, `--actions`, `--settings`, `--sticky`), `__empty-row`, `__empty`, `__expanded-row`, `__expanded-cell` | `aria-busy` and `data-dragging` on `__table`; `data-selected`, `data-drag-range`, `data-drag-start` and `data-drag-end` on `__row` |
 | `rdt-sort-header` (`--sticky`) | `__button` (spans the cell), `__content` (follows the header's `text-align`), `__label`, `__icon`, `__arrow`, `__priority` (a sorted column's place, while two or more are sorted) | `aria-sort` on the header; `data-direction="asc"` or `"desc"` on `__icon` |
 | `rdt-checkbox` | `__indicator`, `__icon` | `data-state`, `data-disabled` |
 | `rdt-column-panel` | `__trigger`, `__trigger-icon`, `__list`, `__item`, `__label`, `__handle`, `__handle-icon` | `data-dragging` on `__item` |
@@ -225,6 +230,7 @@ Set these on `:root`, on any ancestor of the table, or on a single row through `
 | `rdt-pagination` (`--bordered`) | `__range`, `__controls`, `__page-count`, `__button`, `__icon` | |
 | `rdt-button` (`--ghost`, `--outline`) | | `:disabled` |
 | `rdt-skeleton` (`--select`, `--action`, `--cell`) | | |
+| `rdt-expand-button` | `__icon` (the chevron, turned while open) | `aria-expanded` |
 | `rdt-visually-hidden` | | Text for screen readers only |
 
 Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-sort-header`. The column panel and the row menus render in a portal at the end of `<body>`, so style them by their own classes, not through `.rdt-table`.
@@ -258,6 +264,7 @@ Inside `DataTable`, a sortable header is both `rdt-table__header-cell` and `rdt-
 
 On every PR, each story is rendered in headless Chromium and checked with axe (`@storybook/addon-a11y`).
 
+- Expandable rows have a real button, named "Details for ⟨label⟩", with `aria-expanded` and, while open, `aria-controls` pointing at the panel.
 - Sort headers are buttons. The primary sorted column carries `aria-sort`; while two or more columns are sorted, each sorted header also announces its place and direction ("sort priority 2, descending").
 - Header cells use `scope="col"`, and grouped parent headers use `scope="colgroup"`.
 - Checkboxes, pagination buttons ("Previous page" / "Next page"), the column settings trigger, and column drag handles ("Reorder ⟨column⟩") all have accessible names.
@@ -268,7 +275,7 @@ On every PR, each story is rendered in headless Chromium and checked with axe (`
 Known gaps:
 
 - Drag selection and click-to-select rows are mouse-only; the checkboxes are the keyboard path.
-- `onRowClick` (and so row expansion) has no keyboard path of its own. Put a button in a cell if you need one.
+- `onRowClick` has no keyboard path of its own. Put a button in a cell if you need one. (Row expansion has its own button.)
 
 ## Known issues
 

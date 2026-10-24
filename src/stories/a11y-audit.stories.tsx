@@ -4,6 +4,7 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { DataTable } from '../components/data-table/data-table.tsx';
 import type { SortItem, TableActionMenuItem } from '../components/data-table/types.ts';
+import { useTableExpansion } from '../hooks/use-table-expansion.ts';
 import { at } from '../test-support/at.ts';
 import { defaultColumns, isSuspended, type Member, members } from './support/members.tsx';
 
@@ -39,13 +40,23 @@ const actionMenu: TableActionMenuItem<Member>[] = [
   { label: 'Delete', onSelect: fn(), disabled: ({ row }) => isSuspended(row) },
 ];
 
-const FullTable = ({ sortBy = [{ key: 'name', direction: 'asc' }] }: { sortBy?: SortItem[] }) => {
+const FullTable = ({
+  sortBy = [{ key: 'name', direction: 'asc' }],
+  expandFirst = false,
+}: {
+  sortBy?: SortItem[];
+  /** Adds the expand column, with the first row open. */
+  expandFirst?: boolean;
+}) => {
   const [selected, setSelected] = useState<Member[]>(rows.slice(0, 2));
+  const expansion = useTableExpansion<Member>({ initialExpandedIds: [at(rows, 0).id] });
   return (
     <DataTable
       columns={defaultColumns}
       data={rows}
       getRowLabel={row => row.name}
+      renderExpandedRow={expandFirst ? row => <p>Based in {row.location}</p> : undefined}
+      expansion={expansion}
       actionMenu={actionMenu}
       showPageCount
       sort={{ sortBy, onSort: fn() }}
@@ -131,6 +142,17 @@ export const MultiSort: Story = {
     await expect(
       canvas.getByRole('button', { name: /Role.*sort priority 2, descending/ })
     ).toBeInTheDocument();
+  },
+};
+
+/** The expand column with selection and row menus, and the first row open. */
+export const ExpandedRow: Story = {
+  render: () => <FullTable expandFirst />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button', { name: `Details for ${at(rows, 0).name}` });
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(canvas.getByText(`Based in ${at(rows, 0).location}`)).toBeInTheDocument();
   },
 };
 

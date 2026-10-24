@@ -32,6 +32,10 @@ export interface DataTableLabels {
   nextPage: string;
   /** The "Page N of M" indicator (shown with `showPageCount`). */
   pageOf: (params: { page: number; pageCount: number }) => string;
+  /** Visually hidden text in the expand column's header. */
+  expandColumn: string;
+  /** Name of a row's expand button. */
+  expandRow: (params: { rowLabel: string }) => string;
   /** Read after a sorted column's name while two or more columns are sorted. */
   sortPriority: (params: { priority: number; direction: SortDirection }) => string;
 }
@@ -50,6 +54,8 @@ export const defaultLabels: DataTableLabels = {
   previousPage: 'Previous page',
   nextPage: 'Next page',
   pageOf: ({ page, pageCount }) => `Page ${page} of ${pageCount}`,
+  expandColumn: 'Details',
+  expandRow: ({ rowLabel }) => `Details for ${rowLabel}`,
   sortPriority: ({ priority, direction }) =>
     `sort priority ${priority}, ${direction === 'asc' ? 'ascending' : 'descending'}`,
 };

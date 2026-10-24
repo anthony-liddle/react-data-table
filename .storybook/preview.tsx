@@ -42,6 +42,7 @@ const preview: Preview = {
             'Sorting',
             'Grouped Columns',
             'Row Selection',
+            'Row Expansion',
             'Drag Selection',
             'Column Management',
             'Pagination',

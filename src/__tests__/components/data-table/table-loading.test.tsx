@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { getTableLayout } from '@/components/data-table/layout';
 import { TableLoading } from '@/components/data-table/table-loading';
 import type { BaseTableRow, TableColumn } from '@/components/data-table/types';
 
@@ -9,6 +10,18 @@ interface TestRow extends BaseTableRow {
   name: string;
   email?: string;
 }
+
+// The settings column is hidden unless a test says otherwise, so a row without
+// row menus ends at its last data cell.
+const layoutOf = ({
+  select,
+  actionMenu,
+  hideTableSettings = true,
+}: {
+  select: boolean;
+  actionMenu: boolean;
+  hideTableSettings?: boolean;
+}) => getTableLayout({ expand: false, select, actionMenu, hideTableSettings });
 
 describe('TableLoading', () => {
   const baseColumns: TableColumn<TestRow>[] = [
@@ -19,7 +32,10 @@ describe('TableLoading', () => {
   describe('rendering', () => {
     it('should render loading rows', () => {
       render(
-        <TableLoading visibleColumnsData={baseColumns} hasSelection={false} hasActionMenu={false} />
+        <TableLoading
+          visibleColumnsData={baseColumns}
+          layout={layoutOf({ select: false, actionMenu: false })}
+        />
       );
 
       const rows = screen.getAllByRole('row');
@@ -28,7 +44,10 @@ describe('TableLoading', () => {
 
     it('should render default number of rows (10)', () => {
       render(
-        <TableLoading visibleColumnsData={baseColumns} hasSelection={false} hasActionMenu={false} />
+        <TableLoading
+          visibleColumnsData={baseColumns}
+          layout={layoutOf({ select: false, actionMenu: false })}
+        />
       );
 
       const rows = screen.getAllByRole('row');
@@ -39,8 +58,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={5}
         />
       );
@@ -53,8 +71,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -63,12 +80,11 @@ describe('TableLoading', () => {
       expect(cells).toHaveLength(2); // 2 columns
     });
 
-    it('should render selection column when hasSelection is true', () => {
+    it('should render selection column with a checkbox column', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={true}
-          hasActionMenu={false}
+          layout={layoutOf({ select: true, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -77,12 +93,11 @@ describe('TableLoading', () => {
       expect(cells).toHaveLength(3); // 2 columns + 1 selection column
     });
 
-    it('should render action menu column when hasActionMenu is true', () => {
+    it('should render action menu column with row menus', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={true}
+          layout={layoutOf({ select: false, actionMenu: true })}
           rowCount={1}
         />
       );
@@ -95,8 +110,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={true}
-          hasActionMenu={true}
+          layout={layoutOf({ select: true, actionMenu: true })}
           rowCount={1}
         />
       );
@@ -121,8 +135,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={columnsWithLoadingCell}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -135,8 +148,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -164,8 +176,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={columnsWithMixedLoading}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -176,36 +187,31 @@ describe('TableLoading', () => {
     });
   });
 
-  describe('colSpan handling', () => {
-    it('should apply colSpan to last column when action menu is not present', () => {
-      render(
+  describe('trailing column', () => {
+    it('ends each row with an empty settings cell when the settings column shows', () => {
+      const { container } = render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false, hideTableSettings: false })}
           rowCount={1}
         />
       );
-
-      const cells = screen.getAllByRole('cell');
-      const lastCell = cells[cells.length - 1];
-      expect(lastCell).toHaveAttribute('colSpan', '2');
+      const last = container.querySelector('tr')?.lastElementChild;
+      expect(last).toHaveClass('rdt-table__cell--settings', 'rdt-table__cell--sticky');
+      expect(last).toBeEmptyDOMElement();
     });
 
-    it('should not apply colSpan to last column when action menu is present', () => {
-      render(
+    it('never spans a cell over two columns', () => {
+      const { container } = render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={true}
+          layout={layoutOf({ select: true, actionMenu: false, hideTableSettings: false })}
           rowCount={1}
         />
       );
-
-      const cells = screen.getAllByRole('cell');
-      // Last cell should be action menu column
-      const lastDataCell = cells[cells.length - 2];
-      expect(lastDataCell).not.toHaveAttribute('colSpan', '2');
+      for (const cell of container.querySelectorAll('td')) {
+        expect(cell).not.toHaveAttribute('colspan');
+      }
     });
   });
 
@@ -214,8 +220,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={[]}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -228,8 +233,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={0}
         />
       );
@@ -246,8 +250,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={singleColumn}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -266,8 +269,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={manyColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -280,8 +282,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -294,8 +295,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={false}
+          layout={layoutOf({ select: false, actionMenu: false })}
           rowCount={100}
         />
       );
@@ -310,8 +310,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={true}
-          hasActionMenu={false}
+          layout={layoutOf({ select: true, actionMenu: false })}
           rowCount={1}
         />
       );
@@ -326,8 +325,7 @@ describe('TableLoading', () => {
       render(
         <TableLoading
           visibleColumnsData={baseColumns}
-          hasSelection={false}
-          hasActionMenu={true}
+          layout={layoutOf({ select: false, actionMenu: true })}
           rowCount={1}
         />
       );

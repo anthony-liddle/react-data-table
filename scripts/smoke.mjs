@@ -39,6 +39,7 @@ const EXPECTED_EXPORTS = {
     'useCursorPagination',
     'usePagination',
     'usePersistedFilters',
+    'useTableExpansion',
     'useTableSelection',
     'useTableSort',
   ],
@@ -73,6 +74,7 @@ const BLOCKS = [
   'rdt-button',
   'rdt-skeleton',
   'rdt-visually-hidden',
+  'rdt-expand-button',
 ];
 
 let failed = false;
@@ -130,6 +132,7 @@ const html = renderToString(
     sort: { sortBy: [{ key: 'name', direction: 'asc' }], onSort: () => {} },
     // Persisted state is read only on the client, so a server render touches no window.
     persistKey: 'smoke',
+    renderExpandedRow: row => row.email,
     pagination: {
       totalCount: 2, pageIndex: 0, pageSize: 10,
       hasNextPage: false, hasPreviousPage: false,
@@ -137,7 +140,7 @@ const html = renderToString(
     },
   })
 );
-for (const fragment of ['<table', 'Ada', 'bram@example.com', 'aria-sort="ascending"', 'aria-label="Next page"', 'Showing 1-2 of 2 results']) {
+for (const fragment of ['<table', 'Ada', 'bram@example.com', 'aria-sort="ascending"', 'aria-label="Next page"', 'Showing 1-2 of 2 results', 'aria-label="Details for row a"']) {
   assert.ok(html.includes(fragment), \`rendered table should contain \${fragment}\`);
 }
 

@@ -123,6 +123,15 @@ export interface TableSelection<TData extends BaseTableRow = BaseTableRow> {
   onToggleAll: (checked: boolean) => void;
 }
 
+/** What the table needs to show and change row expansion. `useTableExpansion` returns it. */
+export interface TableExpansion<TData extends BaseTableRow = BaseTableRow> {
+  isRowExpanded: (row: TData) => boolean;
+  /** A row that isn't expandable gets no button. Defaults to every row. */
+  isRowExpandable?: (row: TData) => boolean;
+  /** Called by a row's expand button, or a row click with `expandOnRowClick`. */
+  onToggleRow: (row: TData) => void;
+}
+
 export interface VisibleColumn {
   id: string;
   visible: boolean;

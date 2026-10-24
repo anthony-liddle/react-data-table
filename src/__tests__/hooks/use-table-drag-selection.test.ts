@@ -21,9 +21,11 @@ const selection: TableSelection<Row> = {
   isRowSelected: () => false,
 };
 
-// A press that lands on a plain cell, not a checkbox or button.
+// A press that lands on a plain cell of the row, not a checkbox or button.
+const pressedRow = document.createElement('tr');
 const pressOnCell = {
-  target: document.createElement('td'),
+  target: pressedRow.appendChild(document.createElement('td')),
+  currentTarget: pressedRow,
 } as unknown as MouseEvent<HTMLTableRowElement>;
 
 const render = () => renderHook(() => useTableDragSelection({ data: rows, selection }));
