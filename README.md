@@ -88,7 +88,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `pagination` | `TablePagination` | – | Renders the pagination footer |
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
 | `actionMenu` | `TableActionMenuItem<T>[]` | – | Per-row menu: links, callbacks, one level of submenus, per-row `hidden` / `disabled` |
-| `persistKey` | `string` | – | Persists column visibility and order (see [Persistence](#persistence)) |
+| `persistKey` | `string` | – | Saves column visibility and order in localStorage; give the hooks the same key (see [Persistence](#persistence)) |
 | `hideTableSettings` | `boolean` | `false` | Hides the column settings panel |
 | `onColumnReorder` | `(order: string[]) => void` | – | Called with the new column id order |
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
@@ -168,15 +168,20 @@ A standalone `TableActionMenu` names its trigger "Actions", or `triggerLabel`.
 
 ## Persistence
 
-With `persistKey` set, state is read from the URL first, then localStorage, and every change is written to both:
+Give the table and its hooks the same `persistKey`. What is worth sharing goes in the URL, and the column layout stays in the browser:
 
-| State | URL param | localStorage key |
-|---|---|---|
-| Column visibility and order | `cols` | `datatable:{persistKey}` |
-| Sort (`useTableSort`) | `sort`, `dir` | `tablesort:{persistKey}:key`, `…:dir` |
-| Filters (`usePersistedFilters`) | one param per filter | `filters:{persistKey}` |
+| State | Owner | URL | localStorage |
+|---|---|---|---|
+| Sort | `useTableSort` | `{key}.sort=name,-team` | `rdt:1:{key}:sort` |
+| Page | `usePagination` | `{key}.page=3` | none |
+| Filters | `usePersistedFilters` | `{key}.{param}=…` | `rdt:1:{key}:filters` |
+| Column visibility and order | `DataTable` | none | `rdt:1:{key}:columns` |
 
-The URL params are not namespaced, so use one persisted table per page. A persisted sort key is honoured only if it is in `sortableColumns`, so another table's `?sort=` can't leak in. A saved column order is dropped when the column set changes in code.
+- **A link is the whole view.** When a page opens with params in a table's namespace that it didn't write itself, those params alone set the view: a state the link leaves out takes its default, and saved state isn't read. Otherwise each state reads its own param, then localStorage, then its default. The column layout is never part of a link, so it always comes from localStorage.
+- **The URL shows the current view.** Once restored, and on every change, state is written back with `history.replaceState`, keeping your other params, the hash and `history.state`. The sort is always written, as `{key}.sort=` when unsorted, so the address bar gains the table's params on first load.
+- **Readable, checked one param at a time.** A sort is a comma list in priority order, `-` marking descending, and the page is 1-based and absent on page 1. A param that doesn't parse, or a sort naming a column outside `sortableColumns`, takes its default while the others still apply. A page past the end is kept: the table shows its empty state and Previous still works. Storage keys carry a format version (`rdt:1:`), so a later format ignores old entries.
+- **Names.** Sort keys can't contain commas or start with `-`, and filter `param` names can't contain `.`. Give each table on a page its own key.
+- **Server rendering.** The server render, and the client render that hydrates it, use the defaults, so persisted state never causes a hydration mismatch; it arrives in the render straight after. A client-only render starts from it. Each hook returns `isRestored`, false only during those first renders, so you can hold a fetch until the persisted state is in.
 
 ## Styling
 

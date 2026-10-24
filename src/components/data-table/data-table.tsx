@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
+import { usePersistedState } from '../../hooks/use-persisted-state.ts';
 import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
 import { type DataTableLabels, resolveLabels } from '../../labels.ts';
 import { cx } from '../../lib/cx.ts';
+import { readStorage, storageKey, writeStorage } from '../../lib/persistence.ts';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { Pagination } from './pagination.tsx';
-import { readPersisted, writePersisted } from './persist.ts';
 import { type ActionMenuLinkComponent, TableActionMenu } from './table-action-menu.tsx';
 import { TableHeader } from './table-header.tsx';
 import { TableLoading } from './table-loading.tsx';
@@ -26,6 +27,35 @@ import {
 // Unit-separator control char: safe join delimiter for column-id signatures
 // (column ids are ordinary strings, which don't contain it).
 const COLUMN_LAYOUT_SEP = '\u001f';
+
+interface ColumnLayout {
+  toggles: Record<string, boolean>;
+  order: string[];
+}
+
+// The saved layout, or undefined when there is none that parses. A saved order
+// is kept only while it was saved against the same code-defined columns.
+const readColumnLayout = (persistKey: string, currentIds: string[]): ColumnLayout | undefined => {
+  const raw = readStorage(storageKey(persistKey, 'columns'));
+  if (raw === null) {
+    return undefined;
+  }
+  try {
+    const saved = JSON.parse(raw) as {
+      toggles?: Record<string, boolean>;
+      order?: string[];
+      orderSig?: string;
+    };
+    const toggles = saved.toggles && typeof saved.toggles === 'object' ? saved.toggles : {};
+    const order =
+      Array.isArray(saved.order) && saved.orderSig === currentIds.join(COLUMN_LAYOUT_SEP)
+        ? reconcileColumnOrder(saved.order, currentIds)
+        : currentIds;
+    return { toggles, order };
+  } catch {
+    return undefined;
+  }
+};
 
 interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
   loading?: boolean;
@@ -119,46 +149,30 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   const t = resolveLabels(labels);
   const rowLabelOf = (row: TData) => getRowLabel?.(row) ?? t.rowLabel({ id: row.id });
 
-  // Track user-toggled visibility overrides (column ID → visible). Columns not in
-  // this map use their default visibility from hideByDefault.
-  // Lazy initializer reads persisted state on client, defaults on server.
-  const [userToggles, setUserToggles] = useState<Record<string, boolean>>(() => {
-    if (typeof window === 'undefined' || !persistKey) {
-      return {};
-    }
-    const p = readPersisted<{ toggles?: Record<string, boolean> }>(
-      'cols',
-      `datatable:${persistKey}`
-    );
-    return p?.toggles ?? {};
-  });
-  // Signature of the code-defined column layout (order-sensitive). Saved column
-  // orders are versioned against this so a drag-reorder only survives while the
-  // columns themselves are unchanged; when columns change in code the saved
-  // order is discarded rather than rendered stale.
-  const columnLayoutSig = useMemo(
-    () => columns.map(column => column.id).join(COLUMN_LAYOUT_SEP),
-    [columns]
+  // The column layout: user visibility overrides (column id to visible;
+  // columns without one follow hideByDefault) and the column order. Saved in
+  // storage only, never in the URL, so it always comes back from storage, link
+  // or not. The saved order is versioned against the code-defined column set,
+  // so a drag-reorder only survives while the columns themselves are unchanged.
+  const naturalOrder = useMemo(() => columns.map(column => column.id), [columns]);
+  const columnLayoutSig = naturalOrder.join(COLUMN_LAYOUT_SEP);
+  const defaultLayout = useMemo<ColumnLayout>(
+    () => ({ toggles: {}, order: naturalOrder }),
+    [naturalOrder]
   );
-
-  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
-    const currentIds = columns.map(column => column.id);
-    if (typeof window === 'undefined' || !persistKey) {
-      return currentIds;
-    }
-    const p = readPersisted<{ order?: string[]; orderSig?: string }>(
-      'cols',
-      `datatable:${persistKey}`
-    );
-    // Only honor a saved order captured against the current code-defined column
-    // layout. When columns are added/removed/reordered in code (or the saved
-    // state predates this versioning), the signature won't match and we fall
-    // back to the natural order instead of a stale arrangement.
-    if (!p?.order || p.orderSig !== currentIds.join(COLUMN_LAYOUT_SEP)) {
-      return currentIds;
-    }
-    return reconcileColumnOrder(p.order, currentIds);
+  const { value: layout, setValue: setLayout } = usePersistedState<ColumnLayout>({
+    persistKey,
+    defaultValue: defaultLayout,
+    serialize: value => JSON.stringify({ ...value, orderSig: columnLayoutSig }),
+    read: key => readColumnLayout(key, naturalOrder),
+    write: (key, value) =>
+      writeStorage(
+        storageKey(key, 'columns'),
+        JSON.stringify({ toggles: value.toggles, order: value.order, orderSig: columnLayoutSig })
+      ),
   });
+  const userToggles = layout.toggles;
+  const columnOrder = layout.order;
 
   // Reconcile the ORDER used for layout against the current column set, e.g. a
   // dynamic metric/category toggle that adds or removes columns. Derived at
@@ -176,20 +190,6 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     // ⇒ identical sets. Same set → keep the user's order; else natural order.
     return persistedPresent.length === naturalIds.length ? persistedPresent : naturalIds;
   }, [columns, columnOrder]);
-
-  // Persist column state to both URL and localStorage when it changes
-  const isFirstPersist = useRef(true);
-  useEffect(() => {
-    if (!persistKey) {
-      return;
-    }
-    if (isFirstPersist.current) {
-      isFirstPersist.current = false;
-      return;
-    }
-    const state = { toggles: userToggles, order: columnOrder, orderSig: columnLayoutSig };
-    writePersisted({ cols: JSON.stringify(state) }, `datatable:${persistKey}`, state);
-  }, [persistKey, userToggles, columnOrder, columnLayoutSig]);
 
   // Derive visibleColumns from current columns prop + user toggles.
   // This automatically includes dynamically added columns without needing state sync.
@@ -222,7 +222,8 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
 
   const toggleHeaders = useCallback(
     (id: string) => {
-      setUserToggles(prev => {
+      setLayout(prevLayout => {
+        const prev = prevLayout.toggles;
         const current = prev[id];
         const col = columns.find(c => c.id === id);
         const defaultVisible = col ? !col.hideByDefault : true;
@@ -243,20 +244,20 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
           queueMicrotask(() => onVisibleColumnsChange(fullList));
         }
 
-        return updated;
+        return { ...prevLayout, toggles: updated };
       });
     },
-    [columns, onVisibleColumnsChange]
+    [columns, onVisibleColumnsChange, setLayout]
   );
 
   const handleColumnReorder = useCallback(
     (newOrder: string[]) => {
-      setColumnOrder(newOrder);
+      setLayout(prev => ({ ...prev, order: newOrder }));
       if (onColumnReorder) {
         onColumnReorder(newOrder);
       }
     },
-    [onColumnReorder]
+    [onColumnReorder, setLayout]
   );
 
   // Flatten columns to include sub-columns for cell rendering
