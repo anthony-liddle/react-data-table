@@ -52,7 +52,7 @@ export const UrlRoundTrip: Story = {
     const canvas = within(canvasElement);
     await changeView(canvasElement);
     await waitFor(() =>
-      expect(new URL(window.location.href).searchParams.get('team')).toBe('Design')
+      expect(new URL(window.location.href).searchParams.get('url-round-trip.team')).toBe('Design')
     );
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reload table from URL' }));

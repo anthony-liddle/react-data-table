@@ -17,17 +17,17 @@ import { type Member, memberColumn, members, sortKeysOf, sortMembers, TEAMS } fr
 
 /**
  * The URL params the table persists to: its own namespace (`{persistKey}.sort`),
- * plus the column and filter params that are not namespaced yet. A demo that
+ * plus the column param that is not namespaced yet. A demo that
  * means to prove localStorage persistence has to strip them first.
  */
-const UNNAMESPACED_PARAMS = ['cols', 'team'];
+const UNNAMESPACED_PARAMS = ['cols'];
 const isPersistedParam = (persistKey: string, param: string) =>
   param.startsWith(`${persistKey}.`) || UNNAMESPACED_PARAMS.includes(param);
 
 const storageKeysFor = (persistKey: string) => [
   `datatable:${persistKey}`,
   `rdt:1:${persistKey}:sort`,
-  `filters:${persistKey}`,
+  `rdt:1:${persistKey}:filters`,
 ];
 
 const stripPersistedParams = (persistKey: string) => {
@@ -122,7 +122,7 @@ interface PersistedTableProps {
 
 const PersistedTable = ({ mechanism, persistKey, rowCount }: PersistedTableProps) => {
   const sort = useTableSort({ sortableColumns: SORT_KEYS, persistKey });
-  const [filters, setFilter] = usePersistedFilters(persistKey, TEAM_FILTER, {
+  const { filters, setFilter } = usePersistedFilters(persistKey, TEAM_FILTER, {
     persistToStorage: mechanism === 'localStorage',
   });
   const team = filters.team as string;

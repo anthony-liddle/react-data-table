@@ -63,6 +63,15 @@ A `TableActionMenu` used on its own is still named "Actions", or takes `triggerL
 
 With `persistKey`, the page is kept in the URL as `{key}.page=3` (1-based, absent on page 1), so a copied link opens on the same page. It is never saved to localStorage. A page past the end, from an old link say, is kept as it is: the table shows its empty state and Previous still works. The hook also returns `isRestored`.
 
+### `usePersistedFilters` returns an object, and its params are namespaced
+
+```diff
+- const [filters, setFilter, resetAll, isRestored] = usePersistedFilters('members', defs);
++ const { filters, setFilter, reset, isRestored } = usePersistedFilters('members', defs);
+```
+
+Each filter's URL param is now prefixed with the key, `?members.team=Design` rather than `?team=Design`, so two tables' filters can't collide. A filter `param` can't contain `.`. The 0.4 un-prefixed params and `filters:` storage are no longer read. A `deserialize` that throws now gives that filter its default, and the other filters still apply. `isRestored` is true from the first client render, rather than after an effect.
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.
