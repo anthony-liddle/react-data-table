@@ -55,13 +55,20 @@ const serializeFilters = (
   return serialized;
 };
 
-const readStoredFilters = (persistKey: string): Record<string, string> => {
+const readStoredFilters = (persistKey: string): Record<string, unknown> => {
   try {
     const parsed: unknown = JSON.parse(readStorage(storageKey(persistKey, 'filters')) ?? '{}');
-    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
   } catch {
     return {};
   }
+};
+
+// A stored value counts only when it's the map's own string, never something
+// inherited (a filter whose param is `constructor`) or a hand-edited number.
+const storedValue = (stored: Record<string, unknown>, param: string): string | null => {
+  const value = Object.hasOwn(stored, param) ? stored[param] : null;
+  return typeof value === 'string' ? value : null;
 };
 
 const deserialize = (def: FilterDef, raw: string): FilterValue => {
@@ -107,7 +114,7 @@ export const usePersistedFilters = <T extends Record<string, FilterDef>>(
       const stored = urlOnly ? {} : readStoredFilters(key);
       const restored: Record<string, FilterValue> = {};
       for (const [name, def] of Object.entries(filters)) {
-        const raw = readParam(key, def.param) || (urlOnly ? null : stored[def.param]);
+        const raw = readParam(key, def.param) || (urlOnly ? null : storedValue(stored, def.param));
         restored[name] = raw ? deserialize(def, raw) : def.defaultValue;
       }
       return restored as Filters<T>;

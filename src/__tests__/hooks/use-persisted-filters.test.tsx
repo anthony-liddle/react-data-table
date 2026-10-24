@@ -118,6 +118,19 @@ describe('usePersistedFilters', () => {
     expect(result.current.filters).toEqual({ team: 'Design', role: 'any' });
   });
 
+  it('ignores stored values that are not its own strings', () => {
+    const key = freshKey();
+    const deserialize = vi.fn((raw: string) => raw);
+    const filters = {
+      team: { ...team, deserialize },
+      kind: { param: 'constructor', defaultValue: 'any', serialize: () => null, deserialize },
+    };
+    localStorage.setItem(`rdt:1:${key}:filters`, JSON.stringify({ team: 5 }));
+    const { result } = renderHook(() => usePersistedFilters(key, filters));
+    expect(result.current.filters).toEqual({ team: 'all', kind: 'any' });
+    expect(deserialize).not.toHaveBeenCalled();
+  });
+
   it('ignores 0.4 state', () => {
     const key = freshKey();
     setSearch('team=Design');

@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createPortal } from 'react-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DataTable } from '@/components/data-table/data-table';
@@ -194,5 +195,82 @@ describe('row expansion', () => {
     const { container } = render(<Table />);
     expect(container.querySelector('.rdt-table__cell--expand')).toBeNull();
     expect(screen.queryByRole('button', { name: /^Details for/ })).toBeNull();
+  });
+
+  describe('expandOnRowClick edge cases', () => {
+    const selection = (disabled: (row: Row) => boolean) => ({
+      isRowSelected: () => false,
+      isRowDisabled: disabled,
+      onToggleRow: vi.fn(),
+      onToggleAll: vi.fn(),
+    });
+
+    it('ignores a row click on a row whose selection is disabled, but its button works', async () => {
+      render(
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowLabel={row => row.name}
+          renderExpandedRow={details}
+          expandOnRowClick
+          selection={selection(row => row.id === '1')}
+        />
+      );
+      const button = screen.getByRole('button', { name: 'Details for Ada' });
+      await userEvent.click(screen.getByText('Ada'));
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+      await userEvent.click(button);
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('toggles once when its button is clicked', async () => {
+      render(
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowLabel={row => row.name}
+          renderExpandedRow={details}
+          expandOnRowClick
+        />
+      );
+      const button = screen.getByRole('button', { name: 'Details for Ada' });
+      await userEvent.click(button);
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('ignores clicks on its checkbox and from a portal opened in a cell', async () => {
+      const toggles = selection(() => false);
+      const portalColumns: TableColumn<Row>[] = [
+        {
+          id: 'name',
+          header: 'Name',
+          cell: ({ row }) => (
+            <>
+              {row.name}
+              {createPortal(<span>Popover for {row.name}</span>, document.body)}
+            </>
+          ),
+        },
+      ];
+      render(
+        <DataTable
+          columns={portalColumns}
+          data={rows.slice(0, 1)}
+          getRowLabel={row => row.name}
+          renderExpandedRow={details}
+          expandOnRowClick
+          selectOnRowClick
+          selection={toggles}
+        />
+      );
+      const button = screen.getByRole('button', { name: 'Details for Ada' });
+      await userEvent.click(screen.getByText('Popover for Ada'));
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+      expect(toggles.onToggleRow).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Select Ada' }));
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+      expect(toggles.onToggleRow).toHaveBeenCalledTimes(1);
+    });
   });
 });

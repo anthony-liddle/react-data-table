@@ -77,6 +77,22 @@ describe('useTableSort', () => {
     expect(serializeSortBy(result.current.sortBy)).toBe('name');
   });
 
+  it('builds on the first of two sort changes in one event', () => {
+    const onChange = vi.fn();
+    const { result } = renderHook(() =>
+      useTableSort({ sortableColumns: COLUMNS, multiSort: true, onChange })
+    );
+    act(() => {
+      result.current.onSort('name', { additive: false });
+      result.current.onSort('team', { additive: true });
+    });
+    expect(serializeSortBy(result.current.sortBy)).toBe('name,team');
+    expect(onChange.mock.calls.map(([sortBy]) => serializeSortBy(sortBy))).toEqual([
+      'name',
+      'name,team',
+    ]);
+  });
+
   it('ignores keys outside sortableColumns, without onChange', () => {
     const onChange = vi.fn();
     const { result } = renderHook(() => useTableSort({ sortableColumns: COLUMNS, onChange }));

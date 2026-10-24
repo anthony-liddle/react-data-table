@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useId, useMemo } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
 import { usePersistedState } from '../../hooks/use-persisted-state.ts';
 import { type RowDragState, useTableDragSelection } from '../../hooks/use-table-drag-selection.ts';
@@ -91,9 +91,10 @@ interface DataTableProps<TData extends BaseTableRow = BaseTableRow> {
    */
   getRowTestId?: (row: TData) => string | undefined;
   /**
-   * Names a row for assistive technology, in its checkbox ("Select <label>")
-   * and its action menu ("Actions for <label>"). Without it, rows are named by
-   * `labels.rowLabel`, "row <id>" by default.
+   * Names a row for assistive technology, in its checkbox ("Select <label>"),
+   * its action menu ("Actions for <label>") and its expand button ("Details
+   * for <label>"). Without it, rows are named by `labels.rowLabel`, "row <id>"
+   * by default.
    */
   getRowLabel?: (row: TData) => string;
   /** Opt-in: render a "Page N of M" indicator + bordered controls in the footer. */
@@ -132,6 +133,31 @@ const SETTINGS_HEADER_CLASS =
 const ACTIONS_HEADER_CLASS =
   'rdt-table__header-cell rdt-table__header-cell--actions rdt-table__header-cell--sticky';
 
+// Ids key saved layouts, the column panel and React's own keys, so a missing or
+// repeated one breaks them quietly. Describe the problem, or return null.
+const describeColumnIdProblem = (columns: TableColumn<BaseTableRow>[]): string | null => {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  const missing: string[] = [];
+  for (const column of columns.flatMap(column => [column, ...(column.subColumns ?? [])])) {
+    if (typeof column.id !== 'string' || column.id === '') {
+      missing.push(column.header);
+    } else if (seen.has(column.id)) {
+      duplicates.add(column.id);
+    } else {
+      seen.add(column.id);
+    }
+  }
+  if (duplicates.size === 0 && missing.length === 0) {
+    return null;
+  }
+  const parts = [
+    duplicates.size > 0 && `Duplicate: ${[...duplicates].map(id => `"${id}"`).join(', ')}.`,
+    missing.length > 0 && `Missing: ${missing.join(', ')}.`,
+  ].filter(Boolean);
+  return `react-data-table: every column needs a unique id. ${parts.join(' ')}`;
+};
+
 const isExpandable = <TData extends BaseTableRow>(expansion: TableExpansion<TData>, row: TData) =>
   expansion.isRowExpandable?.(row) ?? true;
 
@@ -168,6 +194,18 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   linkComponent,
 }: DataTableProps<TData>) => {
   const t = resolveLabels(labels);
+
+  const columnIdProblem = useMemo(
+    () => describeColumnIdProblem(columns as TableColumn<BaseTableRow>[]),
+    [columns]
+  );
+  const warnedAbout = useRef<string | null>(null);
+  useEffect(() => {
+    if (columnIdProblem && warnedAbout.current !== columnIdProblem) {
+      warnedAbout.current = columnIdProblem;
+      console.error(columnIdProblem);
+    }
+  }, [columnIdProblem]);
   const rowLabelOf = (row: TData) => getRowLabel?.(row) ?? t.rowLabel({ id: row.id });
 
   // Without an `expansion` prop, the table keeps its own expansion state.
@@ -620,7 +658,9 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
       {pagination && (
         <Pagination
           totalCount={pagination.totalCount}
-          pageRowCount={data.length}
+          // While loading, the rows on screen are skeletons, so the footer keeps
+          // the page's range instead of reading 0 to 0.
+          pageRowCount={loading ? undefined : data.length}
           pageIndex={pagination.pageIndex}
           pageSize={pagination.pageSize}
           hasNextPage={pagination.hasNextPage}
