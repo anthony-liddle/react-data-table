@@ -39,6 +39,13 @@ interface ColumnLayout {
   order: string[];
 }
 
+// Pinned (alwaysVisible) columns always show, whatever a saved layout says; the
+// rest follow the user's toggle, then `hideByDefault`.
+const isColumnVisible = (
+  column: { id: string; alwaysVisible?: boolean; hideByDefault?: boolean },
+  toggles: Record<string, boolean>
+): boolean => column.alwaysVisible === true || (toggles[column.id] ?? !column.hideByDefault);
+
 // The saved layout, or undefined when there is none that parses. A saved order
 // is kept only while it was saved against the same code-defined columns.
 const readColumnLayout = (persistKey: string, currentIds: string[]): ColumnLayout | undefined => {
@@ -239,6 +246,12 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   const userToggles = columnLayout.toggles;
   const columnOrder = columnLayout.order;
 
+  // Pinned (alwaysVisible) columns, which keep their places and stay visible.
+  const pinnedIds = useMemo(
+    () => new Set(columns.filter(column => column.alwaysVisible).map(column => column.id)),
+    [columns]
+  );
+
   // Reconcile the ORDER used for layout against the current column set, e.g. a
   // dynamic metric/category toggle that adds or removes columns. Derived at
   // render (no effect / no setState-in-effect): if the persisted `columnOrder`
@@ -253,21 +266,22 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     const persistedPresent = columnOrder.filter(id => naturalSet.has(id));
     // `persistedPresent ⊆ naturalIds` and both have unique ids, so equal lengths
     // ⇒ identical sets. Same set → keep the user's order; else natural order.
-    return persistedPresent.length === naturalIds.length ? persistedPresent : naturalIds;
-  }, [columns, columnOrder]);
+    if (persistedPresent.length !== naturalIds.length) {
+      return naturalIds;
+    }
+    // Pinned columns keep their code-defined places, even against an order
+    // saved before they were pinned.
+    return placeReorderedColumns(
+      naturalIds,
+      pinnedIds,
+      persistedPresent.filter(id => !pinnedIds.has(id))
+    );
+  }, [columns, columnOrder, pinnedIds]);
 
   // Derive visibleColumns from current columns prop + user toggles.
   // This automatically includes dynamically added columns without needing state sync.
   const visibleColumns = useMemo(
-    () =>
-      columns.map(col => {
-        const id = col.id;
-        const userToggle = userToggles[id];
-        return {
-          id,
-          visible: userToggle !== undefined ? userToggle : !col.hideByDefault,
-        };
-      }),
+    () => columns.map(col => ({ id: col.id, visible: isColumnVisible(col, userToggles) })),
     [columns, userToggles]
   );
 
@@ -298,14 +312,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
         // Notify parent after state update via microtask to avoid
         // "setState during render" errors
         if (onVisibleColumnsChange) {
-          const fullList = columns.map(c => {
-            const cId = c.id;
-            const toggle = cId === id ? !currentlyVisible : updated[cId];
-            return {
-              id: cId,
-              visible: toggle !== undefined ? toggle : !c.hideByDefault,
-            };
-          });
+          const fullList = columns.map(c => ({ id: c.id, visible: isColumnVisible(c, updated) }));
           queueMicrotask(() => onVisibleColumnsChange(fullList));
         }
 
@@ -319,12 +326,11 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
   // places and pinned (alwaysVisible) columns stay where they are.
   const handleColumnReorder = useCallback(
     (panelOrder: string[]) => {
-      const pinned = new Set(columns.filter(column => column.alwaysVisible).map(c => c.id));
-      const newOrder = placeReorderedColumns(effectiveColumnOrder, pinned, panelOrder);
+      const newOrder = placeReorderedColumns(effectiveColumnOrder, pinnedIds, panelOrder);
       setColumnLayout(prev => ({ ...prev, order: newOrder }));
       onColumnReorder?.(newOrder);
     },
-    [columns, effectiveColumnOrder, onColumnReorder, setColumnLayout]
+    [effectiveColumnOrder, pinnedIds, onColumnReorder, setColumnLayout]
   );
 
   // Flatten columns to include sub-columns for cell rendering
