@@ -24,7 +24,7 @@ The "Page N of M" indicator is one label, so a language can reorder the phrase a
 + labels={{ pageOf: ({ page, pageCount }) => `Página ${page} de ${pageCount}` }}
 ```
 
-Every other string the table announces is a label too now: `selectAll`, `selectRow`, `rowLabel`, `rowActions`, `columnSettings`, `columnsPanel`, `reorderColumn`, `previousPage` and `nextPage`. Their English defaults are the 0.4 text, except the row menu below. If you build a whole `DataTableLabels` rather than a `Partial`, spread `defaultLabels` into it or add the new keys.
+Every other string the table announces is a label too now: `selectAll`, `selectRow`, `rowLabel`, `rowActions`, `columnSettings`, `columnsPanel`, `reorderColumn`, `previousPage` and `nextPage`, plus `showingRange`, `sortPriority`, `expandColumn` and `expandRow` for the new features. Their English defaults are the 0.4 text, except the row menu below. If you build a whole `DataTableLabels` rather than a `Partial`, spread `defaultLabels` into it or add the new keys.
 
 ### Row menus are named after their row
 
