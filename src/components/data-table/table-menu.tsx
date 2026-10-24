@@ -22,7 +22,7 @@ import { useEffect, useId, useState } from 'react';
 import { DragIndicator, TableEdit } from '../icon.tsx';
 import { Checkbox } from '../ui/checkbox.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx';
-import { type BaseTableRow, getColumnId, type TableColumn, type VisibleColumn } from './types.ts';
+import type { BaseTableRow, TableColumn, VisibleColumn } from './types.ts';
 
 interface TableMenuProps<TData extends BaseTableRow = BaseTableRow> {
   visibleColumns: VisibleColumn[];
@@ -42,7 +42,7 @@ const SortableColumnItem = <TData extends BaseTableRow = BaseTableRow>({
   isVisible,
   onToggle,
 }: SortableColumnItemProps<TData>) => {
-  const columnId = getColumnId(column);
+  const columnId = column.id;
   // A generated id: a column id could match an element elsewhere on the page.
   const checkboxId = useId();
 
@@ -95,7 +95,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
   }, [columns]);
 
   const handleColumnVisibilityChange = (column: TableColumn<TData>) => {
-    toggleHeaders(getColumnId(column));
+    toggleHeaders(column.id);
   };
 
   const sensors = useSensors(
@@ -113,8 +113,8 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = localColumns.findIndex(column => getColumnId(column) === active.id);
-      const newIndex = localColumns.findIndex(column => getColumnId(column) === over.id);
+      const oldIndex = localColumns.findIndex(column => column.id === active.id);
+      const newIndex = localColumns.findIndex(column => column.id === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrder = arrayMove(localColumns, oldIndex, newIndex);
@@ -122,7 +122,7 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
 
         // Pass the new column order back to the parent
         if (onColumnReorder) {
-          onColumnReorder(newOrder.map(column => getColumnId(column)));
+          onColumnReorder(newOrder.map(column => column.id));
         }
       }
     }
@@ -146,11 +146,11 @@ export const TableMenu = <TData extends BaseTableRow = BaseTableRow>({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={localColumns.map(column => getColumnId(column))}
+              items={localColumns.map(column => column.id)}
               strategy={verticalListSortingStrategy}
             >
               {localColumns.map((column: TableColumn<TData>) => {
-                const columnId = getColumnId(column);
+                const columnId = column.id;
                 const visibleColumn = visibleColumns.find(c => c.id === columnId);
                 const isVisible = visibleColumn?.visible ?? true;
 

@@ -64,9 +64,9 @@ interface Member {
 }
 
 const columns: TableColumn<Member>[] = [
-  { header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
-  { header: 'Email', cell: ({ row }) => row.email },
-  { header: 'Team', sortKey: 'team', cell: ({ row }) => row.team, hideByDefault: true },
+  { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
+  { id: 'email', header: 'Email', cell: ({ row }) => row.email },
+  { id: 'team', header: 'Team', sortKey: 'team', cell: ({ row }) => row.team, hideByDefault: true },
 ];
 
 export function Members({ members }: { members: Member[] }) {
@@ -106,8 +106,8 @@ The table is controlled. You own the data, the sort, the selection, and the page
 
 ```ts
 interface TableColumn<T> {
-  header: string;            // header text; also the default column id
-  id?: string;               // stable id when headers repeat or change
+  id: string;                // required: stable across header text and translations
+  header: string;            // header text
   sortKey?: string;          // makes the column sortable
   cell?: ({ row }) => ReactNode;
   loadingCell?: () => ReactNode;

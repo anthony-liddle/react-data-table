@@ -36,7 +36,6 @@ const EXPECTED_EXPORTS = {
     'DataTable',
     'Pagination',
     'TableActionMenu',
-    'getColumnId',
     'useCursorPagination',
     'usePagination',
     'usePersistedFilters',
@@ -120,8 +119,8 @@ assert.deepEqual(
 const html = renderToString(
   createElement(pkg.DataTable, {
     columns: [
-      { header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
-      { header: 'Email', cell: ({ row }) => row.email },
+      { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => row.name },
+      { id: 'email', header: 'Email', cell: ({ row }) => row.email },
     ],
     data: [
       { id: 'a', name: 'Ada', email: 'ada@example.com' },

@@ -14,18 +14,9 @@ interface TestRow extends BaseTableRow {
 
 describe('TableMenu', () => {
   const baseColumns: TableColumn<TestRow>[] = [
-    {
-      header: 'Name',
-      cell: ({ row }) => <span>{row.name}</span>,
-    },
-    {
-      header: 'Email',
-      cell: ({ row }) => <span>{String(row.email)}</span>,
-    },
-    {
-      header: 'Role',
-      cell: ({ row }) => <span>{String(row.role)}</span>,
-    },
+    { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
+    { id: 'email', header: 'Email', cell: ({ row }) => <span>{String(row.email)}</span> },
+    { id: 'role', header: 'Role', cell: ({ row }) => <span>{String(row.role)}</span> },
   ];
 
   const baseVisibleColumns: VisibleColumn[] = [
@@ -318,14 +309,8 @@ describe('TableMenu', () => {
     it('should handle columns with duplicate headers', async () => {
       const user = userEvent.setup();
       const duplicateColumns: TableColumn<TestRow>[] = [
-        {
-          header: 'Name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
-          header: 'Name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
+        { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
+        { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
       ];
 
       const duplicateVisible: VisibleColumn[] = [
@@ -353,11 +338,9 @@ describe('TableMenu', () => {
     it('should handle columns with special characters in headers', async () => {
       const user = userEvent.setup();
       const specialColumns: TableColumn<TestRow>[] = [
+        { id: 'name_&_email', header: 'Name & Email', cell: ({ row }) => <span>{row.name}</span> },
         {
-          header: 'Name & Email',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
+          id: 'role_(admin)',
           header: 'Role (Admin)',
           cell: ({ row }) => <span>{String(row.role)}</span>,
         },
@@ -407,10 +390,7 @@ describe('TableMenu', () => {
       await user.keyboard('{Escape}');
 
       const newColumns: TableColumn<TestRow>[] = [
-        {
-          header: 'New Column',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
+        { id: 'new_column', header: 'New Column', cell: ({ row }) => <span>{row.name}</span> },
       ];
 
       const newVisible: VisibleColumn[] = [{ id: 'new-column', visible: true }];

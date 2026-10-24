@@ -23,20 +23,9 @@ interface TestRow extends BaseTableRow {
 
 describe('DataTable', () => {
   const baseColumns: TableColumn<TestRow>[] = [
-    {
-      header: 'Name',
-      sortKey: 'name',
-      cell: ({ row }) => <span>{row.name}</span>,
-    },
-    {
-      header: 'Email',
-      sortKey: 'email',
-      cell: ({ row }) => <span>{row.email}</span>,
-    },
-    {
-      header: 'Role',
-      cell: ({ row }) => <span>{row.role}</span>,
-    },
+    { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => <span>{row.name}</span> },
+    { id: 'email', header: 'Email', sortKey: 'email', cell: ({ row }) => <span>{row.email}</span> },
+    { id: 'role', header: 'Role', cell: ({ row }) => <span>{row.role}</span> },
   ];
 
   const baseData: TestRow[] = [
@@ -344,21 +333,15 @@ describe('DataTable', () => {
 
     it('should hide column with hideByDefault: true initially', () => {
       const columnsWithHidden: TableColumn<TestRow>[] = [
+        { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => <span>{row.name}</span> },
         {
-          header: 'Name',
-          sortKey: 'name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
+          id: 'email',
           header: 'Email',
           sortKey: 'email',
           cell: ({ row }) => <span>{row.email}</span>,
           hideByDefault: true,
         },
-        {
-          header: 'Role',
-          cell: ({ row }) => <span>{row.role}</span>,
-        },
+        { id: 'role', header: 'Role', cell: ({ row }) => <span>{row.role}</span> },
       ];
 
       render(<DataTable columns={columnsWithHidden} data={baseData} />);
@@ -377,12 +360,14 @@ describe('DataTable', () => {
     it('should show column with hideByDefault: false initially', () => {
       const columnsWithVisible: TableColumn<TestRow>[] = [
         {
+          id: 'name',
           header: 'Name',
           sortKey: 'name',
           cell: ({ row }) => <span>{row.name}</span>,
           hideByDefault: false,
         },
         {
+          id: 'email',
           header: 'Email',
           sortKey: 'email',
           cell: ({ row }) => <span>{row.email}</span>,
@@ -400,12 +385,9 @@ describe('DataTable', () => {
 
     it('should show column with hideByDefault: undefined initially (default visible)', () => {
       const columnsWithoutHideByDefault: TableColumn<TestRow>[] = [
+        { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => <span>{row.name}</span> },
         {
-          header: 'Name',
-          sortKey: 'name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
+          id: 'email',
           header: 'Email',
           sortKey: 'email',
           cell: ({ row }) => <span>{row.email}</span>,
@@ -424,12 +406,9 @@ describe('DataTable', () => {
     it('should allow toggling hidden column to visible via table menu', async () => {
       const user = userEvent.setup();
       const columnsWithHidden: TableColumn<TestRow>[] = [
+        { id: 'name', header: 'Name', sortKey: 'name', cell: ({ row }) => <span>{row.name}</span> },
         {
-          header: 'Name',
-          sortKey: 'name',
-          cell: ({ row }) => <span>{row.name}</span>,
-        },
-        {
+          id: 'email',
           header: 'Email',
           sortKey: 'email',
           cell: ({ row }) => <span>{row.email}</span>,
@@ -473,21 +452,13 @@ describe('DataTable', () => {
 
   describe('grouped columns', () => {
     const groupedColumns: TableColumn<TestRow>[] = [
+      { id: 'name', header: 'Name', cell: ({ row }) => <span>{row.name}</span> },
       {
-        header: 'Name',
-        cell: ({ row }) => <span>{row.name}</span>,
-      },
-      {
+        id: 'contact_info',
         header: 'Contact Info',
         subColumns: [
-          {
-            header: 'Email',
-            cell: ({ row }) => <span>{String(row.email)}</span>,
-          },
-          {
-            header: 'Phone',
-            cell: ({ row }) => <span>{String(row.phone)}</span>,
-          },
+          { id: 'email', header: 'Email', cell: ({ row }) => <span>{String(row.email)}</span> },
+          { id: 'phone', header: 'Phone', cell: ({ row }) => <span>{String(row.phone)}</span> },
         ],
       },
     ];
@@ -780,12 +751,8 @@ describe('DataTable', () => {
 
     it('should handle columns without cell functions', () => {
       const columnsWithoutCells: TableColumn<TestRow>[] = [
-        {
-          header: 'Name',
-        },
-        {
-          header: 'Email',
-        },
+        { id: 'name', header: 'Name' },
+        { id: 'email', header: 'Email' },
       ];
 
       render(<DataTable columns={columnsWithoutCells} data={baseData} />);
@@ -797,6 +764,7 @@ describe('DataTable', () => {
     it('should handle columns with loadingCell', () => {
       const columnsWithLoadingCell: TableColumn<TestRow>[] = [
         {
+          id: 'name',
           header: 'Name',
           cell: ({ row }) => <span>{row.name}</span>,
           loadingCell: () => <div data-testid="loading-name">Loading...</div>,
@@ -826,6 +794,7 @@ describe('DataTable', () => {
     it('puts a column headerClassName on its header and cellClassName on its cells', () => {
       const columnsWithClassName: TableColumn<TestRow>[] = [
         {
+          id: 'name',
           header: 'Name',
           cell: ({ row }) => <span>{row.name}</span>,
           headerClassName: 'custom-header-class',
@@ -846,9 +815,10 @@ describe('DataTable', () => {
     it('puts a group column headerClassName on its group header', () => {
       const grouped: TableColumn<TestRow>[] = [
         {
+          id: 'person',
           header: 'Person',
           headerClassName: 'custom-group-class',
-          subColumns: [{ header: 'Name', cell: ({ row }) => row.name }],
+          subColumns: [{ id: 'name', header: 'Name', cell: ({ row }) => row.name }],
         },
       ];
 
@@ -973,12 +943,13 @@ describe('DataTable', () => {
       render(
         <DataTable
           columns={[
-            { header: 'Name', cell: ({ row }) => row.name },
+            { id: 'name', header: 'Name', cell: ({ row }) => row.name },
             {
+              id: 'contact',
               header: 'Contact',
               subColumns: [
-                { header: 'Email', cell: ({ row }) => row.email },
-                { header: 'Role', cell: ({ row }) => row.role },
+                { id: 'email', header: 'Email', cell: ({ row }) => row.email },
+                { id: 'role', header: 'Role', cell: ({ row }) => row.role },
               ],
             },
           ]}

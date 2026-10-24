@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-import { stringToKey } from '../../helpers/strings.ts';
 import type { SortDirection } from '../library/sortable-header-client/index.ts';
 
 // Re-export SortDirection for consistent usage
@@ -15,8 +14,12 @@ export interface BaseTableRow {
 }
 
 export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
-  /** Optional stable identifier for the column. When omitted, the column key is derived from the header text. Set this when multiple columns can share the same header. */
-  id?: string;
+  /**
+   * Stable identifier for the column, sub-columns included. Saved layouts,
+   * `onVisibleColumnsChange` and the column panel key off it, so it must stay
+   * the same when the header text changes or is translated.
+   */
+  id: string;
   header: string;
   headerIcon?: React.ReactNode;
   sortKey?: string;
@@ -31,15 +34,11 @@ export interface TableColumn<TData extends BaseTableRow = BaseTableRow> {
   alwaysVisible?: boolean;
 }
 
-/** Return a stable column identifier: explicit `id` if set, otherwise derived from the header text. */
-export const getColumnId = <TData extends BaseTableRow>(col: TableColumn<TData>): string =>
-  col.id ?? stringToKey(col.header);
-
 /**
  * Reconcile a persisted column order against the current set of column IDs.
  *
  * A persisted order can go stale when the table's columns change in code
- * (added, removed, or renamed, and header-derived IDs change with the header).
+ * (added, removed, or renamed).
  * Naively rendering by the stale order strands any column missing from it at
  * the very end, which reads as "columns in the wrong order". This keeps the
  * user's saved order for columns that still exist, drops IDs that no longer do,

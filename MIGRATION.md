@@ -4,6 +4,15 @@
 
 0.5 is the last round of breaking changes before the API settles. Each entry says what changed and what to do.
 
+### Columns need an `id`
+
+`TableColumn.id` is required, on sub-columns too. Before 0.5, a column without one took an id derived from its header text, so translating or rewording a header changed the id that saved layouts, `onVisibleColumnsChange` and the column panel key off. `getColumnId` is gone with the fallback: read `column.id`.
+
+```diff
+- { header: 'Email address', cell: ({ row }) => row.email }
++ { id: 'email', header: 'Email address', cell: ({ row }) => row.email }
+```
+
 ### Sort directions are lowercase only
 
 The uppercase `SortOrder` values (`'ASC'`, `'DESC'`) and the `SortOrder` export are gone. Pass `'asc'` or `'desc'`; an uppercase value now counts as no direction. If your API takes an uppercase enum, convert at the call: `direction?.toUpperCase()`.

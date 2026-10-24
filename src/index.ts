@@ -21,7 +21,6 @@ export type {
   TableSort,
   VisibleColumn,
 } from './components/data-table/types.ts';
-export { getColumnId } from './components/data-table/types.ts';
 // Hooks
 export { type CursorPaginationInput, useCursorPagination } from './hooks/use-cursor-pagination.ts';
 export { usePagination } from './hooks/use-pagination.ts';
