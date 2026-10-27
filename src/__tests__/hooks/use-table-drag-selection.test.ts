@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import type { MouseEvent } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { TableSelection } from '@/components/data-table/types';
 import { useTableDragSelection } from '@/hooks/use-table-drag-selection';
@@ -88,5 +88,45 @@ describe('useTableDragSelection drag state', () => {
 
     expect(result.current.isDragActive).toBe(false);
     expect(result.current.getRowDragState(1).inRange).toBe(false);
+  });
+});
+
+// A table that the page's React renders into a popout window or an iframe
+// lives in another document, which has its own events and text selection.
+describe('useTableDragSelection in another document', () => {
+  const popout = () => {
+    const doc = document.implementation.createHTMLDocument('popout');
+    const row = doc.createElement('tr');
+    const press = {
+      target: row.appendChild(doc.createElement('td')),
+      currentTarget: row,
+    } as unknown as MouseEvent<HTMLTableRowElement>;
+    return { doc, press };
+  };
+
+  it("ends the drag on a release anywhere in the table's document", () => {
+    const { doc, press } = popout();
+    const { result } = render();
+    act(() => result.current.handleRowMouseDown(press, 0));
+    expect(result.current.isDragging).toBe(true);
+
+    act(() => {
+      doc.dispatchEvent(new MouseEvent('mouseup'));
+    });
+    expect(result.current.isDragging).toBe(false);
+  });
+
+  it("clears the text selection in the table's document", () => {
+    const { doc, press } = popout();
+    const removeAllRanges = vi.fn();
+    vi.spyOn(doc, 'getSelection').mockReturnValue({
+      removeAllRanges,
+      toString: () => 'selected text',
+    } as unknown as Selection);
+    const { result } = render();
+    act(() => result.current.handleRowMouseDown(press, 0));
+    act(() => result.current.handleRowMouseEnter(1));
+
+    expect(removeAllRanges).toHaveBeenCalled();
   });
 });
