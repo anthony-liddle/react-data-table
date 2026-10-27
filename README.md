@@ -137,6 +137,8 @@ interface TableColumn<T> {
 
 With `multiSort: true`, Shift+click on a header (or Shift+Enter or Shift+Space on a focused one) adds that column as the next sort key, then flips it, then removes it, leaving the others in place. A plain click still makes the column the only sort. Each sorted column shows a small number with its place while two or more are sorted. Turn it on only when your API can sort by several fields.
 
+To keep the selection in your own state instead of `useTableSelection`, pass `isRowSelected`, `onToggleRow` and `onToggleAll` to the `selection` prop yourself. A Shift range or a drag calls `onToggleRow` once per row in a single event, so update your state from its previous value (`setSelected(prev => ...)`). Otherwise only the last row sticks.
+
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
 ```tsx

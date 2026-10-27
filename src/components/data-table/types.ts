@@ -132,7 +132,12 @@ export interface TableSelection<TData extends BaseTableRow = BaseTableRow> {
   isRowSelected: (row: TData) => boolean;
   /** A disabled row's checkbox is disabled, and select-all and drag selection skip it. */
   isRowDisabled?: (row: TData) => boolean;
-  /** Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag toggles it. */
+  /**
+   * Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag
+   * toggles it. A Shift range or a drag calls it once per row in one event, so
+   * update your state from its previous value (`setSelected(prev => ...)`), as
+   * `useTableSelection` does.
+   */
   onToggleRow: (row: TData) => void;
   /** Called when the select-all checkbox changes. */
   onToggleAll: (checked: boolean) => void;
