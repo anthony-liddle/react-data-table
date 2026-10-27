@@ -479,9 +479,23 @@ describe('Pagination', () => {
       expect(screen.getByText('Showing 0-0')).toBeInTheDocument();
     });
 
-    it('reads a negative total as one page', () => {
-      render(<Pagination {...base} pageIndex={0} totalCount={-5} showPageCount />);
-      expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+    it('reads a negative or non-finite total as no total', () => {
+      const { rerender } = render(
+        <Pagination {...base} totalCount={-1} pageRowCount={4} showPageCount />
+      );
+      expect(screen.getByText('Showing 11-14')).toBeInTheDocument();
+      expect(screen.queryByText(/Page|of/)).toBeNull();
+      rerender(<Pagination {...base} totalCount={Number.NaN} pageRowCount={4} showPageCount />);
+      expect(screen.getByText('Showing 11-14')).toBeInTheDocument();
+      expect(screen.queryByText(/Page|of/)).toBeNull();
+    });
+
+    it('reads a numeric string total as its number', () => {
+      // A Postgres count(*) arrives from node-postgres as a string.
+      const total = '42' as unknown as number;
+      render(<Pagination {...base} totalCount={total} showPageCount />);
+      expect(screen.getByText('Showing 11-20 of 42 results')).toBeInTheDocument();
+      expect(screen.getByText('Page 2 of 5')).toBeInTheDocument();
     });
 
     it('keeps the page range while a table without a total loads', () => {

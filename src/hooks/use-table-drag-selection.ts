@@ -44,6 +44,9 @@ export function useTableDragSelection<TData extends BaseTableRow>({
   const [dragEndRowIndex, setDragEndRowIndex] = useState<number | null>(null);
   const [isDragConfirmed, setIsDragConfirmed] = useState(false);
   const wasDragSelectionPerformedRef = useRef(false);
+  // The pressed row's document, which is not the page's own when the table is
+  // rendered into a popout window or an iframe.
+  const dragDocumentRef = useRef<Document | null>(null);
 
   // Range selection helper function
   const selectRange = useCallback(
@@ -81,6 +84,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
         return;
       }
 
+      dragDocumentRef.current = e.currentTarget.ownerDocument;
       setDragStartRowIndex(rowIndex);
       setIsDragging(true);
       setDragEndRowIndex(rowIndex);
@@ -127,7 +131,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
         if (rowIndex !== dragStartRowIndex) {
           setIsDragConfirmed(true);
           // Clear any text selection when row drag is confirmed
-          const textSelection = window.getSelection();
+          const textSelection = dragDocumentRef.current?.getSelection();
           if (textSelection) {
             textSelection.removeAllRanges();
           }
@@ -148,7 +152,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
     }
   }, [isDragging]);
 
-  // Handle global mouse up to cancel drag if mouse leaves table
+  // A release anywhere in the table's document, off the rows, cancels the drag
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
@@ -159,10 +163,11 @@ export function useTableDragSelection<TData extends BaseTableRow>({
       }
     };
 
-    if (isDragging) {
-      document.addEventListener('mouseup', handleGlobalMouseUp);
+    const dragDocument = dragDocumentRef.current;
+    if (isDragging && dragDocument) {
+      dragDocument.addEventListener('mouseup', handleGlobalMouseUp);
       return () => {
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        dragDocument.removeEventListener('mouseup', handleGlobalMouseUp);
       };
     }
   }, [isDragging]);
@@ -175,7 +180,7 @@ export function useTableDragSelection<TData extends BaseTableRow>({
       && dragEndRowIndex !== null
       && dragStartRowIndex !== dragEndRowIndex
     ) {
-      const textSelection = window.getSelection();
+      const textSelection = dragDocumentRef.current?.getSelection();
       if (textSelection && textSelection.toString().length > 0) {
         textSelection.removeAllRanges();
       }

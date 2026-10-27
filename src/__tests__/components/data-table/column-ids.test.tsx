@@ -41,4 +41,23 @@ describe('column ids', () => {
       error.mockRestore();
     }
   });
+
+  it('names a column without a header by its position, and a non-string id as such', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const columns = [
+        { id: 'name', header: 'Name' },
+        { id: 3, header: 'Age' },
+        { header: '' },
+        { id: 'contact', header: 'Contact', subColumns: [{ header: '' }] },
+      ] as unknown as TableColumn<{ id: string }>[];
+      render(<DataTable columns={columns} data={[]} />);
+      const messages = error.mock.calls.map(([message]) => String(message));
+      expect(messages.filter(message => message.startsWith('react-data-table'))).toEqual([
+        'react-data-table: every column needs a unique id. Missing: column 3, column 4.1. Not a string: Age (number).',
+      ]);
+    } finally {
+      error.mockRestore();
+    }
+  });
 });

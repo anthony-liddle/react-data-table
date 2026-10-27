@@ -147,21 +147,37 @@ const describeColumnIdProblem = (columns: TableColumn<BaseTableRow>[]): string |
   const seen = new Set<string>();
   const duplicates = new Set<string>();
   const missing: string[] = [];
-  for (const column of columns.flatMap(column => [column, ...(column.subColumns ?? [])])) {
-    if (typeof column.id !== 'string' || column.id === '') {
-      missing.push(column.header);
-    } else if (seen.has(column.id)) {
-      duplicates.add(column.id);
+  const notStrings: string[] = [];
+  // A column by its header, or by its position ("column 4.1") when it has none.
+  const nameOf = (column: TableColumn<BaseTableRow>, position: string) =>
+    typeof column.header === 'string' && column.header !== ''
+      ? column.header
+      : `column ${position}`;
+  const check = (column: TableColumn<BaseTableRow>, position: string) => {
+    const id: unknown = column.id;
+    if (id == null || id === '') {
+      missing.push(nameOf(column, position));
+    } else if (typeof id !== 'string') {
+      notStrings.push(`${nameOf(column, position)} (${typeof id})`);
+    } else if (seen.has(id)) {
+      duplicates.add(id);
     } else {
-      seen.add(column.id);
+      seen.add(id);
+    }
+  };
+  for (const [index, column] of columns.entries()) {
+    check(column, `${index + 1}`);
+    for (const [subIndex, subColumn] of (column.subColumns ?? []).entries()) {
+      check(subColumn, `${index + 1}.${subIndex + 1}`);
     }
   }
-  if (duplicates.size === 0 && missing.length === 0) {
+  if (duplicates.size === 0 && missing.length === 0 && notStrings.length === 0) {
     return null;
   }
   const parts = [
     duplicates.size > 0 && `Duplicate: ${[...duplicates].map(id => `"${id}"`).join(', ')}.`,
     missing.length > 0 && `Missing: ${missing.join(', ')}.`,
+    notStrings.length > 0 && `Not a string: ${notStrings.join(', ')}.`,
   ].filter(Boolean);
   return `react-data-table: every column needs a unique id. ${parts.join(' ')}`;
 };
@@ -435,12 +451,15 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     () => orderedColumns.filter(column => !column.alwaysVisible),
     [orderedColumns]
   );
+  // The settings button only opens the column panel, so it goes when every
+  // column is pinned and the panel would be empty.
+  const showTableSettings = !hideTableSettings && menuColumns.length > 0;
 
   const layout = getTableLayout({
     expand: !!activeExpansion,
     select: !!selection,
     actionMenu: !!actionMenu,
-    hideTableSettings: !!hideTableSettings,
+    hideTableSettings: !showTableSettings,
   });
   const columnCount = layout.leadingCount + flattenedColumnsData.length + layout.trailingCount;
 
@@ -517,7 +536,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       );
                     }
                   })}
-                  {!hideTableSettings && (
+                  {showTableSettings && (
                     <th scope="col" rowSpan={2} className={SETTINGS_HEADER_CLASS}>
                       <TableMenu
                         visibleColumns={visibleColumns}
@@ -528,7 +547,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       />
                     </th>
                   )}
-                  {hideTableSettings && layout.trailing === 'actions' && (
+                  {!showTableSettings && layout.trailing === 'actions' && (
                     <td rowSpan={2} className={ACTIONS_HEADER_CLASS} />
                   )}
                 </tr>
@@ -587,7 +606,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     className={column.headerClassName || ''}
                   />
                 ))}
-                {!hideTableSettings && (
+                {showTableSettings && (
                   <th scope="col" className={SETTINGS_HEADER_CLASS}>
                     <TableMenu
                       visibleColumns={visibleColumns}
@@ -598,7 +617,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     />
                   </th>
                 )}
-                {hideTableSettings && layout.trailing === 'actions' && (
+                {!showTableSettings && layout.trailing === 'actions' && (
                   <td className={ACTIONS_HEADER_CLASS} />
                 )}
               </tr>

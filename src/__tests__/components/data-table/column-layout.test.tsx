@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -123,6 +123,22 @@ describe('column layout', () => {
     const last = container.querySelector('thead tr')?.lastElementChild;
     expect(last).toHaveClass('rdt-table__header-cell', 'rdt-table__header-cell--actions');
     expect(last).toBeEmptyDOMElement();
+  });
+
+  it.each([
+    ['flat', flat],
+    ['grouped', grouped],
+  ])('leaves out the settings button when every column is pinned (%s)', (_, columns) => {
+    const pinned = columns.map(column => ({ ...column, alwaysVisible: true }));
+    for (const actionMenu of [undefined, [{ label: 'Edit', onSelect: vi.fn() }]]) {
+      const { container, unmount } = render(
+        <DataTable columns={pinned} data={rows} actionMenu={actionMenu} />
+      );
+      expect(screen.queryByRole('button', { name: 'Column settings' })).toBeNull();
+      const header = span(container.querySelector('thead tr') as Element);
+      expect([...container.querySelectorAll('tbody > tr')].map(span)).toEqual([header, header]);
+      unmount();
+    }
   });
 
   it('never fills a gap with colSpan 2', () => {

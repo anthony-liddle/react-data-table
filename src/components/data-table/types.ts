@@ -107,7 +107,8 @@ export interface TablePagination {
   /**
    * Rows across every page. Cursor APIs often have none: without it the footer
    * shows the page's range only, and Next follows `hasNextPage`. `null` (a
-   * nullable GraphQL field) counts as unknown too.
+   * nullable GraphQL field) counts as unknown too, as does a negative or
+   * non-finite total (an API's -1).
    */
   totalCount?: number | null;
   pageIndex: number;
@@ -131,7 +132,12 @@ export interface TableSelection<TData extends BaseTableRow = BaseTableRow> {
   isRowSelected: (row: TData) => boolean;
   /** A disabled row's checkbox is disabled, and select-all and drag selection skip it. */
   isRowDisabled?: (row: TData) => boolean;
-  /** Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag toggles it. */
+  /**
+   * Called when a row's checkbox, a row click (`selectOnRowClick`) or a drag
+   * toggles it. A Shift range or a drag calls it once for each row it changes,
+   * in one event, so update your state from its previous value
+   * (`setSelected(prev => ...)`), as `useTableSelection` does.
+   */
   onToggleRow: (row: TData) => void;
   /** Called when the select-all checkbox changes. */
   onToggleAll: (checked: boolean) => void;
