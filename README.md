@@ -137,7 +137,7 @@ interface TableColumn<T> {
 
 With `multiSort: true`, Shift+click on a header (or Shift+Enter or Shift+Space on a focused one) adds that column as the next sort key, then flips it, then removes it, leaving the others in place. A plain click still makes the column the only sort. Each sorted column shows a small number with its place while two or more are sorted. Turn it on only when your API can sort by several fields.
 
-To keep the selection in your own state instead of `useTableSelection`, pass `isRowSelected`, `onToggleRow` and `onToggleAll` to the `selection` prop yourself. A Shift range or a drag calls `onToggleRow` once per row in a single event, so update your state from its previous value (`setSelected(prev => ...)`). Otherwise only the last row sticks.
+To keep the selection in your own state instead of `useTableSelection`, pass `isRowSelected`, `onToggleRow` and `onToggleAll` to the `selection` prop yourself. A Shift range or a drag calls `onToggleRow` once for each row it changes, in a single event, so update your state from its previous value (`setSelected(prev => ...)`). Otherwise only the last row sticks.
 
 `usePagination` hands back the `offset` and `limit` for the current page. The total row count usually arrives with that page, so the table's `pagination` prop is built from it at render time:
 
@@ -150,7 +150,7 @@ const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.s
 
 Call `reset()` when the sort or filters change, so the table goes back to the first page. `useTableSort`'s `onChange` runs on every sort change except restoring a persisted one, so it's the place for that: `useTableSort({ onChange: () => reset() })`.
 
-`TablePagination.totalCount` is optional, since cursor APIs often have no total. Without it the footer reads "Showing 11-20", ending at the page's row count (`DataTable` supplies it; a standalone `Pagination` takes `pageRowCount`), it drops "Page N of M", and Next follows `hasNextPage`. A negative total, such as an API's -1 for unknown, counts as none. A page with no rows reads "Showing 0-0".
+`TablePagination.totalCount` is optional, since cursor APIs often have no total. Without it the footer reads "Showing 11-20", ending at the page's row count (`DataTable` supplies it; a standalone `Pagination` takes `pageRowCount`), it drops "Page N of M", and Next follows `hasNextPage`. A negative or non-finite total, such as an API's -1 for unknown, counts as none. `usePagination` works out `hasNextPage` from the total, so it needs the real one. With an unknown total, use `useCursorPagination` for a cursor API, or build the `pagination` prop yourself with your API's own `hasNextPage`. A page with no rows reads "Showing 0-0".
 
 ## Labels
 

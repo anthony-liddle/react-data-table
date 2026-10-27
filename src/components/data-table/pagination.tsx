@@ -49,9 +49,10 @@ export const Pagination = ({
 }: PaginationProps) => {
   const t = resolveLabels(labels);
 
-  // A negative or non-finite total (an API's -1 for "unknown") counts as none.
-  const total =
-    totalCount != null && Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : null;
+  // A negative or non-finite total (an API's -1 for "unknown") counts as none. A
+  // numeric string, such as node-postgres's count(*), counts as its number.
+  const asNumber = totalCount == null ? Number.NaN : Number(totalCount);
+  const total = Number.isFinite(asNumber) && asNumber >= 0 ? asNumber : null;
   const first = pageIndex * pageSize + 1;
   const last =
     total == null

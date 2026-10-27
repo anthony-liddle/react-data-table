@@ -23,6 +23,8 @@ const PAGE_NUMBER = /^[1-9]\d*$/;
  * then pass `getPagination(totalCount)` to `DataTable`'s `pagination` prop.
  * The total usually arrives with the page the offset fetched, which is why the
  * table's prop is built from it at render time rather than passed in up front.
+ * Next is enabled from that total, so it needs the real one: an unknown total
+ * (such as -1) leaves Next off.
  *
  * A page past the end (from an old link, say) is kept as it is: the table
  * shows its empty state and Previous still works.

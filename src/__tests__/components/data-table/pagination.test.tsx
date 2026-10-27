@@ -490,6 +490,14 @@ describe('Pagination', () => {
       expect(screen.queryByText(/Page|of/)).toBeNull();
     });
 
+    it('reads a numeric string total as its number', () => {
+      // A Postgres count(*) arrives from node-postgres as a string.
+      const total = '42' as unknown as number;
+      render(<Pagination {...base} totalCount={total} showPageCount />);
+      expect(screen.getByText('Showing 11-20 of 42 results')).toBeInTheDocument();
+      expect(screen.getByText('Page 2 of 5')).toBeInTheDocument();
+    });
+
     it('keeps the page range while a table without a total loads', () => {
       render(
         <DataTable
