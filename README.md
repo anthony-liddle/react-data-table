@@ -89,7 +89,7 @@ The table is controlled. You own the data, the sort, the selection, and the page
 | `showPageCount` | `boolean` | `false` | Adds "Page N of M" and bordered controls to the footer |
 | `actionMenu` | `TableActionMenuItem<T>[]` | – | Per-row menu: links, callbacks, one level of submenus, per-row `hidden` / `disabled` |
 | `persistKey` | `string` | – | Saves column visibility and order in localStorage; give the hooks the same key (see [Persistence](#persistence)) |
-| `hideTableSettings` | `boolean` | `false` | Hides the column settings panel |
+| `hideTableSettings` | `boolean` | `false` | Hides the column settings panel. It's also left out when every column is pinned (`alwaysVisible`) |
 | `onColumnReorder` | `(order: string[]) => void` | – | Called with the new column id order |
 | `onVisibleColumnsChange` | `(columns: VisibleColumn[]) => void` | – | Called when a column is shown or hidden |
 | `loading` | `boolean` | `false` | Shows skeleton rows and sets `aria-busy` |

@@ -435,12 +435,15 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
     () => orderedColumns.filter(column => !column.alwaysVisible),
     [orderedColumns]
   );
+  // The settings button only opens the column panel, so it goes when every
+  // column is pinned and the panel would be empty.
+  const showTableSettings = !hideTableSettings && menuColumns.length > 0;
 
   const layout = getTableLayout({
     expand: !!activeExpansion,
     select: !!selection,
     actionMenu: !!actionMenu,
-    hideTableSettings: !!hideTableSettings,
+    hideTableSettings: !showTableSettings,
   });
   const columnCount = layout.leadingCount + flattenedColumnsData.length + layout.trailingCount;
 
@@ -517,7 +520,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       );
                     }
                   })}
-                  {!hideTableSettings && (
+                  {showTableSettings && (
                     <th scope="col" rowSpan={2} className={SETTINGS_HEADER_CLASS}>
                       <TableMenu
                         visibleColumns={visibleColumns}
@@ -528,7 +531,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                       />
                     </th>
                   )}
-                  {hideTableSettings && layout.trailing === 'actions' && (
+                  {!showTableSettings && layout.trailing === 'actions' && (
                     <td rowSpan={2} className={ACTIONS_HEADER_CLASS} />
                   )}
                 </tr>
@@ -587,7 +590,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     className={column.headerClassName || ''}
                   />
                 ))}
-                {!hideTableSettings && (
+                {showTableSettings && (
                   <th scope="col" className={SETTINGS_HEADER_CLASS}>
                     <TableMenu
                       visibleColumns={visibleColumns}
@@ -598,7 +601,7 @@ export const DataTable = <TData extends BaseTableRow = BaseTableRow>({
                     />
                   </th>
                 )}
-                {hideTableSettings && layout.trailing === 'actions' && (
+                {!showTableSettings && layout.trailing === 'actions' && (
                   <td className={ACTIONS_HEADER_CLASS} />
                 )}
               </tr>
