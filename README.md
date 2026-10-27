@@ -148,7 +148,7 @@ const { items, total } = useMembers({ offset, limit }); // your fetch, or rows.s
 
 Call `reset()` when the sort or filters change, so the table goes back to the first page. `useTableSort`'s `onChange` runs on every sort change except restoring a persisted one, so it's the place for that: `useTableSort({ onChange: () => reset() })`.
 
-`TablePagination.totalCount` is optional, since cursor APIs often have no total. Without it the footer reads "Showing 11-20", ending at the page's row count (`DataTable` supplies it; a standalone `Pagination` takes `pageRowCount`), it drops "Page N of M", and Next follows `hasNextPage`. A page with no rows reads "Showing 0-0".
+`TablePagination.totalCount` is optional, since cursor APIs often have no total. Without it the footer reads "Showing 11-20", ending at the page's row count (`DataTable` supplies it; a standalone `Pagination` takes `pageRowCount`), it drops "Page N of M", and Next follows `hasNextPage`. A negative total, such as an API's -1 for unknown, counts as none. A page with no rows reads "Showing 0-0".
 
 ## Labels
 

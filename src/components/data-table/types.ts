@@ -107,7 +107,8 @@ export interface TablePagination {
   /**
    * Rows across every page. Cursor APIs often have none: without it the footer
    * shows the page's range only, and Next follows `hasNextPage`. `null` (a
-   * nullable GraphQL field) counts as unknown too.
+   * nullable GraphQL field) counts as unknown too, as does a negative total
+   * (an API's -1) or `NaN`.
    */
   totalCount?: number | null;
   pageIndex: number;
