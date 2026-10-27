@@ -147,21 +147,37 @@ const describeColumnIdProblem = (columns: TableColumn<BaseTableRow>[]): string |
   const seen = new Set<string>();
   const duplicates = new Set<string>();
   const missing: string[] = [];
-  for (const column of columns.flatMap(column => [column, ...(column.subColumns ?? [])])) {
-    if (typeof column.id !== 'string' || column.id === '') {
-      missing.push(column.header);
-    } else if (seen.has(column.id)) {
-      duplicates.add(column.id);
+  const notStrings: string[] = [];
+  // A column by its header, or by its position ("column 4.1") when it has none.
+  const nameOf = (column: TableColumn<BaseTableRow>, position: string) =>
+    typeof column.header === 'string' && column.header !== ''
+      ? column.header
+      : `column ${position}`;
+  const check = (column: TableColumn<BaseTableRow>, position: string) => {
+    const id: unknown = column.id;
+    if (id == null || id === '') {
+      missing.push(nameOf(column, position));
+    } else if (typeof id !== 'string') {
+      notStrings.push(`${nameOf(column, position)} (${typeof id})`);
+    } else if (seen.has(id)) {
+      duplicates.add(id);
     } else {
-      seen.add(column.id);
+      seen.add(id);
+    }
+  };
+  for (const [index, column] of columns.entries()) {
+    check(column, `${index + 1}`);
+    for (const [subIndex, subColumn] of (column.subColumns ?? []).entries()) {
+      check(subColumn, `${index + 1}.${subIndex + 1}`);
     }
   }
-  if (duplicates.size === 0 && missing.length === 0) {
+  if (duplicates.size === 0 && missing.length === 0 && notStrings.length === 0) {
     return null;
   }
   const parts = [
     duplicates.size > 0 && `Duplicate: ${[...duplicates].map(id => `"${id}"`).join(', ')}.`,
     missing.length > 0 && `Missing: ${missing.join(', ')}.`,
+    notStrings.length > 0 && `Not a string: ${notStrings.join(', ')}.`,
   ].filter(Boolean);
   return `react-data-table: every column needs a unique id. ${parts.join(' ')}`;
 };
